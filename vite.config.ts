@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Il momento della compilazione, mostrato nelle impostazioni: su un tablet
+  // in sala «che versione sto guardando?» è una domanda che capita davvero.
+  define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString()) },
   // Percorsi relativi: l'app funziona anche servita da una sottocartella,
   // non solo dalla radice del dominio.
   base: './',
@@ -33,6 +36,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // Senza queste due il service worker nuovo si installa e resta in
+        // attesa che tutte le schede si chiudano: su un'app installata, che
+        // non si chiude mai davvero, vuol dire non aggiornarsi mai.
+        // `registerType: 'autoUpdate'` da solo non le accende, perché la
+        // registrazione la facciamo a mano invece di lasciarla al plugin.
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             // Le clip della voce: alla prima richiesta entrano in cache e da lì

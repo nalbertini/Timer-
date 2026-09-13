@@ -4,6 +4,7 @@ import { Cues, italianVoices, speak } from '../lib/audio'
 import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
 import { listClips } from '../lib/clipStore'
 import { CLIPS } from '../lib/voiceClips'
+import { COMPILATA_IL, cercaAggiornamenti } from '../lib/aggiornamento'
 import { Chevron } from './Icons'
 import { Logo } from './Logo'
 
@@ -45,6 +46,15 @@ export function SettingsScreen({
   onOpenRecorder: () => void
 }) {
   const [incise, setIncise] = useState(0)
+  const [controllo, setControllo] = useState(false)
+  const [esitoControllo, setEsito] = useState<string | null>(null)
+  const dataCompilazione = new Intl.DateTimeFormat('it-IT', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(COMPILATA_IL))
   useEffect(() => {
     void listClips().then((k) => setIncise(k.length))
   }, [])
@@ -242,6 +252,46 @@ export function SettingsScreen({
           on={settings.bigScreen}
           onChange={(v) => onChange({ bigScreen: v })}
         />
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">VERSIONE</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 8 }}>
+        <div className="card stack" style={{ gap: 8, padding: 14 }}>
+          <div className="row" style={{ gap: 10, alignItems: 'baseline' }}>
+            <span className="grow" style={{ fontSize: 15, fontWeight: 600 }}>
+              Compilata il
+            </span>
+            <span className="num" style={{ fontSize: 14, fontWeight: 600, color: 'var(--dim)' }}>
+              {dataCompilazione}
+            </span>
+          </div>
+          <span style={{ fontSize: 12, lineHeight: 1.45, color: 'var(--dim)' }}>
+            {esitoControllo ?? 'L’app si aggiorna da sola quando torna in primo piano. Mai durante un allenamento.'}
+          </span>
+          <button
+            className="btn btn-ghost"
+            style={{ minHeight: 46, fontSize: 15 }}
+            disabled={controllo}
+            onClick={async () => {
+              setControllo(true)
+              setEsito(null)
+              const esito = await cercaAggiornamenti()
+              setControllo(false)
+              setEsito(
+                esito === 'nuova'
+                  ? 'Versione nuova trovata: l’app si ricarica fra un istante.'
+                  : esito === 'aggiornata'
+                    ? 'Sei già sull’ultima versione.'
+                    : 'Controllo non disponibile: serve una connessione, e l’app installata dal browser.',
+              )
+            }}
+          >
+            {controllo ? 'CONTROLLO…' : 'CONTROLLA AGGIORNAMENTI'}
+          </button>
+        </div>
       </div>
 
       <div className="rule">

@@ -4,6 +4,7 @@ import { applyCoach, buildSegments, describe } from '../lib/engine'
 import { BECCATO, FINALE, a_caso, perStato } from '../lib/adesivi'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
+import { segnalaTimerAperto } from '../lib/aggiornamento'
 import { useWakeLock } from '../lib/wakeLock'
 import { Close, Next, Pause, Play, Prev } from './Icons'
 
@@ -90,6 +91,13 @@ export function TimerScreen({
     timeoutBeccato.current = window.setTimeout(() => setBeccato(null), 3200)
   })
   useEffect(() => () => window.clearTimeout(timeoutBeccato.current), [])
+
+  // Finché questa schermata è aperta l'app non si ricarica da sola per un
+  // aggiornamento: un allenamento a metà vale più di una versione nuova subito.
+  useEffect(() => {
+    segnalaTimerAperto(true)
+    return () => segnalaTimerAperto(false)
+  }, [])
 
   const seg = view.segment
 
