@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { HistoryEntry, Settings, Workout } from './types'
 import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory, saveSettings, saveWorkouts } from './lib/storage'
 import { blankWorkout } from './lib/presets'
+import { preload } from './lib/voice'
+import { COACH_LINES } from './lib/engine'
+import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './lib/voiceClips'
 import { uid } from './lib/format'
 import { HomeScreen } from './components/HomeScreen'
 import { PresetScreen } from './components/PresetScreen'
@@ -40,6 +43,24 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
   const [tab, setTab] = useState<Tab>('timer')
   const [view, setView] = useState<View>({ kind: 'tabs' })
+
+  // Le clip si scaldano all'apertura dell'app, non all'apertura del timer.
+  // Un annuncio non aspetta la rete: se la clip non è pronta parla la sintesi,
+  // quindi il tempo utile è quello che passa mentre si sceglie l'allenamento,
+  // non il mezzo secondo fra «apri» e «avvia».
+  useEffect(() => {
+    preload([
+      INTRO_CLIP,
+      ...Object.values(STATE_CLIP),
+      ...Object.values(NUMBER_CLIP),
+      ...COACH_LINES.map((_, i) => `maurizio/${i + 1}`),
+    ])
+  }, [])
+
+  // I nomi degli esercizi dipendono dai timer salvati, quindi si scaldano a parte.
+  useEffect(() => {
+    preload(workouts.flatMap((w) => w.exercises.map((e) => exerciseKey(e.name))))
+  }, [workouts])
 
   useEffect(() => saveWorkouts(workouts), [workouts])
   useEffect(() => saveSettings(settings), [settings])

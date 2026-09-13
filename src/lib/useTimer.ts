@@ -58,15 +58,10 @@ export function useTimer(
   const voiceRef = useRef(voiceOpts)
   voiceRef.current = voiceOpts
 
-  // Le clip che serviranno in questo allenamento, scaldate in anticipo.
+  // Il grosso è già scaldato all'apertura dell'app; qui restano i nomi degli
+  // esercizi di questo allenamento.
   useEffect(() => {
-    preload([
-      INTRO_CLIP,
-      ...Object.values(STATE_CLIP),
-      ...Object.values(NUMBER_CLIP),
-      ...COACH_LINES.map((_, i) => `maurizio/${i + 1}`),
-      ...segments.map((s) => exerciseKey(s.name)),
-    ])
+    preload(segments.map((s) => exerciseKey(s.name)))
   }, [segments])
 
   const total = useMemo(() => {
@@ -96,13 +91,10 @@ export function useTimer(
         const testo = seg.kind === 'work' ? `${label}. ${seg.name}` : label
         const conIntro = introRef.current
         introRef.current = false
-        void (async () => {
-          // Il saluto apre solo il primo annuncio dell'allenamento, e solo se la
-          // clip c'è davvero: in testa a una catena, una clip mancante farebbe
-          // ripiegare sulla sintesi anche tutto il resto.
-          const keys = conIntro && (await hasClip(INTRO_CLIP)) ? [INTRO_CLIP, ...base] : base
-          await say(keys, testo, voiceRef.current)
-        })()
+        // Al primo annuncio il saluto PRENDE IL POSTO di «preparati», non lo
+        // precede: dice già lui che l'allenamento sta per cominciare, e
+        // incatenati i due sforavano nel conto alla rovescia, che li tagliava.
+        say(conIntro && hasClip(INTRO_CLIP) ? [INTRO_CLIP] : base, testo, voiceRef.current)
       }
     },
     [settings.vibrate, settings.voice, settings.volume, settings.voiceURI],
@@ -120,7 +112,7 @@ export function useTimer(
         setStatus('done')
         cues.current.finish()
         if (settings.vibrate) buzz([200, 100, 200, 100, 300])
-        if (settings.voice) void say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
+        if (settings.voice) say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
         finishRef.current(total, true)
         return
       }
@@ -151,20 +143,15 @@ export function useTimer(
       if (tornatoIndietro) {
         const i = Math.floor(Math.random() * COACH_LINES.length)
         slipRef.current?.(COACH_LINES[i])
-        if (settings.voice) void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
+        if (settings.voice) say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
         return
       }
 
       if (mostrato > 3) return
       // Con la voce incisa il numero viene detto; il bip resta solo come
       // ripiego, per non raddoppiare il segnale.
-      if (settings.recordedVoice && settings.voice) {
-        void say([NUMBER_CLIP[mostrato]], '', voiceRef.current).then((detto) => {
-          if (!detto && settings.countdownBeep) cues.current.countdown()
-        })
-      } else if (settings.countdownBeep) {
-        cues.current.countdown()
-      }
+      const detto = settings.recordedVoice && settings.voice && say([NUMBER_CLIP[mostrato]], '', voiceRef.current)
+      if (!detto && settings.countdownBeep) cues.current.countdown()
     }
 
     const id = window.setInterval(tick, 100)

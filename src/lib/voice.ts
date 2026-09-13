@@ -140,70 +140,79 @@ export function unlockVoice() {
   if (c && c.state === 'suspended') void c.resume()
 }
 
-export async function hasClip(key: string): Promise<boolean> {
-  return (await clip(key)) !== null
-}
-
 /** Scalda le clip che serviranno, così al momento buono partono senza ritardo. */
 export function preload(keys: string[]) {
   keys.filter(Boolean).forEach((k) => void clip(k))
 }
 
 /**
- * Dice qualcosa con la voce incisa, se c'è, altrimenti con la sintesi.
+ * La clip se è GIÀ pronta in memoria, altrimenti null — e intanto avvia il
+ * caricamento per la volta dopo.
+ *
+ * Non aspetta mai la rete: un annuncio è legato a un istante preciso
+ * dell'allenamento, e uno che arriva in ritardo non è un annuncio, è rumore.
+ */
+export function clipPronta(key: string): Clip | null {
+  if (cache.has(key)) return cache.get(key) ?? null
+  void clip(key)
+  return null
+}
+
+export const hasClip = (key: string): boolean => clipPronta(key) !== null
+
+function suona(clips: Clip[], volume: number): boolean {
+  const c = context()
+  if (!c || c.state !== 'running') return false
+  // Come per la sintesi, l'ultimo annuncio vince: il saluto iniziale dura
+  // sei secondi e con una preparazione corta si accavallerebbe a quello dopo.
+  inCorso.forEach((s) => {
+    try {
+      s.stop()
+    } catch {
+      // Già finita da sola.
+    }
+  })
+  inCorso = []
+  let when = c.currentTime
+  for (const { buffer, attacco } of clips) {
+    const src = c.createBufferSource()
+    const gain = c.createGain()
+    gain.gain.value = volume
+    src.buffer = buffer
+    src.connect(gain).connect(c.destination)
+    src.start(when, attacco)
+    src.onended = () => {
+      inCorso = inCorso.filter((x) => x !== src)
+    }
+    inCorso.push(src)
+    when += buffer.duration - attacco
+  }
+  return true
+}
+
+/**
+ * Dice qualcosa con la voce incisa, se è pronta, altrimenti con la sintesi.
  *
  * `keys` è una sequenza da suonare di fila: la prima è obbligatoria, le altre
- * sono di contorno. Se la prima manca si ripiega sulla sintesi di `text`; se
- * mancano solo quelle dopo, si suona il pezzo disponibile — una clip incisa
- * per «Lavoro» vale comunque, anche senza quella del nome dell'esercizio.
+ * sono di contorno. Se la prima non c'è o non è ancora scaricata si ripiega
+ * subito sulla sintesi di `text`; se mancano solo quelle dopo, si suona il
+ * pezzo disponibile.
  *
  * Restituisce `true` se ha parlato con la voce incisa.
  */
-export async function say(
+export function say(
   keys: string[],
   text: string,
   opts: { volume: number; voiceURI: string | null; useRecorded: boolean },
-): Promise<boolean> {
-  const wanted = keys.filter(Boolean)
-  if (opts.useRecorded && wanted.length > 0) {
-    const clips: Clip[] = []
-    for (const k of wanted) {
-      const c = await clip(k)
+): boolean {
+  if (opts.useRecorded) {
+    const pronte: Clip[] = []
+    for (const k of keys.filter(Boolean)) {
+      const c = clipPronta(k)
       if (!c) break
-      clips.push(c)
+      pronte.push(c)
     }
-    if (clips.length > 0) {
-      const c = context()
-      if (c && c.state === 'running') {
-        // Come per la sintesi, l'ultimo annuncio vince: il saluto iniziale dura
-        // sei secondi e con una preparazione corta si accavallerebbe a quello
-        // dopo. Si taglia invece di sovrapporre.
-        inCorso.forEach((s) => {
-          try {
-            s.stop()
-          } catch {
-            // Già finita da sola.
-          }
-        })
-        inCorso = []
-        // Incatenate sull'orologio audio: niente buchi né sovrapposizioni.
-        let when = c.currentTime
-        for (const { buffer, attacco } of clips) {
-          const src = c.createBufferSource()
-          const gain = c.createGain()
-          gain.gain.value = opts.volume
-          src.buffer = buffer
-          src.connect(gain).connect(c.destination)
-          src.start(when, attacco)
-          src.onended = () => {
-            inCorso = inCorso.filter((x) => x !== src)
-          }
-          inCorso.push(src)
-          when += buffer.duration - attacco
-        }
-        return true
-      }
-    }
+    if (pronte.length > 0 && suona(pronte, opts.volume)) return true
   }
   speak(text, opts.volume, opts.voiceURI)
   return false
