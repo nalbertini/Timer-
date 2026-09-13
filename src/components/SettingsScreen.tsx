@@ -70,6 +70,37 @@ export function SettingsScreen({
 
   return (
     <>
+      <div className="pad" style={{ paddingTop: 16 }}>
+        <div className="card maurizio-card">
+          <div className="row" style={{ gap: 14, alignItems: 'flex-start' }}>
+            <img src="adesivi/indica.webp" alt="" className="maurizio-faccia" />
+            <div className="stack grow" style={{ gap: 6, minWidth: 0 }}>
+              <span className="ob" style={{ fontSize: 25, fontWeight: 700, letterSpacing: '0.04em', lineHeight: 1 }}>
+                MODALITÀ MAURIZIO
+              </span>
+              <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0, textWrap: 'pretty' }}>
+                L'allenatore che perde il conto per farti lavorare qualche secondo in più. Il tempo in più è deciso
+                all'avvio e sparso a caso fra gli intervalli di lavoro; il recupero non si tocca.
+              </p>
+            </div>
+          </div>
+
+          <div className="maurizio-livelli">
+            {(Object.keys(COACH_LEVELS) as CoachLevel[]).map((l) => (
+              <button key={l} className="livello" data-on={settings.coach === l} onClick={() => onChange({ coach: l })}>
+                <span className="ob" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.1em' }}>
+                  {COACH_LABEL[l].toUpperCase()}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <span style={{ fontSize: 13, lineHeight: 1.4, color: settings.coach === 'off' ? 'var(--dim)' : 'var(--giallo)' }}>
+            {COACH_HINT[settings.coach]}
+          </span>
+        </div>
+      </div>
+
       <div className="rule">
         <span className="rule-label">AUDIO</span>
         <div className="rule-line" />
@@ -186,25 +217,6 @@ export function SettingsScreen({
             })}
           </div>
         )}
-      </div>
-
-      <div className="rule">
-        <span className="rule-label">MODALITÀ MAURIZIO</span>
-        <div className="rule-line" />
-      </div>
-      <div className="pad stack" style={{ gap: 8 }}>
-        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0 }}>
-          Come l'allenatore che perde il conto per farti lavorare qualche secondo in più: il tempo in più viene
-          deciso all'avvio e sparso a caso fra gli intervalli di lavoro. Il recupero non si tocca.
-        </p>
-        <div className="row" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-          {(Object.keys(COACH_LEVELS) as CoachLevel[]).map((l) => (
-            <button key={l} className="chip" data-on={settings.coach === l} onClick={() => onChange({ coach: l })}>
-              {COACH_LABEL[l].toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <span style={{ fontSize: 13, color: 'var(--dim)' }}>{COACH_HINT[settings.coach]}</span>
       </div>
 
       <div className="rule">

@@ -290,3 +290,40 @@ input { font: inherit; color: inherit; }
   .adesivo-stato { left: 24px; right: auto; top: auto; bottom: 196px; height: 16vh; max-height: 130px; }
   .beccato-frase { max-width: 40%; text-align: left; }
 }
+
+/* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */
+
+/* È la cosa che dà carattere all'app ed è accesa di partenza: merita una
+   scheda, non una riga fra le altre. Il giallo è quello del distintivo che
+   compare nel timer, così il collegamento si vede. */
+.maurizio-card {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 16px 16px 18px;
+  border-color: var(--giallo);
+  background: linear-gradient(180deg, #241f0d 0%, var(--surface) 62%);
+}
+
+.maurizio-faccia {
+  width: 82px; height: auto; flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px #000000aa);
+}
+
+.maurizio-livelli {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+}
+
+.livello {
+  min-height: 52px; padding: 0 10px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--line); background: var(--surface-2); color: #b8b8b2;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.livello:hover { border-color: var(--dim); color: var(--text); }
+.livello[data-on='true'] {
+  background: var(--giallo); border-color: var(--giallo); color: #121212;
+}
+
+@media (min-width: 560px) {
+  .maurizio-livelli { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .maurizio-faccia { width: 110px; }
+}

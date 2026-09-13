@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Settings, Workout } from '../types'
-import { applyCoach, buildSegments } from '../lib/engine'
+import { applyCoach, buildSegments, describe } from '../lib/engine'
 import { BECCATO, FINALE, a_caso, perStato } from '../lib/adesivi'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
@@ -180,13 +180,13 @@ export function TimerScreen({
               textOverflow: 'ellipsis',
             }}
           >
-            {seg && seg.sets > 1 ? `SERIE ${seg.set} / ${seg.sets}` : workout.name.toUpperCase()}
+            {seg && seg.sets > 1 ? `SERIE ${seg.set} / ${seg.sets}` : describe(workout).toUpperCase()}
           </span>
         </div>
         {settings.coach !== 'off' && (
           <span
             className="badge"
-            style={{ background: 'var(--giallo)', alignSelf: 'center', fontSize: 9, letterSpacing: '0.1em', padding: '3px 6px' }}
+            style={{ background: 'var(--giallo)', alignSelf: 'center', fontSize: 11, letterSpacing: '0.12em', padding: '5px 9px' }}
             title="Maurizio ogni tanto perde il conto"
           >
             MAURIZIO
@@ -233,7 +233,7 @@ export function TimerScreen({
                 style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', gap: 2 }}
               >
                 <span className="cond" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--dim)' }}>
-                  {idle ? 'PRONTO' : 'GIRO'}
+                  GIRO
                 </span>
                 <span className="num" style={{ fontSize: 46, fontWeight: 700, lineHeight: 1, color }}>
                   {seg ? `${seg.round || 1}/${seg.rounds}` : '—'}
