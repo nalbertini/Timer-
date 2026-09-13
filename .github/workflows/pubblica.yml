@@ -50,12 +50,10 @@ jobs:
       name: github-pages
       url: ${{ steps.pubblicazione.outputs.page_url }}
     steps:
-      # Prova ad accendere Pages da solo. Sta qui e non nella compilazione
-      # apposta: è configurazione del repository, e se fallisce deve restare
-      # rosso solo questo job, non il controllo sul codice.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
+      # Niente `configure-pages`: provato due volte, da repository privato e da
+      # pubblico, risponde sempre «Resource not accessible by integration». Il
+      # token del workflow non può creare il sito Pages, e non è un permesso
+      # concedibile da `permissions:`. Accenderlo resta un passaggio a mano in
+      # Settings › Pages › Source: GitHub Actions, una volta sola.
       - id: pubblicazione
         uses: actions/deploy-pages@v4

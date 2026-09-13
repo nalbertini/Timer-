@@ -161,11 +161,14 @@ push. L'indirizzo è `https://<utente>.github.io/<repository>/`, quindi l'app
 vive in una sottocartella: per questo `vite.config.ts` usa `base: './'` e tutti
 i percorsi — icone, manifest, `start_url`, `scope` — sono relativi.
 
-Il repository deve essere **pubblico**: su uno privato Pages richiede un piano
-a pagamento. Serve inoltre, una volta sola, **Settings › Pages › Source: GitHub
-Actions**; il workflow prova ad accenderlo da solo (`enablement: true`), ma quel
-passo sta nel job di pubblicazione e non in quello di compilazione, così un
-problema di configurazione non fa fallire il controllo sul codice.
+Due condizioni. Il repository deve essere **pubblico**: su uno privato Pages
+richiede un piano a pagamento. E Pages va acceso a mano, una volta sola, da
+**Settings › Pages › Source: GitHub Actions** — non è automatizzabile, il token
+del workflow non può creare il sito (`Resource not accessible by integration`,
+sia da privato sia da pubblico).
+
+Finché non è acceso, il job di compilazione passa lo stesso: il controllo sul
+codice non dipende dalla configurazione di Pages.
 
 `dist/` resta comunque una cartella statica: funziona su qualsiasi hosting con
 **HTTPS**, che non è opzionale — senza, service worker, Wake Lock e
