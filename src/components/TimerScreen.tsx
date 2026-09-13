@@ -34,6 +34,30 @@ function Ring({ progress, color, size }: { progress: number; color: string; size
   )
 }
 
+/**
+ * Ogni cifra occupa esattamente la larghezza dello zero del font corrente (1ch).
+ * `tabular-nums` da solo non basta: vale solo se il font espone la feature
+ * `tnum`, altrimenti i numeri cambiano larghezza a ogni secondo e il blocco,
+ * essendo centrato, balla da destra a sinistra.
+ */
+function Digits({ value }: { value: string }) {
+  return (
+    <div className="digits" role="timer" aria-label={value}>
+      {value.split('').map((ch, i) =>
+        ch >= '0' && ch <= '9' ? (
+          <span key={i} aria-hidden="true" style={{ display: 'inline-block', width: '1ch', textAlign: 'center' }}>
+            {ch}
+          </span>
+        ) : (
+          <span key={i} aria-hidden="true">
+            {ch}
+          </span>
+        ),
+      )}
+    </div>
+  )
+}
+
 export function TimerScreen({
   workout,
   settings,
@@ -140,7 +164,7 @@ export function TimerScreen({
         {done ? (
           <>
             <span className="state-label">COMPLETATO</span>
-            <div className="digits">{clock(view.total)}</div>
+            <Digits value={clock(view.total)} />
             <span className="exercise">{workout.name}</span>
           </>
         ) : (
@@ -165,7 +189,7 @@ export function TimerScreen({
 
             <div className="timer-col" style={{ alignItems: 'center', gap: 4 }}>
               <span className="state-label">{idle ? 'PRONTO' : (seg?.label ?? '')}</span>
-              <div className="digits">{clock(idle ? (segments[0]?.duration ?? 0) : view.display)}</div>
+              <Digits value={clock(idle ? (segments[0]?.duration ?? 0) : view.display)} />
               <span className="exercise">{idle ? workout.name : (seg?.name ?? '')}</span>
             </div>
           </>
