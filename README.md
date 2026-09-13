@@ -156,20 +156,18 @@ installazione funzionino.
 
 ## Pubblicazione
 
-`.github/workflows/pubblica.yml` compila e pubblica su **GitHub Pages** a ogni
-push sul branch principale. L'indirizzo è
-`https://<utente>.github.io/<repository>/`, quindi l'app vive in una
-sottocartella: per questo `vite.config.ts` usa `base: './'` e tutti i percorsi —
-icone, manifest, `start_url`, `scope` — sono relativi.
+`.github/workflows/compila.yml` compila a ogni push e allega il sito pronto
+come artefatto scaricabile (`ods-timer-sito`, sotto Actions › la run › Artifacts).
 
-Una volta sola, a mano: **Settings › Pages › Source: GitHub Actions**. Non è
-automatizzabile — il token del workflow non ha il diritto di accendere Pages —
-quindi finché non è fatto il job di pubblicazione fallisce, mentre quello di
-compilazione passa lo stesso.
+**GitHub Pages non è utilizzabile qui**: su un repository privato richiede un
+piano a pagamento. Le alternative gratuite, tutte con HTTPS e tutte compatibili
+con un repository privato, sono Netlify, Cloudflare Pages e Vercel. Il modo più
+rapido senza configurare nulla: scaricare l'artefatto, scompattarlo e
+trascinare la cartella su [Netlify Drop](https://app.netlify.com/drop).
 
-Il job di compilazione gira comunque a ogni push, anche senza Pages acceso, e
-fa da controllo: dentro `npm run build` c'è `tsc -b`, quindi se i tipi non
-tornano non si pubblica.
+`dist/` resta comunque una cartella statica: funziona su qualsiasi spazio web,
+anche quello del sito della palestra. Serve **HTTPS**, altrimenti service
+worker, Wake Lock e installazione non funzionano.
 
 Dal telefono, aperto l'indirizzo: **Aggiungi alla schermata Home**. Da lì in poi
 è un'app a tutti gli effetti — schermo intero, offline, schermo sempre acceso.
