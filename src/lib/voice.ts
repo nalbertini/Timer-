@@ -162,7 +162,13 @@ export const hasClip = (key: string): boolean => clipPronta(key) !== null
 
 function suona(clips: Clip[], volume: number): boolean {
   const c = context()
-  if (!c || c.state !== 'running') return false
+  if (!c) return false
+  if (c.state === 'suspended') {
+    // Non si aspetta: sarebbe di nuovo un annuncio fuori tempo. Si sveglia per
+    // la prossima volta e per questa parla la sintesi.
+    void c.resume()
+  }
+  if (c.state !== 'running') return false
   // Come per la sintesi, l'ultimo annuncio vince: il saluto iniziale dura
   // sei secondi e con una preparazione corta si accavallerebbe a quello dopo.
   inCorso.forEach((s) => {

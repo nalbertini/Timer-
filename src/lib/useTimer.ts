@@ -88,7 +88,10 @@ export function useTimer(
       if (settings.voice) {
         const label = seg.label.toLowerCase()
         const base = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
-        const testo = seg.kind === 'work' ? `${label}. ${seg.name}` : label
+        // «Preparati» non si annuncia: ci pensa il saluto. E se il saluto non è
+        // ancora pronto, il silenzio è meglio di una voce sintetica che dice
+        // una parola di cui si può fare a meno.
+        const testo = seg.kind === 'prepare' ? '' : seg.kind === 'work' ? `${label}. ${seg.name}` : label
         const conIntro = introRef.current
         introRef.current = false
         // Al primo annuncio il saluto PRENDE IL POSTO di «preparati», non lo

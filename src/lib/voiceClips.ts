@@ -35,7 +35,6 @@ export const CLIPS: ClipSpec[] = [
     group: 'Stati',
     hint: 'Il saluto prima di partire: si sente una volta sola, all\u2019avvio',
   },
-  { key: 'stato/preparati', text: 'Preparati', group: 'Stati' },
   { key: 'stato/lavoro', text: 'Lavoro', group: 'Stati', hint: 'Deciso, è quello che si sente più spesso' },
   { key: 'stato/recupero', text: 'Recupero', group: 'Stati' },
   { key: 'stato/riposo', text: 'Riposo', group: 'Stati', hint: 'Fra una serie e l’altra' },

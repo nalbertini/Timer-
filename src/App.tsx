@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { HistoryEntry, Settings, Workout } from './types'
 import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory, saveSettings, saveWorkouts } from './lib/storage'
 import { blankWorkout } from './lib/presets'
-import { preload } from './lib/voice'
+import { preload, unlockVoice } from './lib/voice'
 import { COACH_LINES } from './lib/engine'
 import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './lib/voiceClips'
 import { uid } from './lib/format'
@@ -43,6 +43,22 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
   const [tab, setTab] = useState<Tab>('timer')
   const [view, setView] = useState<View>({ kind: 'tabs' })
+
+  // L'audio si sblocca al PRIMO tocco nell'app, non all'avvio del timer.
+  // `resume()` è asincrono: chiamarlo quando parte l'allenamento significa che
+  // il primo annuncio, che è sincrono, trova il contesto ancora sospeso e va
+  // perso. Fra l'apertura di un timer e il tasto avvia ci sono almeno due
+  // tocchi, che bastano e avanzano.
+  useEffect(() => {
+    const sblocca = () => unlockVoice()
+    const opzioni = { once: true, passive: true } as const
+    window.addEventListener('pointerdown', sblocca, opzioni)
+    window.addEventListener('keydown', sblocca, opzioni)
+    return () => {
+      window.removeEventListener('pointerdown', sblocca)
+      window.removeEventListener('keydown', sblocca)
+    }
+  }, [])
 
   // Le clip si scaldano all'apertura dell'app, non all'apertura del timer.
   // Un annuncio non aspetta la rete: se la clip non è pronta parla la sintesi,

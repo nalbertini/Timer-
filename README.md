@@ -110,8 +110,10 @@ L'ordine è: registrazione fatta su quel dispositivo → file pubblicato in
 dove manca la clip il timer torna da solo alla voce di sistema senza che nessuno
 debba configurare niente.
 
-In `public/voce/` ci sono **16 clip**: il saluto iniziale, i sei stati, i tre
-numeri e le sei battute di Maurizio.
+In `public/voce/` ci sono **15 clip**: il saluto iniziale, cinque stati, i tre
+numeri e le sei battute di Maurizio. «Preparati» non c'è e non serve: quel
+momento è del saluto, e se il saluto non è ancora pronto resta silenzio invece
+di una voce sintetica.
 
 Il saluto (`stato/intro`) si sente una volta sola, all'avvio, e **prende il
 posto** di «preparati» invece di precederlo: dice già lui che si comincia, e
