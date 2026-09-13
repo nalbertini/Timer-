@@ -18,6 +18,7 @@ import { EserciziScreen } from './components/EserciziScreen'
 import { CondividiScreen } from './components/CondividiScreen'
 import { RicevutoScreen } from './components/RicevutoScreen'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
+import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
 import { Dumbbell, Gear, History, Library, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
@@ -25,7 +26,7 @@ type Tab = 'timer' | 'preset' | 'esercizi' | 'storico' | 'impostazioni'
 type View =
   | { kind: 'tabs' }
   | { kind: 'editor'; workout: Workout }
-  | { kind: 'run'; workout: Workout }
+  | { kind: 'run'; workout: Workout; ripresa?: Interrotto }
   | { kind: 'condividi'; workout: Workout }
   | { kind: 'ricevuto'; workout: Workout }
   | { kind: 'voce' }
@@ -54,6 +55,8 @@ export default function App() {
   // dentro un timer devono vedere la stessa lista, non due copie.
   const [catalogo, setCatalogo] = useState<Esercizio[]>(() => loadEsercizi())
   const [tab, setTab] = useState<Tab>('timer')
+  // Letto una volta all'apertura: è la fotografia di com'era quando l'app è morta.
+  const [interrotto, setInterrotto] = useState<Interrotto | null>(() => leggiInterrotto())
   const [view, setView] = useState<View>({ kind: 'tabs' })
 
   // L'audio si sblocca al PRIMO tocco nell'app, non all'avvio del timer.
@@ -173,7 +176,12 @@ export default function App() {
     )
   }, [])
 
-  const startWorkout = useCallback((w: Workout) => setView({ kind: 'run', workout: w }), [])
+  const startWorkout = useCallback((w: Workout) => {
+    // Partendo con qualcos'altro, l'allenamento lasciato a metà è acqua passata.
+    scordaInterrotto()
+    setInterrotto(null)
+    setView({ kind: 'run', workout: w })
+  }, [])
 
   const duplicate = useCallback(
     (w: Workout) => {
@@ -200,6 +208,16 @@ export default function App() {
             onDuplicate={duplicate}
             onDelete={remove}
             onShare={(w) => setView({ kind: 'condividi', workout: w })}
+            interrotto={interrotto}
+            onRiprendi={() => {
+              if (!interrotto) return
+              setView({ kind: 'run', workout: interrotto.workout, ripresa: interrotto })
+              setInterrotto(null)
+            }}
+            onScarta={() => {
+              scordaInterrotto()
+              setInterrotto(null)
+            }}
             onNew={() => setView({ kind: 'editor', workout: blankWorkout('interval') })}
           />
         )
@@ -231,6 +249,7 @@ export default function App() {
     workouts,
     history,
     settings,
+    interrotto,
     catalogo,
     usiEsercizi,
     rinominaEsercizio,
@@ -245,6 +264,7 @@ export default function App() {
       <TimerScreen
         workout={view.workout}
         settings={settings}
+        ripresa={view.ripresa}
         onExit={() => setView({ kind: 'tabs' })}
         onFinish={recordFinish(view.workout)}
       />

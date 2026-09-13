@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { Mode, Workout } from '../types'
 import { MODE_BADGE, describe, totalDuration } from '../lib/engine'
-import { compact } from '../lib/format'
+import { clock, compact } from '../lib/format'
+import { type Interrotto, doveEraRimasto } from '../lib/ripresa'
 import { Copy, Edit, Play, Plus, Share, Trash } from './Icons'
 
 const MODE_TINT: Record<Mode, string> = {
@@ -28,6 +29,9 @@ export function HomeScreen({
   onDuplicate,
   onDelete,
   onShare,
+  onRiprendi,
+  onScarta,
+  interrotto,
   onNew,
 }: {
   workouts: Workout[]
@@ -36,6 +40,10 @@ export function HomeScreen({
   onDuplicate: (w: Workout) => void
   onDelete: (w: Workout) => void
   onShare: (w: Workout) => void
+  /** L'allenamento lasciato a metà l'ultima volta, se c'è. */
+  interrotto: Interrotto | null
+  onRiprendi: () => void
+  onScarta: () => void
   onNew: () => void
 }) {
   const [filter, setFilter] = useState<Mode | 'all'>('all')
@@ -48,6 +56,34 @@ export function HomeScreen({
 
   return (
     <>
+      {/* In cima, perché è la prima cosa che uno cerca riaprendo l'app dopo
+          che gli è morta in mano a metà allenamento. */}
+      {interrotto && (
+        <div className="pad" style={{ paddingTop: 14 }}>
+          <div className="card stack" style={{ gap: 10, padding: 14, borderColor: 'var(--giallo)' }}>
+            <div className="stack" style={{ gap: 2, minWidth: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--giallo)' }}>
+                ALLENAMENTO INTERROTTO
+              </span>
+              <span className="ob" style={{ fontSize: 20, fontWeight: 700 }}>
+                {interrotto.workout.name.toUpperCase()}
+              </span>
+              <span style={{ fontSize: 13, color: 'var(--dim)' }}>
+                {doveEraRimasto(interrotto)} · {clock(interrotto.elapsed)} svolti
+              </span>
+            </div>
+            <div className="row" style={{ gap: 8 }}>
+              <button className="btn btn-go grow" style={{ minHeight: 48, fontSize: 16 }} onClick={onRiprendi}>
+                RIPRENDI
+              </button>
+              <button className="btn btn-ghost" style={{ minHeight: 48, fontSize: 16, padding: '0 18px' }} onClick={onScarta}>
+                SCARTA
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="row pad" style={{ gap: 8, paddingTop: 14, paddingBottom: 14, overflowX: 'auto' }}>
         {FILTERS.map((f) => (
           <button key={f.key} className="chip" data-on={filter === f.key} onClick={() => setFilter(f.key)}>

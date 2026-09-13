@@ -64,6 +64,15 @@ export function useTimer(
     preload(segments.map((s) => exerciseKey(s.name)))
   }, [segments])
 
+  // La lista dei segmenti può cambiare mentre si va — il tasto «+30″» allunga
+  // l'intervallo in corso — e allora il numero mostrato salta su di trenta.
+  // Senza dimenticare l'ultimo numero visto, quel salto verrebbe letto come un
+  // ripensamento di Maurizio, con tanto di battuta e illustrazione: sarebbe
+  // l'app a prendersi gioco di una scelta dell'istruttore.
+  useEffect(() => {
+    lastShownRef.current = -1
+  }, [segments])
+
   const total = useMemo(() => {
     const last = segments[segments.length - 1]
     return last ? last.offset + last.duration : 0
@@ -167,7 +176,9 @@ export function useTimer(
 
       // L'esitazione può cadere ovunque nell'intervallo, non solo in fondo:
       // la battuta va quindi legata al numero che risale, non al conto finale.
-      if (tornatoIndietro) {
+      // Solo però se Maurizio è acceso: a modalità spenta un numero che risale
+      // è una cosa sola, l'istruttore che ha allungato l'intervallo.
+      if (tornatoIndietro && settings.coach !== 'off') {
         const i = Math.floor(Math.random() * COACH_LINES.length)
         slipRef.current?.(COACH_LINES[i])
         if (settings.voice) say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
@@ -197,6 +208,7 @@ export function useTimer(
     settings.voiceURI,
     settings.recordedVoice,
     settings.announceNext,
+    settings.coach,
   ])
 
   const start = useCallback(() => {
@@ -272,6 +284,26 @@ export function useTimer(
     [status, indexAt, segments, seekTo, total],
   )
 
+  /**
+   * Riparte da un allenamento interrotto: si mette in pausa al secondo dove
+   * era rimasto, invece di far ripartire il conto da zero. In pausa e non in
+   * corsa di proposito — chi riprende vuole dire «ci siamo?» prima di ripartire.
+   */
+  const riprendiDa = useCallback(
+    (secondi: number) => {
+      cues.current.unlock()
+      unlockVoice()
+      bankedRef.current = secondi
+      anchorRef.current = performance.now()
+      lastIndexRef.current = indexAt(secondi)
+      lastShownRef.current = -1
+      introRef.current = false
+      setElapsed(secondi)
+      setStatus('paused')
+    },
+    [indexAt],
+  )
+
   const stop = useCallback(() => {
     const done = bankedRef.current + (status === 'running' ? (performance.now() - anchorRef.current) / 1000 : 0)
     // A fine allenamento lo storico è già stato scritto: non registrarlo due volte.
@@ -302,5 +334,5 @@ export function useTimer(
     }
   }, [elapsed, indexAt, segments, status, total])
 
-  return { view, start, pause, resume, toggle, stop, skip, seekTo }
+  return { view, start, pause, resume, toggle, stop, skip, seekTo, riprendiDa }
 }

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Settings, Workout } from '../types'
+import { useEffect, useRef, useState } from 'react'
+import type { Segment, Settings, Workout } from '../types'
 import { applyCoach, buildSegments, describe } from '../lib/engine'
 import { BECCATO, FINALE, a_caso, perStato } from '../lib/adesivi'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
 import { segnalaTimerAperto } from '../lib/aggiornamento'
+import { type Interrotto, salvaInterrotto, scordaInterrotto } from '../lib/ripresa'
 import { useWakeLock } from '../lib/wakeLock'
 import { Close, Next, Pause, Play, Prev } from './Icons'
 
@@ -63,28 +64,41 @@ function Digits({ value }: { value: string }) {
 export function TimerScreen({
   workout,
   settings,
+  ripresa,
   onExit,
   onFinish,
 }: {
   workout: Workout
   settings: Settings
+  /** Un allenamento interrotto da riprendere dal punto in cui era rimasto. */
+  ripresa?: Interrotto | null
   onExit: () => void
   onFinish: (seconds: number, completed: boolean) => void
 }) {
   // I secondi regalati da Maurizio si estraggono a ogni avvio: due giri dello
-  // stesso allenamento non cadono negli stessi punti.
+  // stesso allenamento non cadono negli stessi punti. Riprendendo un
+  // allenamento interrotto si riusano invece i segmenti salvati, perché quelle
+  // durate erano già state estratte e lo stesso secondo, in una lista nuova,
+  // cadrebbe in un punto diverso.
   const [run, setRun] = useState(0)
-  const segments = useMemo(
-    () => applyCoach(buildSegments(workout), settings.coach),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [workout, settings.coach, run],
+  const [segments, setSegments] = useState<Segment[]>(
+    () => ripresa?.segments ?? applyCoach(buildSegments(workout), settings.coach),
   )
+  const primoGiro = useRef(true)
+  useEffect(() => {
+    if (primoGiro.current) {
+      primoGiro.current = false
+      return
+    }
+    setSegments(applyCoach(buildSegments(workout), settings.coach))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workout, settings.coach, run])
   // L'illustrazione che compare quando Maurizio si tradisce, e quella finale.
   const [beccato, setBeccato] = useState<{ src: string; frase: string } | null>(null)
   const [finale] = useState(() => a_caso(FINALE))
   const timeoutBeccato = useRef<number | undefined>(undefined)
 
-  const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish, (frase) => {
+  const { view, toggle, stop, skip, riprendiDa } = useTimer(segments, settings, onFinish, (frase) => {
     if (settings.coach === 'off') return
     setBeccato({ src: a_caso(BECCATO), frase })
     window.clearTimeout(timeoutBeccato.current)
@@ -98,6 +112,54 @@ export function TimerScreen({
     segnalaTimerAperto(true)
     return () => segnalaTimerAperto(false)
   }, [])
+
+  // La ripresa si fa una volta sola, all'apertura della schermata.
+  const ripreso = useRef(false)
+  useEffect(() => {
+    if (ripreso.current || !ripresa) return
+    ripreso.current = true
+    riprendiDa(ripresa.elapsed)
+  }, [ripresa, riprendiDa])
+
+  // Dove si è arrivati, segnato ogni due secondi: se l'app muore qui in mezzo,
+  // alla riapertura si può riprendere invece di ricominciare da capo.
+  const vistaRef = useRef(view)
+  vistaRef.current = view
+  useEffect(() => {
+    if (view.status !== 'running') return
+    const id = window.setInterval(() => {
+      const v = vistaRef.current
+      salvaInterrotto({ workout, segments, elapsed: v.elapsed, quando: Date.now() })
+    }, 2000)
+    return () => window.clearInterval(id)
+  }, [view.status, workout, segments])
+
+  // Finito davvero: non c'è più niente da riprendere.
+  useEffect(() => {
+    if (view.status === 'done') scordaInterrotto()
+  }, [view.status])
+
+  /**
+   * Trenta secondi in più sull'intervallo in corso.
+   *
+   * La lezione non va mai come è scritta: il gruppo è cotto, una postazione è
+   * occupata, arrivano due in ritardo. Si allunga il segmento corrente e si
+   * spostano in avanti quelli dopo, così barra e durata totale restano
+   * coerenti. Se Maurizio aveva già scritto il conto per questo intervallo lo
+   * si butta: da qui in poi conta onesto, e il numero che salta su di trenta è
+   * esattamente ciò che è appena successo.
+   */
+  const allunga = (secondi: number) => {
+    const i = view.index
+    if (i < 0 || view.status === 'idle' || view.status === 'done') return
+    setSegments((prec) =>
+      prec.map((s, k) => {
+        if (k < i) return s
+        if (k === i) return { ...s, duration: s.duration + secondi, display: undefined }
+        return { ...s, offset: s.offset + secondi }
+      }),
+    )
+  }
 
   const seg = view.segment
 
@@ -134,6 +196,7 @@ export function TimerScreen({
   // Uscire a metà non butta via il lavoro fatto: stop() lo registra come interrotto.
   const exit = () => {
     stop()
+    scordaInterrotto()
     onExit()
   }
   // La scorciatoia da tastiera deve chiamare sempre l'ultima versione di exit,
@@ -198,7 +261,14 @@ export function TimerScreen({
             MAURIZIO
           </span>
         )}
-        <button className="icon-btn" onClick={stop} aria-label="Azzera il timer">
+        <button
+          className="icon-btn"
+          onClick={() => {
+            stop()
+            scordaInterrotto()
+          }}
+          aria-label="Azzera il timer"
+        >
           <span className="cond" style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em' }}>
             RESET
           </span>
@@ -277,9 +347,20 @@ export function TimerScreen({
         <div style={{ height: '100%', width: `${done ? 100 : view.progress * 100}%`, background: tinta }} />
       </div>
 
-      {/* Il giro che Maurizio si inventa non si annuncia in anticipo: se lo
-          leggi qui non è più uno scherzo, è una riga di programma. */}
-      {view.next && view.next.extra === undefined && !done && (
+      {/* Il «+30″» sta accanto alla riga del prossimo intervallo e non fra i
+          comandi: quelli si premono al volo, questo lo preme l'istruttore
+          guardando la sala. In modalità schermo grande la riga del prossimo
+          sparisce ma il tasto resta, perché è lì che serve di più. */}
+      <div className="row timer-azioni">
+        <button
+          className="btn-piu"
+          onClick={() => allunga(30)}
+          disabled={idle || done}
+          aria-label="Aggiungi trenta secondi a questo intervallo"
+        >
+          +30&Prime;
+        </button>
+        {view.next && view.next.extra === undefined && !done && (
         <div className="row card timer-prossimo">
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--dim)' }}>PROSSIMO</span>
           <div className="grow" style={{ minWidth: 8 }} />
@@ -299,8 +380,9 @@ export function TimerScreen({
             {view.next.kind === 'work' && view.next.name ? view.next.name : view.next.label} {view.next.duration}
             &quot;
           </span>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       <div className="row timer-controlli">
         <button className="icon-btn tasto-salto" onClick={() => skip(-1)} aria-label="Intervallo precedente">

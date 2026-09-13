@@ -351,6 +351,7 @@ input, textarea { font: inherit; color: inherit; }
 .timer[data-grande='true'] .obiettivo { font-size: clamp(15px, 2.4vw, 30px); }
 .timer[data-grande='true'] .beccato-frase { font-size: clamp(13px, 2.6vw, 20px); }
 .timer[data-grande='true'] .timer-prossimo { display: none; }
+.timer[data-grande='true'] .btn-piu { min-width: 96px; font-size: 20px; min-height: 48px; }
 .timer[data-grande='true'] .timer-dots { padding-top: 10px; }
 .timer[data-grande='true'] .timer-controlli { gap: 10px; padding: 10px 20px calc(var(--safe-b) + 12px); }
 .timer[data-grande='true'] .tasto-salto { width: 56px; height: 56px; }
@@ -430,7 +431,23 @@ input, textarea { font: inherit; color: inherit; }
 
 .timer-top { gap: 12px; padding: calc(var(--safe-t) + 14px) 20px 0; }
 .timer-dots { padding: 16px 20px 0; }
-.timer-prossimo { gap: 10px; margin: 14px 20px 0; padding: 10px 14px; }
+.timer-azioni { gap: 8px; margin: 14px 20px 0; align-items: stretch; }
+.timer-prossimo { gap: 10px; flex-grow: 1; min-width: 0; padding: 10px 14px; }
+/* Il tasto che allunga l'intervallo in corso: piccolo, ma con un'area di tocco
+   vera, perché lo si preme guardando la sala e non lo schermo. */
+.btn-piu {
+  flex-shrink: 0; min-width: 66px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--line); background: var(--surface); color: #b8b8b2;
+  font-family: var(--cond); font-variant-numeric: tabular-nums;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.06em;
+}
+/* Acceso col colore dello stato: sul telefono non c'è il passaggio del mouse a
+   far capire che si può premere, e questo tasto deve trovarsi con la coda
+   dell'occhio mentre si guarda la sala. */
+.btn-piu:not(:disabled) { border-color: var(--state); color: var(--text); }
+.btn-piu:active:not(:disabled) { background: var(--surface-2); }
+.btn-piu:disabled { opacity: 0.35; }
 .timer-controlli { gap: 12px; padding: 16px 20px calc(var(--safe-b) + 20px); }
 .tasto-salto { width: 68px; height: 68px; }
 .tasto-avvia { height: 68px; }
@@ -442,7 +459,8 @@ input, textarea { font: inherit; color: inherit; }
   .timer-main { gap: 2px; }
   .timer-top { padding-top: calc(var(--safe-t) + 8px); }
   .timer-dots { padding-top: 8px; }
-  .timer-prossimo { margin-top: 8px; padding: 7px 12px; }
+  .timer-azioni { margin-top: 8px; }
+  .timer-prossimo { padding: 7px 12px; }
   .timer-controlli { gap: 10px; padding: 10px 16px calc(var(--safe-b) + 12px); }
   .tasto-salto { width: 58px; height: 58px; }
   .tasto-avvia { height: 58px; }
@@ -462,7 +480,8 @@ input, textarea { font: inherit; color: inherit; }
   .obiettivo { font-size: clamp(12px, 2vw, 18px); }
   .timer-top { padding-top: calc(var(--safe-t) + 6px); }
   .timer-dots { padding-top: 6px; }
-  .timer-prossimo { margin-top: 6px; padding: 5px 10px; }
+  .timer-azioni { margin-top: 6px; }
+  .timer-prossimo { padding: 5px 10px; }
   .timer-controlli { gap: 8px; padding: 8px 14px calc(var(--safe-b) + 8px); }
   .tasto-salto { width: 50px; height: 50px; }
   .tasto-avvia { height: 50px; }
