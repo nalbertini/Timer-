@@ -39,8 +39,8 @@ I timer, le impostazioni e lo storico stanno nel browser del dispositivo
 ## Modalità Maurizio
 
 Come l'allenatore che «perde il conto» per farti lavorare qualche secondo in
-più. Spenta di default, con tre livelli: **distratto**, **classico**,
-**spietato**.
+più. **Attiva di partenza** al livello *classico*; gli altri due sono
+**distratto** e **spietato**, e da Impostazioni si può spegnere.
 
 All'avvio, per ogni intervallo di lavoro, si genera la **sequenza completa dei
 numeri da mostrare**, un elemento per secondo. Le esitazioni cadono in punti a

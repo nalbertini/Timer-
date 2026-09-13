@@ -243,6 +243,18 @@ input { font: inherit; color: inherit; }
   text-shadow: 0 2px 12px #000000cc;
 }
 
+/* Gli stati tranquilli: piccola e in un angolo, non deve rubare la scena ai
+   numeri né competere con l'illustrazione centrale di Maurizio. */
+.adesivo-stato {
+  /* In alto a destra: è lo spazio morto accanto all'anello. In basso
+     coprirebbe la riga «prossimo», che è informazione. */
+  position: absolute; right: 4px; top: 88px; z-index: 3;
+  height: 15vh; max-height: 118px; width: auto; pointer-events: none;
+  opacity: 0.92;
+  filter: drop-shadow(0 4px 14px #000000aa);
+  animation: entra 260ms ease-out;
+}
+
 .adesivo-finale {
   height: 34vh; max-height: 300px; width: auto;
   animation: entra 320ms ease-out;
@@ -254,11 +266,27 @@ input { font: inherit; color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .beccato, .adesivo-finale { animation: none; }
+  .beccato, /* Gli stati tranquilli: piccola e in un angolo, non deve rubare la scena ai
+   numeri né competere con l'illustrazione centrale di Maurizio. */
+.adesivo-stato {
+  /* In alto a destra: è lo spazio morto accanto all'anello. In basso
+     coprirebbe la riga «prossimo», che è informazione. */
+  position: absolute; right: 4px; top: 88px; z-index: 3;
+  height: 15vh; max-height: 118px; width: auto; pointer-events: none;
+  opacity: 0.92;
+  filter: drop-shadow(0 4px 14px #000000aa);
+  animation: entra 260ms ease-out;
+}
+
+.adesivo-finale { animation: none; }
 }
 
 @media (min-width: 900px) and (orientation: landscape) {
   .beccato { flex-direction: row; gap: 36px; }
   .beccato > img { height: 46vh; max-height: 420px; }
+  /* In orizzontale l'angolo in alto a destra è occupato dall'intestazione, e
+     più in basso c'è la riga «prossimo». Resta la fascia vuota sotto
+     l'anello. */
+  .adesivo-stato { left: 24px; right: auto; top: auto; bottom: 196px; height: 16vh; max-height: 130px; }
   .beccato-frase { max-width: 40%; text-align: left; }
 }

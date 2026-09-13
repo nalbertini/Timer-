@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Settings, Workout } from '../types'
 import { applyCoach, buildSegments } from '../lib/engine'
-import { BECCATO, FINALE, a_caso } from '../lib/adesivi'
+import { BECCATO, FINALE, a_caso, perStato } from '../lib/adesivi'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
 import { useWakeLock } from '../lib/wakeLock'
@@ -92,6 +92,14 @@ export function TimerScreen({
   useEffect(() => () => window.clearTimeout(timeoutBeccato.current), [])
 
   const seg = view.segment
+
+  // Estratta una volta per segmento: cambiarla a ogni render la farebbe
+  // lampeggiare, e durante il lavoro non ce n'è, di proposito.
+  const chiaveSegmento = seg ? `${seg.kind}-${seg.offset}` : ''
+  const [statoFermo, setStatoFermo] = useState<{ chiave: string; src: string | null }>({ chiave: '', src: null })
+  useEffect(() => {
+    setStatoFermo((prec) => (prec.chiave === chiaveSegmento ? prec : { chiave: chiaveSegmento, src: perStato(seg?.kind) }))
+  }, [chiaveSegmento, seg?.kind])
 
   const startOrToggle = () => {
     if (view.status === 'idle' || view.status === 'done') setRun((n) => n + 1)
@@ -244,6 +252,10 @@ export function TimerScreen({
           </>
         )}
       </div>
+
+      {statoFermo.src && !done && !beccato && view.status !== 'idle' && (
+        <img className="adesivo-stato" src={statoFermo.src} alt="" />
+      )}
 
       {beccato && !done && (
         <div className="beccato">

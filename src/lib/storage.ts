@@ -6,7 +6,9 @@ const KEY_SETTINGS = 'ods-timer:settings'
 const KEY_HISTORY = 'ods-timer:history'
 
 export const DEFAULT_SETTINGS: Settings = {
-  coach: 'off',
+  // Maurizio è acceso di partenza, al livello di tutti i giorni: è la voce e il
+  // carattere della palestra, non un extra da scoprire nelle impostazioni.
+  coach: 'classico',
   countdownBeep: true,
   voice: true,
   vibrate: true,
