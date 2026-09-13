@@ -4,8 +4,8 @@ import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory,
 import { blankWorkout } from './lib/presets'
 import { type Esercizio, loadEsercizi, normalizza, saveEsercizi } from './lib/esercizi'
 import { preload, unlockVoice } from './lib/voice'
-import { COACH_LINES } from './lib/engine'
-import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './lib/voiceClips'
+import { COACH_LINES, EXTRA_LINES } from './lib/engine'
+import { INTRO_CLIP, NUMBER_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './lib/voiceClips'
 import { uid } from './lib/format'
 import { HomeScreen } from './components/HomeScreen'
 import { PresetScreen } from './components/PresetScreen'
@@ -74,9 +74,11 @@ export default function App() {
   useEffect(() => {
     preload([
       INTRO_CLIP,
+      PROSSIMO_CLIP,
       ...Object.values(STATE_CLIP),
       ...Object.values(NUMBER_CLIP),
       ...COACH_LINES.map((_, i) => `maurizio/${i + 1}`),
+      ...EXTRA_LINES.map((_, i) => extraClip(i)),
     ])
   }, [])
 

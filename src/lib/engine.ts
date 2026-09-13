@@ -1,4 +1,4 @@
-import type { CoachLevel, Mode, Segment, Workout } from '../types'
+import type { CoachLevel, Exercise, Mode, Segment, Workout } from '../types'
 
 export const MODE_LABEL: Record<Mode, string> = {
   interval: 'Intervalli',
@@ -33,6 +33,23 @@ export const MODE_FIELDS: Record<Mode, Array<keyof Workout>> = {
   fortime: ['prepare', 'duration', 'cooldown'],
 }
 
+/**
+ * L'obiettivo di un esercizio impaginato: `3×10 · 16 kg`.
+ *
+ * È un promemoria, non un parametro: il timer continua a scandire il tempo con
+ * durate e round dell'allenamento, e questa riga sta lì solo per dire cosa
+ * farci dentro. Le parti mancanti spariscono invece di comparire a zero.
+ */
+export function descriviObiettivo(ex: Pick<Exercise, 'sets' | 'reps' | 'kg'>): string {
+  const parti: string[] = []
+  const { sets, reps, kg } = ex
+  if (sets && reps) parti.push(`${sets}×${reps}`)
+  else if (reps) parti.push(`${reps} rip.`)
+  else if (sets) parti.push(`${sets} serie`)
+  if (kg) parti.push(`${Number(kg.toFixed(1))} kg`)
+  return parti.join(' · ')
+}
+
 const KIND_LABEL = {
   prepare: 'PREPARATI',
   work: 'LAVORO',
@@ -58,7 +75,11 @@ export function buildSegments(w: Workout): Segment[] {
   const sets = Math.max(1, w.sets)
   const rounds = Math.max(1, w.rounds)
   const names = w.exercises.filter((e) => e.name.trim().length > 0)
-  const nameAt = (i: number) => (names.length ? names[i % names.length].name : 'Lavoro')
+  const exAt = (i: number): Exercise | null => (names.length ? names[i % names.length] : null)
+  const nota = (ex: Exercise | null) => {
+    const testo = ex ? descriviObiettivo(ex) : ''
+    return testo ? { nota: testo } : {}
+  }
 
   if (w.prepare > 0) {
     push({
@@ -99,6 +120,7 @@ export function buildSegments(w: Workout): Segment[] {
             rounds,
             set,
             sets,
+            ...nota(ex),
           })
           const isVeryLast = set === sets && round === rounds && i === stations.length - 1
           if (!isVeryLast) {
@@ -118,15 +140,17 @@ export function buildSegments(w: Workout): Segment[] {
     } else {
       // interval ed emom: stessa forma, l'emom semplicemente non ha recupero.
       for (let round = 1; round <= rounds; round++) {
+        const ex = exAt(round - 1)
         push({
           kind: 'work',
           label: KIND_LABEL.work,
-          name: nameAt(round - 1),
+          name: ex ? ex.name : 'Lavoro',
           duration: w.work,
           round,
           rounds,
           set,
           sets,
+          ...nota(ex),
         })
         const isVeryLast = set === sets && round === rounds
         if (w.mode === 'interval' && !isVeryLast) {
@@ -223,13 +247,15 @@ export interface CoachOptions {
   /** Secondi regalati da ogni singola esitazione. */
   minExtra: number
   maxExtra: number
+  /** Quanto spesso si inventa un giro in più alla fine, da 0 a 1. */
+  giroExtra: number
 }
 
 export const COACH_LEVELS: Record<CoachLevel, CoachOptions | null> = {
   off: null,
-  distratto: { probability: 0.3, minEventi: 1, maxEventi: 1, minExtra: 1, maxExtra: 2 },
-  classico: { probability: 0.55, minEventi: 1, maxEventi: 2, minExtra: 1, maxExtra: 3 },
-  spietato: { probability: 0.85, minEventi: 1, maxEventi: 3, minExtra: 2, maxExtra: 4 },
+  distratto: { probability: 0.3, minEventi: 1, maxEventi: 1, minExtra: 1, maxExtra: 2, giroExtra: 0.12 },
+  classico: { probability: 0.55, minEventi: 1, maxEventi: 2, minExtra: 1, maxExtra: 3, giroExtra: 0.25 },
+  spietato: { probability: 0.85, minEventi: 1, maxEventi: 3, minExtra: 2, maxExtra: 4, giroExtra: 0.5 },
 }
 
 export const COACH_LABEL: Record<CoachLevel, string> = {
@@ -243,7 +269,7 @@ export const COACH_HINT: Record<CoachLevel, string> = {
   off: 'Il timer conta onestamente.',
   distratto: 'Ogni tanto perde il filo, e per poco.',
   classico: 'Il Maurizio di tutti i giorni: succede a circa un intervallo su due.',
-  spietato: 'Sbaglia quasi sempre, anche più volte nello stesso intervallo.',
+  spietato: 'Sbaglia quasi sempre, anche più volte nello stesso intervallo. E il giro in più è quasi una certezza.',
 }
 
 /** Le frasi che gli scappano quando lo becchi a sbagliare. */
@@ -255,6 +281,42 @@ export const COACH_LINES = [
   'Dai che è quasi finita',
   'Scusate, mi sono distratto',
 ]
+
+/** Le frasi con cui si inventa un giro che non era in programma. */
+export const EXTRA_LINES = [
+  'Ancora uno, l’ultimo non valeva',
+  'Ne manca uno, me n’ero dimenticato',
+  'Dai, l’ultimo giro. Questo sì',
+]
+
+/** L'etichetta di stato del giro in più, al posto di LAVORO. */
+export const EXTRA_LABEL = 'ANCORA UNO'
+
+/**
+ * Il giro che Maurizio si inventa quando l'allenamento sarebbe finito.
+ *
+ * È una copia dell'ultimo intervallo di lavoro, infilata subito dopo, con lo
+ * stesso numero di giro: il contatore non avanza, esattamente come chi sostiene
+ * che quello di prima non contava. Gli offset li rifà `applyCoach` subito dopo,
+ * quindi qui basta inserire il segmento al posto giusto.
+ */
+function giroInPiu(segments: Segment[], opts: CoachOptions, rand: () => number): Segment[] {
+  if (rand() >= opts.giroExtra) return segments
+  const lavori = segments.filter((s) => s.kind === 'work' && !s.countUp)
+  // Serve una struttura a giri: un AMRAP è un unico blocco lunghissimo, e
+  // raddoppiarlo non è uno scherzo, è un altro allenamento.
+  if (lavori.length < 2) return segments
+  const ultimo = lavori[lavori.length - 1]
+  if (ultimo.duration < 5 || ultimo.duration > 180) return segments
+  const i = segments.lastIndexOf(ultimo)
+  const extra: Segment = {
+    ...ultimo,
+    label: EXTRA_LABEL,
+    display: undefined,
+    extra: Math.floor(rand() * EXTRA_LINES.length),
+  }
+  return [...segments.slice(0, i + 1), extra, ...segments.slice(i + 1)]
+}
 
 const intero = (rand: () => number, min: number, max: number) => min + Math.floor(rand() * (max - min + 1))
 
@@ -309,7 +371,8 @@ export function applyCoach(segments: Segment[], level: CoachLevel, rand: () => n
   if (!opts) return segments
 
   let offset = 0
-  return segments.map((seg) => {
+  // Prima il giro in più, poi le esitazioni: così anche quello può incepparsi.
+  return giroInPiu(segments, opts, rand).map((seg) => {
     // Solo il lavoro si allunga: sul recupero Maurizio conta benissimo. E un
     // intervallo troppo corto non regge un ripensamento credibile.
     const eligible = seg.kind === 'work' && !seg.countUp && seg.duration >= 10

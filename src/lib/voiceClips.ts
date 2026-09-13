@@ -19,6 +19,12 @@ export interface ClipSpec {
 /** Il saluto che apre l'allenamento, prima del conto alla rovescia iniziale. */
 export const INTRO_CLIP = 'stato/intro'
 
+/** «Prossimo»: nel recupero precede il nome dell'esercizio che arriva. */
+export const PROSSIMO_CLIP = 'stato/prossimo'
+
+/** La frase con cui Maurizio annuncia il giro che si è inventato. */
+export const extraClip = (i: number) => `maurizio/extra-${i + 1}`
+
 export const STATE_CLIP: Record<SegmentKind | 'finish', string> = {
   prepare: 'stato/preparati',
   work: 'stato/lavoro',
@@ -40,6 +46,12 @@ export const CLIPS: ClipSpec[] = [
   { key: 'stato/riposo', text: 'Riposo', group: 'Stati', hint: 'Fra una serie e l’altra' },
   { key: 'stato/defaticamento', text: 'Defaticamento', group: 'Stati' },
   { key: 'stato/completato', text: 'Allenamento completato', group: 'Stati' },
+  {
+    key: PROSSIMO_CLIP,
+    text: 'Prossimo',
+    group: 'Stati',
+    hint: 'Detta nel recupero, subito prima del nome dell’esercizio che arriva',
+  },
 
   { key: 'numeri/tre', text: 'Tre', group: 'Conto alla rovescia' },
   { key: 'numeri/due', text: 'Due', group: 'Conto alla rovescia' },
@@ -51,6 +63,15 @@ export const CLIPS: ClipSpec[] = [
   { key: 'maurizio/4', text: 'Eh no, quello non valeva', group: 'Maurizio' },
   { key: 'maurizio/5', text: 'Dai che è quasi finita', group: 'Maurizio' },
   { key: 'maurizio/6', text: 'Scusate, mi sono distratto', group: 'Maurizio' },
+
+  {
+    key: 'maurizio/extra-1',
+    text: 'Ancora uno, l’ultimo non valeva',
+    group: 'Maurizio',
+    hint: 'Il giro in più: si sente quando l’allenamento sembrava finito',
+  },
+  { key: 'maurizio/extra-2', text: 'Ne manca uno, me n’ero dimenticato', group: 'Maurizio' },
+  { key: 'maurizio/extra-3', text: 'Dai, l’ultimo giro. Questo sì', group: 'Maurizio' },
 ]
 
 export const NUMBER_CLIP: Record<number, string> = {

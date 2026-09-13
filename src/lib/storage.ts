@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
   voiceURI: null,
   recordedVoice: true,
+  announceNext: true,
   keepAwake: true,
   bigScreen: false,
 }

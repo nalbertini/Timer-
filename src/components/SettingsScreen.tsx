@@ -122,6 +122,12 @@ export function SettingsScreen({
           }}
         />
         <Toggle
+          label="Dice il prossimo esercizio"
+          hint="Nel recupero annuncia dove si va dopo, così ci si prepara"
+          on={settings.announceNext}
+          onChange={(v) => onChange({ announceNext: v })}
+        />
+        <Toggle
           label="Vibrazione"
           hint="Solo su telefono e tablet che la supportano"
           on={settings.vibrate}

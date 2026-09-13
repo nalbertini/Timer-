@@ -249,6 +249,7 @@ export function TimerScreen({
               <span className="state-label">{idle ? 'PRONTO' : (seg?.label ?? '')}</span>
               <Digits value={clock(idle ? (segments[0]?.duration ?? 0) : view.display)} />
               <span className="exercise">{idle ? workout.name : (seg?.name ?? '')}</span>
+              {!idle && seg?.nota && <span className="obiettivo">{seg.nota}</span>}
             </div>
           </>
         )}
@@ -265,13 +266,27 @@ export function TimerScreen({
         <div style={{ height: '100%', width: `${done ? 100 : view.progress * 100}%`, background: tinta }} />
       </div>
 
-      {view.next && !done && (
+      {/* Il giro che Maurizio si inventa non si annuncia in anticipo: se lo
+          leggi qui non è più uno scherzo, è una riga di programma. */}
+      {view.next && view.next.extra === undefined && !done && (
         <div className="row card timer-prossimo">
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--dim)' }}>PROSSIMO</span>
-          <div className="grow" />
-          <div style={{ width: 12, height: 12, background: STATE_COLOR[view.next.kind] }} />
-          <span className="num" style={{ fontSize: 19, fontWeight: 600, color: '#b8b8b2' }}>
-            {view.next.label} {view.next.duration}&quot;
+          <div className="grow" style={{ minWidth: 8 }} />
+          <div style={{ width: 12, height: 12, flexShrink: 0, background: STATE_COLOR[view.next.kind] }} />
+          <span
+            className="num"
+            style={{
+              fontSize: 19,
+              fontWeight: 600,
+              color: '#b8b8b2',
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {view.next.kind === 'work' && view.next.name ? view.next.name : view.next.label} {view.next.duration}
+            &quot;
           </span>
         </div>
       )}

@@ -9,6 +9,16 @@ export interface Exercise {
   name: string
   /** Durata propria, usata solo dai circuiti. Altrove vale `work` dell'allenamento. */
   duration?: number
+  /**
+   * L'obiettivo dell'esercizio: serie, ripetizioni e carico.
+   *
+   * È un promemoria mostrato sotto il nome mentre si lavora, non un parametro
+   * del timer: a scandire il tempo restano durate e round dell'allenamento.
+   */
+  sets?: number
+  reps?: number
+  /** Carico in chili. Mezzi chili ammessi. */
+  kg?: number
 }
 
 export interface Workout {
@@ -54,6 +64,10 @@ export interface Segment {
   offset: number
   /** Il conto mostrato secondo per secondo, quando Maurizio ci mette del suo. */
   display?: number[]
+  /** Serie, ripetizioni e carico già impaginati: `3×10 · 16 kg`. */
+  nota?: string
+  /** Il giro in più che Maurizio si inventa: indice della frase con cui lo annuncia. */
+  extra?: number
 }
 
 /** Quanto è disonesto Maurizio quando conta. */
@@ -67,6 +81,8 @@ export interface Settings {
   voiceURI: string | null
   /** Usa le clip incise quando ci sono, invece della sintesi. */
   recordedVoice: boolean
+  /** Nel recupero dice anche qual è il prossimo esercizio. */
+  announceNext: boolean
   vibrate: boolean
   volume: number
   keepAwake: boolean

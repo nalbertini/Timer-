@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Segment, Settings } from '../types'
 import { Cues, buzz } from './audio'
-import { COACH_LINES, coachedDisplay } from './engine'
+import { COACH_LINES, EXTRA_LINES, coachedDisplay } from './engine'
 import { hasClip, preload, say, unlockVoice } from './voice'
-import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './voiceClips'
+import { INTRO_CLIP, NUMBER_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './voiceClips'
 
 export type Status = 'idle' | 'running' | 'paused' | 'done'
 
@@ -81,26 +81,50 @@ export function useTimer(
   )
 
   const announce = useCallback(
-    (seg: Segment) => {
+    (seg: Segment, prossimo: Segment | null) => {
       if (seg.kind === 'work') cues.current.work()
       else cues.current.rest()
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
-      if (settings.voice) {
-        const label = seg.label.toLowerCase()
-        const base = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
-        // «Preparati» non si annuncia: ci pensa il saluto. E se il saluto non è
-        // ancora pronto, il silenzio è meglio di una voce sintetica che dice
-        // una parola di cui si può fare a meno.
-        const testo = seg.kind === 'prepare' ? '' : seg.kind === 'work' ? `${label}. ${seg.name}` : label
-        const conIntro = introRef.current
-        introRef.current = false
-        // Al primo annuncio il saluto PRENDE IL POSTO di «preparati», non lo
-        // precede: dice già lui che l'allenamento sta per cominciare, e
-        // incatenati i due sforavano nel conto alla rovescia, che li tagliava.
-        say(conIntro && hasClip(INTRO_CLIP) ? [INTRO_CLIP] : base, testo, voiceRef.current)
+
+      // Il giro che Maurizio si è inventato non si annuncia come un lavoro
+      // qualsiasi: è lui che se lo intesta, con tanto di illustrazione.
+      if (seg.extra !== undefined) {
+        const frase = EXTRA_LINES[seg.extra] ?? EXTRA_LINES[0]
+        slipRef.current?.(frase)
+        if (settings.voice) say([extraClip(seg.extra)], frase, voiceRef.current)
+        return
       }
+
+      if (!settings.voice) return
+      const label = seg.label.toLowerCase()
+      const base = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
+
+      // Nel recupero si dice anche dove si va dopo: in un circuito a otto
+      // stazioni è l'unico momento in cui uno può prepararsi alla successiva.
+      const dopo = prossimo && prossimo.kind === 'work' ? prossimo.name.trim() : ''
+      const annunciaDopo =
+        settings.announceNext && dopo.length > 0 && (seg.kind === 'rest' || seg.kind === 'setRest')
+      // La coda si aggiunge solo se entrambe le clip ci sono: `say` suona il
+      // pezzo disponibile e si ferma, e un «prossimo» senza nome è peggio del
+      // silenzio. Se invece parla la sintesi, la frase intera ce l'ha comunque.
+      const codaIncisa = annunciaDopo && hasClip(PROSSIMO_CLIP) && hasClip(exerciseKey(dopo))
+      const keys = codaIncisa ? [...base, PROSSIMO_CLIP, exerciseKey(dopo)] : base
+
+      // «Preparati» non si annuncia: ci pensa il saluto. E se il saluto non è
+      // ancora pronto, il silenzio è meglio di una voce sintetica che dice
+      // una parola di cui si può fare a meno.
+      const testo =
+        seg.kind === 'prepare'
+          ? ''
+          : (seg.kind === 'work' ? `${label}. ${seg.name}` : label) + (annunciaDopo ? `. Prossimo: ${dopo}` : '')
+      const conIntro = introRef.current
+      introRef.current = false
+      // Al primo annuncio il saluto PRENDE IL POSTO di «preparati», non lo
+      // precede: dice già lui che l'allenamento sta per cominciare, e
+      // incatenati i due sforavano nel conto alla rovescia, che li tagliava.
+      say(conIntro && hasClip(INTRO_CLIP) ? [INTRO_CLIP] : keys, testo, voiceRef.current)
     },
-    [settings.vibrate, settings.voice, settings.volume, settings.voiceURI],
+    [settings.vibrate, settings.voice, settings.volume, settings.voiceURI, settings.announceNext],
   )
 
   useEffect(() => {
@@ -129,7 +153,7 @@ export function useTimer(
       if (i !== lastIndexRef.current) {
         lastIndexRef.current = i
         lastShownRef.current = -1
-        announce(seg)
+        announce(seg, segments[i + 1] ?? null)
         return
       }
 
@@ -172,6 +196,7 @@ export function useTimer(
     settings.volume,
     settings.voiceURI,
     settings.recordedVoice,
+    settings.announceNext,
   ])
 
   const start = useCallback(() => {
@@ -218,7 +243,7 @@ export function useTimer(
       lastIndexRef.current = i
       if (status === 'done') setStatus('paused')
       const seg = segments[i]
-      if (seg && status === 'running') announce(seg)
+      if (seg && status === 'running') announce(seg, segments[i + 1] ?? null)
     },
     [total, indexAt, segments, status, announce],
   )

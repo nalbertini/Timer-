@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { Esercizio } from '../lib/esercizi'
 import { PickerEsercizi } from './PickerEsercizi'
-import type { Mode, Segment, Workout } from '../types'
-import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, totalDuration } from '../lib/engine'
+import type { Exercise, Mode, Segment, Workout } from '../types'
+import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, descriviObiettivo, totalDuration } from '../lib/engine'
 import { clock, uid } from '../lib/format'
 import { Back, Drag, Minus, Play, Plus, Trash } from './Icons'
 
@@ -75,9 +75,45 @@ function Stepper({
  * si sta guardando.
  */
 function rigaAnteprima(s: Segment): string {
-  if (s.kind === 'work') return s.name
+  if (s.kind === 'work') return s.nota ? `${s.name} · ${s.nota}` : s.name
   const l = s.label.toLowerCase()
   return l.charAt(0).toUpperCase() + l.slice(1)
+}
+
+/** Un numero che può anche non esserci: vuoto vuol dire «non lo dico». */
+function CampoObiettivo({
+  label,
+  value,
+  step,
+  max,
+  onChange,
+}: {
+  label: string
+  value: number | undefined
+  step?: number
+  max: number
+  onChange: (v: number | undefined) => void
+}) {
+  return (
+    <label className="stack grow" style={{ gap: 4, minWidth: 0 }}>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--faint)' }}>{label}</span>
+      <input
+        className="field"
+        style={{ padding: '8px 10px', fontSize: 15, textAlign: 'center' }}
+        type="number"
+        inputMode="decimal"
+        min={0}
+        max={max}
+        step={step ?? 1}
+        value={value ?? ''}
+        placeholder="—"
+        onChange={(e) => {
+          const n = Number(e.target.value)
+          onChange(e.target.value === '' || !Number.isFinite(n) || n <= 0 ? undefined : Math.min(n, max))
+        }}
+      />
+    </label>
+  )
 }
 
 export function EditorScreen({
@@ -97,6 +133,9 @@ export function EditorScreen({
 }) {
   const [w, setW] = useState<Workout>(initial)
   const [scegliendo, setScegliendo] = useState(false)
+  // L'obiettivo si apre una riga per volta: tre campi per ogni esercizio,
+  // sempre aperti, trasformerebbero un circuito da otto stazioni in un modulo.
+  const [obiettivoAperto, setObiettivoAperto] = useState<string | null>(null)
   const set = (patch: Partial<Workout>) => setW((prev) => ({ ...prev, ...patch, builtin: false, updatedAt: Date.now() }))
 
   const fields = MODE_FIELDS[w.mode]
@@ -112,6 +151,8 @@ export function EditorScreen({
   const setExerciseDuration = (id: string, duration: number) =>
     set({ exercises: w.exercises.map((e) => (e.id === id ? { ...e, duration } : e)) })
   const removeExercise = (id: string) => set({ exercises: w.exercises.filter((e) => e.id !== id) })
+  const setObiettivo = (id: string, patch: Partial<Pick<Exercise, 'sets' | 'reps' | 'kg'>>) =>
+    set({ exercises: w.exercises.map((e) => (e.id === id ? { ...e, ...patch } : e)) })
   const move = (index: number, step: -1 | 1) => {
     const to = index + step
     if (to < 0 || to >= w.exercises.length) return
@@ -197,52 +238,100 @@ export function EditorScreen({
         <p className="pad" style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: '0 0 10px' }}>
           {w.mode === 'circuit'
             ? 'Ogni stazione è un intervallo di lavoro, con la sua durata.'
-            : 'I nomi si alternano a ogni round. Lascia vuoto per non annunciare nulla.'}
+            : 'I nomi si alternano a ogni round. Lascia vuoto per non annunciare nulla.'}{' '}
+          L’obiettivo — serie, ripetizioni, carico — si vede sotto il nome mentre lavori, e non cambia i tempi.
         </p>
 
         <div className="pad stack" style={{ gap: 8 }}>
-          {w.exercises.map((ex, i) => (
-            <div key={ex.id} className="card row" style={{ gap: 8, padding: '8px 10px' }}>
-              <button
-                className="icon-btn"
-                style={{ width: 30, height: 44, border: 'none', color: 'var(--faint)' }}
-                onClick={() => move(i, -1)}
-                aria-label="Sposta su"
-              >
-                <Drag />
-              </button>
-              <span className="num" style={{ fontSize: 15, fontWeight: 600, color: 'var(--faint)', width: 22 }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <input
-                className="field grow"
-                style={{ border: 'none', background: 'transparent', padding: '10px 0', fontSize: 15 }}
-                value={ex.name}
-                placeholder={w.mode === 'circuit' ? `Stazione ${i + 1}` : `Esercizio ${i + 1}`}
-                onChange={(e) => renameExercise(ex.id, e.target.value)}
-              />
-              {w.mode === 'circuit' && (
-                <input
-                  className="field"
-                  style={{ width: 76, textAlign: 'center', padding: '10px 4px', fontSize: 15 }}
-                  type="number"
-                  min={5}
-                  max={600}
-                  value={ex.duration ?? w.work}
-                  onChange={(e) => setExerciseDuration(ex.id, Number(e.target.value) || w.work)}
-                  aria-label={`Durata di ${ex.name || `stazione ${i + 1}`}`}
-                />
-              )}
-              <button
-                className="icon-btn"
-                style={{ width: 40, border: 'none', color: 'var(--faint)' }}
-                onClick={() => removeExercise(ex.id)}
-                aria-label="Rimuovi"
-              >
-                <Trash size={16} />
-              </button>
-            </div>
-          ))}
+          {w.exercises.map((ex, i) => {
+            const obiettivo = descriviObiettivo(ex)
+            const aperto = obiettivoAperto === ex.id
+            return (
+              <div key={ex.id} className="card stack" style={{ gap: 6, padding: '8px 10px' }}>
+                <div className="row" style={{ gap: 8 }}>
+                  <button
+                    className="icon-btn"
+                    style={{ width: 30, height: 44, border: 'none', color: 'var(--faint)' }}
+                    onClick={() => move(i, -1)}
+                    aria-label="Sposta su"
+                  >
+                    <Drag />
+                  </button>
+                  <span className="num" style={{ fontSize: 15, fontWeight: 600, color: 'var(--faint)', width: 22 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <input
+                    className="field grow"
+                    style={{ border: 'none', background: 'transparent', padding: '10px 0', fontSize: 15 }}
+                    value={ex.name}
+                    placeholder={w.mode === 'circuit' ? `Stazione ${i + 1}` : `Esercizio ${i + 1}`}
+                    onChange={(e) => renameExercise(ex.id, e.target.value)}
+                  />
+                  {w.mode === 'circuit' && (
+                    <input
+                      className="field"
+                      style={{ width: 76, textAlign: 'center', padding: '10px 4px', fontSize: 15 }}
+                      type="number"
+                      min={5}
+                      max={600}
+                      value={ex.duration ?? w.work}
+                      onChange={(e) => setExerciseDuration(ex.id, Number(e.target.value) || w.work)}
+                      aria-label={`Durata di ${ex.name || `stazione ${i + 1}`}`}
+                    />
+                  )}
+                  <button
+                    className="icon-btn"
+                    style={{ width: 40, border: 'none', color: 'var(--faint)' }}
+                    onClick={() => removeExercise(ex.id)}
+                    aria-label="Rimuovi"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+
+                <button
+                  className="row"
+                  style={{
+                    gap: 6,
+                    alignSelf: 'flex-start',
+                    padding: '2px 0 2px 60px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    color: obiettivo ? 'var(--giallo)' : 'var(--faint)',
+                  }}
+                  onClick={() => setObiettivoAperto(aperto ? null : ex.id)}
+                  aria-expanded={aperto}
+                >
+                  {obiettivo || '+ OBIETTIVO'}
+                </button>
+
+                {aperto && (
+                  <div className="row" style={{ gap: 8, padding: '2px 0 6px' }}>
+                    <CampoObiettivo
+                      label="SERIE"
+                      value={ex.sets}
+                      max={20}
+                      onChange={(v) => setObiettivo(ex.id, { sets: v })}
+                    />
+                    <CampoObiettivo
+                      label="RIPETIZIONI"
+                      value={ex.reps}
+                      max={200}
+                      onChange={(v) => setObiettivo(ex.id, { reps: v })}
+                    />
+                    <CampoObiettivo
+                      label="KG"
+                      value={ex.kg}
+                      step={0.5}
+                      max={500}
+                      onChange={(v) => setObiettivo(ex.id, { kg: v })}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          })}
           <button className="btn btn-dashed" style={{ minHeight: 50, fontSize: 15 }} onClick={() => setScegliendo(true)}>
             <Plus size={16} />
             AGGIUNGI {w.mode === 'circuit' ? 'STAZIONE' : 'ESERCIZIO'}

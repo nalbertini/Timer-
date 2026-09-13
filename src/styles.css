@@ -177,6 +177,12 @@ input, textarea { font: inherit; color: inherit; }
   font-size: clamp(20px, 5vw, 44px); font-weight: 600; letter-spacing: 0.04em;
   text-align: center; text-wrap: balance;
 }
+/* Serie, ripetizioni e carico: un promemoria, non un protagonista. */
+.obiettivo {
+  font-family: var(--cond); font-variant-numeric: tabular-nums;
+  font-size: clamp(13px, 2.6vw, 22px); font-weight: 600; letter-spacing: 0.1em;
+  color: var(--dim); text-align: center;
+}
 /* Definita anche fuori dalla media query: in verticale senza `display: flex`
    l'allineamento centrato non si applicava e stato ed esercizio restavano a
    sinistra sotto le cifre. */
@@ -373,6 +379,7 @@ input, textarea { font: inherit; color: inherit; }
   .tasto-salto { width: 58px; height: 58px; }
   .tasto-avvia { height: 58px; }
   .adesivo-stato { height: 12vh; max-height: 86px; }
+  .obiettivo { font-size: clamp(12px, 2.2vw, 18px); }
 }
 
 
@@ -384,6 +391,7 @@ input, textarea { font: inherit; color: inherit; }
   .digits { font-size: min(18vw, 30vh); }
   .state-label { font-size: clamp(18px, 3.4vw, 30px); letter-spacing: 0.2em; }
   .exercise { font-size: clamp(16px, 3vw, 28px); }
+  .obiettivo { font-size: clamp(12px, 2vw, 18px); }
   .timer-top { padding-top: calc(var(--safe-t) + 6px); }
   .timer-dots { padding-top: 6px; }
   .timer-prossimo { margin-top: 6px; padding: 5px 10px; }
