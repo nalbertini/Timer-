@@ -1,0 +1,61 @@
+name: Pubblica
+
+on:
+  push:
+    # `main` è la destinazione finale. Il branch di lavoro è qui perché al
+    # momento è ancora lui il default del repository e la pull request non è
+    # stata unita: appena lo sarà, questa seconda riga si può togliere.
+    branches:
+      - main
+      - claude/interval-timer-gym-app-ezesr2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Una pubblicazione per volta, senza interrompere quella in corso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Compila
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Il controllo dei tipi è dentro `npm run build` (tsc -b && vite build):
+      # se non compila, il push è rosso.
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Pubblica
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pubblicazione.outputs.page_url }}
+    steps:
+      # Prova ad accendere Pages da solo. Sta qui e non nella compilazione
+      # apposta: è configurazione del repository, e se fallisce deve restare
+      # rosso solo questo job, non il controllo sul codice.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - id: pubblicazione
+        uses: actions/deploy-pages@v4
