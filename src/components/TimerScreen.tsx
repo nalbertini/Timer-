@@ -16,11 +16,11 @@ const STATE_COLOR = {
 } as const
 
 /** Anello a ingranaggio: il tratteggio richiama i denti del marchio. */
-function Ring({ progress, color, size }: { progress: number; color: string; size: number }) {
+function Ring({ progress, color }: { progress: number; color: string }) {
   const r = 43
   const circumference = 2 * Math.PI * r
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
+    <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
       <circle cx="50" cy="50" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="9" strokeDasharray="9 10.4" />
       <circle
         cx="50"
@@ -161,14 +161,12 @@ export function TimerScreen({
 
   return (
     <div className="timer" style={{ ['--state' as string]: tinta }}>
-      <div className="row" style={{ gap: 12, padding: 'calc(var(--safe-t) + 14px) 20px 0' }}>
+      <div className="row timer-top">
         <button className="icon-btn" onClick={exit} aria-label="Chiudi il timer">
           <Close />
         </button>
         <div className="stack grow" style={{ gap: 1, minWidth: 0 }}>
-          <span className="ob" style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
-            {workout.name.toUpperCase()}
-          </span>
+          <span className="ob titolo-timer">{workout.name.toUpperCase()}</span>
           <span
             style={{
               fontSize: 11,
@@ -200,7 +198,7 @@ export function TimerScreen({
       </div>
 
       {rounds > 1 && (
-        <div className="dots" style={{ padding: '16px 20px 0' }}>
+        <div className="dots timer-dots">
           {roundDots.map((r) => {
             const cur = seg?.round ?? 0
             return (
@@ -217,6 +215,9 @@ export function TimerScreen({
       )}
 
       <div className="timer-main">
+        {statoFermo.src && !done && !beccato && view.status !== 'idle' && (
+          <img className="adesivo-stato" src={statoFermo.src} alt="" />
+        )}
         {done ? (
           <>
             {settings.coach !== 'off' && <img className="adesivo-finale" src={finale} alt="" />}
@@ -226,8 +227,8 @@ export function TimerScreen({
           </>
         ) : (
           <>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <Ring progress={view.progress} color={color} size={300} />
+            <div className="anello">
+              <Ring progress={view.progress} color={color} />
               <div
                 className="stack"
                 style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', gap: 2 }}
@@ -253,10 +254,6 @@ export function TimerScreen({
         )}
       </div>
 
-      {statoFermo.src && !done && !beccato && view.status !== 'idle' && (
-        <img className="adesivo-stato" src={statoFermo.src} alt="" />
-      )}
-
       {beccato && !done && (
         <div className="beccato">
           <img src={beccato.src} alt="" />
@@ -269,7 +266,7 @@ export function TimerScreen({
       </div>
 
       {view.next && !done && (
-        <div className="row card" style={{ margin: '14px 20px 0', padding: '10px 14px', gap: 10 }}>
+        <div className="row card timer-prossimo">
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--dim)' }}>PROSSIMO</span>
           <div className="grow" />
           <div style={{ width: 12, height: 12, background: STATE_COLOR[view.next.kind] }} />
@@ -279,13 +276,13 @@ export function TimerScreen({
         </div>
       )}
 
-      <div className="row" style={{ gap: 12, padding: '16px 20px calc(var(--safe-b) + 20px)' }}>
-        <button className="icon-btn" style={{ width: 68, height: 68 }} onClick={() => skip(-1)} aria-label="Intervallo precedente">
+      <div className="row timer-controlli">
+        <button className="icon-btn tasto-salto" onClick={() => skip(-1)} aria-label="Intervallo precedente">
           <Prev size={24} />
         </button>
         <button
-          className="btn grow"
-          style={{ height: 68, background: tinta, color: '#121212' }}
+          className="btn grow tasto-avvia"
+          style={{ background: tinta, color: '#121212' }}
           onClick={done ? exit : startOrToggle}
         >
           {view.status === 'running' ? <Pause size={22} /> : <Play size={22} />}
@@ -293,7 +290,7 @@ export function TimerScreen({
             {done ? 'CHIUDI' : view.status === 'running' ? 'PAUSA' : idle ? 'AVVIA' : 'RIPRENDI'}
           </span>
         </button>
-        <button className="icon-btn" style={{ width: 68, height: 68 }} onClick={() => skip(1)} aria-label="Intervallo successivo">
+        <button className="icon-btn tasto-salto" onClick={() => skip(1)} aria-label="Intervallo successivo">
           <Next size={24} />
         </button>
       </div>

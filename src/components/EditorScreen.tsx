@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Mode, Workout } from '../types'
+import type { Mode, Segment, Workout } from '../types'
 import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, totalDuration } from '../lib/engine'
 import { clock, uid } from '../lib/format'
 import { Back, Drag, Minus, Play, Plus, Trash } from './Icons'
@@ -62,6 +62,20 @@ function Stepper({
       </div>
     </div>
   )
+}
+
+/**
+ * Il nome della riga nell'anteprima.
+ *
+ * Sul timer, sotto le cifre, un recupero dice «Respira»: è un incoraggiamento,
+ * e lì lo stato è già scritto sopra a caratteri cubitali. In un elenco di
+ * struttura serve invece il nome dello stato, altrimenti non si capisce cosa
+ * si sta guardando.
+ */
+function rigaAnteprima(s: Segment): string {
+  if (s.kind === 'work') return s.name
+  const l = s.label.toLowerCase()
+  return l.charAt(0).toUpperCase() + l.slice(1)
 }
 
 export function EditorScreen({
@@ -232,7 +246,7 @@ export function EditorScreen({
                 {String(i + 1).padStart(2, '0')}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600 }} className="grow">
-                {s.name}
+                {rigaAnteprima(s)}
               </span>
               <span className="num" style={{ fontSize: 16, fontWeight: 700, color: '#b8b8b2' }}>
                 {s.duration}&quot;
