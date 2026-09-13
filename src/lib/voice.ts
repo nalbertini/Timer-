@@ -12,8 +12,34 @@ import { CLIP_DIR, CLIP_EXTENSIONS } from './voiceClips'
  */
 
 let ctx: AudioContext | null = null
-const cache = new Map<string, AudioBuffer | null>()
-const pending = new Map<string, Promise<AudioBuffer | null>>()
+interface Clip {
+  buffer: AudioBuffer
+  /** Secondi di silenzio da saltare in testa. */
+  attacco: number
+}
+
+const cache = new Map<string, Clip | null>()
+const pending = new Map<string, Promise<Clip | null>>()
+
+/**
+ * Trova dove comincia davvero il suono.
+ *
+ * Le registrazioni hanno quantità diverse di silenzio iniziale — fra le clip
+ * dei numeri si va da 0,02 a 0,22 secondi — e in un conto alla rovescia si
+ * sentirebbe: «tre» sul tempo e «due» un quinto di secondo dopo. Saltare il
+ * silenzio in riproduzione le allinea tutte senza toccare i file.
+ */
+function attaccoDi(buffer: AudioBuffer): number {
+  const d = buffer.getChannelData(0)
+  const soglia = 0.01
+  let i = 0
+  while (i < d.length && Math.abs(d[i]) <= soglia) i++
+  if (i >= d.length) return 0
+  const secondi = i / buffer.sampleRate
+  // Sotto i 40 ms non vale la pena, e un filo di respiro prima dell'attacco
+  // va lasciato: tagliato di netto, il suono parte con un clic.
+  return secondi < 0.04 ? 0 : Math.max(0, secondi - 0.015)
+}
 
 function context(): AudioContext | null {
   if (ctx) return ctx
@@ -68,33 +94,34 @@ function clipIndex(): Promise<ClipIndex | null> {
   return indexPromise
 }
 
-async function load(key: string): Promise<AudioBuffer | null> {
+async function load(key: string): Promise<Clip | null> {
   // Prima la registrazione locale: incidere sul tablet deve avere effetto subito.
   const recorded = await getClip(key)
   if (recorded) {
     const buf = await decode(await recorded.arrayBuffer())
-    if (buf) return buf
+    if (buf) return { buffer: buf, attacco: attaccoDi(buf) }
   }
   const index = await clipIndex()
   if (!index || !index.clips.includes(key)) return null
   try {
     const res = await fetch(`${CLIP_DIR}/${key}.${index.ext}`)
     if (!res.ok) return null
-    return await decode(await res.arrayBuffer())
+    const buf = await decode(await res.arrayBuffer())
+    return buf ? { buffer: buf, attacco: attaccoDi(buf) } : null
   } catch {
     return null
   }
 }
 
 /** Risolve una volta sola per chiave, anche se la chiedono in dieci insieme. */
-function clip(key: string): Promise<AudioBuffer | null> {
+function clip(key: string): Promise<Clip | null> {
   if (cache.has(key)) return Promise.resolve(cache.get(key) ?? null)
   const inFlight = pending.get(key)
   if (inFlight) return inFlight
-  const p = load(key).then((buf) => {
-    cache.set(key, buf)
+  const p = load(key).then((c) => {
+    cache.set(key, c)
     pending.delete(key)
-    return buf
+    return c
   })
   pending.set(key, p)
   return p
@@ -138,25 +165,25 @@ export async function say(
 ): Promise<boolean> {
   const wanted = keys.filter(Boolean)
   if (opts.useRecorded && wanted.length > 0) {
-    const buffers: AudioBuffer[] = []
+    const clips: Clip[] = []
     for (const k of wanted) {
-      const buf = await clip(k)
-      if (!buf) break
-      buffers.push(buf)
+      const c = await clip(k)
+      if (!c) break
+      clips.push(c)
     }
-    if (buffers.length > 0) {
+    if (clips.length > 0) {
       const c = context()
       if (c && c.state === 'running') {
         // Incatenate sull'orologio audio: niente buchi né sovrapposizioni.
         let when = c.currentTime
-        for (const buf of buffers) {
+        for (const { buffer, attacco } of clips) {
           const src = c.createBufferSource()
           const gain = c.createGain()
           gain.gain.value = opts.volume
-          src.buffer = buf
+          src.buffer = buffer
           src.connect(gain).connect(c.destination)
-          src.start(when)
-          when += buf.duration
+          src.start(when, attacco)
+          when += buffer.duration - attacco
         }
         return true
       }

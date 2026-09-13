@@ -110,9 +110,15 @@ L'ordine è: registrazione fatta su quel dispositivo → file pubblicato in
 dove manca la clip il timer torna da solo alla voce di sistema senza che nessuno
 debba configurare niente.
 
-In `public/voce/` ci sono **14 clip**: i sei stati, «due» e «uno», e le sei
-battute di Maurizio. Manca `numeri/tre`, che è arrivato troncato: al suo posto
-il conto alla rovescia emette il bip, come quando la voce incisa è spenta.
+In `public/voce/` ci sono le **15 clip**: i sei stati, i tre numeri e le sei
+battute di Maurizio.
+
+In riproduzione il silenzio iniziale di ogni clip viene saltato. Le
+registrazioni ne hanno quantità diverse — fra i tre numeri si andava da 0,02 a
+0,22 secondi — e in un conto alla rovescia si sentiva: «tre» sul tempo e «due»
+un quinto di secondo dopo. L'attacco si calcola una volta sola alla
+decodifica, quindi vale anche per le clip che aggiungerai, e i file non
+vengono toccati.
 
 **Impostazioni › Voce incisa › Incidi la voce** apre un registratore: ogni frase
 ha REGISTRA / FERMA, si riascolta e si rifà. Le clip restano su quel dispositivo
@@ -150,7 +156,6 @@ installazione funzionino.
   sostituito con il file originale, e poi va rilanciato `npm run icons`.
 - L'indirizzo della palestra in `src/components/SettingsScreen.tsx` è un
   segnaposto.
-- Manca la clip `numeri/tre`, arrivata troncata: va rifatta.
 - Mancano, facoltative, le clip dei nomi degli esercizi (`esercizi/<nome>.mp3`).
 - I timer sono locali al dispositivo. Per la libreria condivisa della palestra
   (istruttori che creano, soci che avviano) e per mandare un allenamento al
