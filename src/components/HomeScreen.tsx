@@ -142,14 +142,14 @@ export function HomeScreen({
               </div>
 
               {isOpen && (
-                <div className="row" style={{ gap: 8, padding: '0 15px 13px' }}>
-                  <button className="btn btn-ghost" style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }} onClick={() => onEdit(w)}>
+                <div className="wcard-azioni">
+                  <button className="btn btn-ghost" style={{ minHeight: 44, padding: '0 12px', fontSize: 14 }} onClick={() => onEdit(w)}>
                     <Edit size={16} />
                     MODIFICA
                   </button>
                   <button
                     className="btn btn-ghost"
-                    style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }}
+                    style={{ minHeight: 44, padding: '0 12px', fontSize: 14 }}
                     onClick={() => onDuplicate(w)}
                   >
                     <Copy size={16} />
@@ -157,16 +157,15 @@ export function HomeScreen({
                   </button>
                   <button
                     className="btn btn-ghost"
-                    style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }}
+                    style={{ minHeight: 44, padding: '0 12px', fontSize: 14 }}
                     onClick={() => onShare(w)}
                   >
                     <Share size={16} />
                     INVIA
                   </button>
-                  <div className="grow" />
                   <button
                     className="icon-btn"
-                    style={{ borderColor: 'var(--line)', color: 'var(--rosso)' }}
+                    style={{ borderColor: 'var(--line)', color: 'var(--rosso)', marginLeft: 'auto' }}
                     onClick={() => onDelete(w)}
                     aria-label={`Elimina ${w.name}`}
                   >

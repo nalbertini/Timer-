@@ -147,6 +147,16 @@ input, textarea { font: inherit; color: inherit; }
 /* ---------- lista allenamenti ---------- */
 
 .wcard { display: flex; align-items: center; gap: 14px; padding: 13px 15px; min-height: 86px; }
+/* Le azioni della scheda vanno a capo invece di uscirne.
+   Con l'arrivo di INVIA sono quattro, e quattro tasti affiancati chiedono
+   quasi cinquecento pixel: più di quanto una colonna della griglia ne offra,
+   e più della larghezza di un telefono. Non stringendosi, finivano sopra la
+   scheda accanto — e sul telefono il cestino spariva del tutto fuori bordo. */
+.wcard-azioni {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 0 15px 13px;
+}
+
 .wcard-name { font-family: var(--cond); font-style: oblique 9deg; font-size: 21px; font-weight: 700; line-height: 1.05; }
 .play-btn {
   width: 52px; height: 52px; flex-shrink: 0;
