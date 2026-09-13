@@ -113,10 +113,19 @@ debba configurare niente.
 In `public/voce/` ci sono **16 clip**: il saluto iniziale, i sei stati, i tre
 numeri e le sei battute di Maurizio.
 
-Il saluto (`stato/intro`) si sente una volta sola, all'avvio, incatenato prima
-del «preparati». Dura più di un annuncio normale, quindi vale la regola della
-sintesi: l'ultimo annuncio vince e taglia quello prima, invece di accavallarsi
-— serve quando la preparazione è corta o si salta subito al lavoro.
+Il saluto (`stato/intro`) si sente una volta sola, all'avvio, e **prende il
+posto** di «preparati» invece di precederlo: dice già lui che si comincia, e
+incatenati i due sforavano nel conto alla rovescia, che li tagliava. Vale
+comunque la regola della sintesi — l'ultimo annuncio vince e taglia quello
+prima, invece di accavallarsi — quando la preparazione è corta o si salta
+subito al lavoro.
+
+**Un annuncio non aspetta mai la rete.** Usa la clip solo se è già decodificata
+in memoria; altrimenti parla la sintesi, subito. Aspettare il download
+significa che l'annuncio arriva quando il momento è passato, e se ne accumulano
+diversi escono tutti insieme appena la rete consegna. Per questo le clip si
+scaldano all'apertura dell'**app**, non del timer: il tempo utile è quello in
+cui si sceglie l'allenamento, non il mezzo secondo fra «apri» e «avvia».
 
 In riproduzione il silenzio iniziale di ogni clip viene saltato. Le
 registrazioni ne hanno quantità diverse — fra i tre numeri si andava da 0,02 a
