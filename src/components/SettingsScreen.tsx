@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import type { CoachLevel, Settings } from '../types'
 import { Cues, italianVoices, speak } from '../lib/audio'
 import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
+import { listClips } from '../lib/clipStore'
+import { CLIPS } from '../lib/voiceClips'
+import { Chevron } from './Icons'
 import { Logo } from './Logo'
 
 const cues = new Cues()
@@ -34,11 +37,17 @@ export function SettingsScreen({
   settings,
   onChange,
   historyCount,
+  onOpenRecorder,
 }: {
   settings: Settings
   onChange: (patch: Partial<Settings>) => void
   historyCount: number
+  onOpenRecorder: () => void
 }) {
+  const [incise, setIncise] = useState(0)
+  useEffect(() => {
+    void listClips().then((k) => setIncise(k.length))
+  }, [])
   // getVoices() è spesso vuoto al primo giro: il sistema le carica dopo.
   const [vociIt, setVociIt] = useState(() => italianVoices())
   useEffect(() => {
@@ -110,7 +119,33 @@ export function SettingsScreen({
       </div>
 
       <div className="rule">
-        <span className="rule-label">VOCE</span>
+        <span className="rule-label">VOCE INCISA</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 8 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0 }}>
+          Frasi registrate con una voce vera al posto della sintesi. Si può incidere un pezzo per volta: dove manca
+          la clip, il timer torna da solo alla voce di sistema.
+        </p>
+        <button className="card row" style={{ gap: 12, padding: '0 14px', minHeight: 60, textAlign: 'left' }} onClick={onOpenRecorder}>
+          <div className="stack grow" style={{ gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>Incidi la voce</span>
+            <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+              {incise === 0 ? `nessuna clip · ${CLIPS.length} frasi da registrare` : `${incise} clip su questo dispositivo`}
+            </span>
+          </div>
+          <Chevron />
+        </button>
+        <Toggle
+          label="Usa le clip incise"
+          hint="Quando ci sono, hanno la precedenza sulla sintesi"
+          on={settings.recordedVoice}
+          onChange={(v) => onChange({ recordedVoice: v })}
+        />
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">VOCE DI SISTEMA</span>
         <div className="rule-line" />
       </div>
       <div className="pad stack" style={{ gap: 8 }}>

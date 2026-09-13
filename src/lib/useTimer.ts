@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Segment, Settings } from '../types'
-import { Cues, buzz, speak } from './audio'
+import { Cues, buzz } from './audio'
 import { COACH_LINES, coachedDisplay } from './engine'
+import { preload, say, unlockVoice } from './voice'
+import { NUMBER_CLIP, STATE_CLIP, exerciseKey } from './voiceClips'
 
 export type Status = 'idle' | 'running' | 'paused' | 'done'
 
@@ -43,6 +45,24 @@ export function useTimer(
 
   cues.current.volume = settings.volume
 
+  const voiceOpts = {
+    volume: settings.volume,
+    voiceURI: settings.voiceURI,
+    useRecorded: settings.recordedVoice,
+  }
+  const voiceRef = useRef(voiceOpts)
+  voiceRef.current = voiceOpts
+
+  // Le clip che serviranno in questo allenamento, scaldate in anticipo.
+  useEffect(() => {
+    preload([
+      ...Object.values(STATE_CLIP),
+      ...Object.values(NUMBER_CLIP),
+      ...COACH_LINES.map((_, i) => `maurizio/${i + 1}`),
+      ...segments.map((s) => exerciseKey(s.name)),
+    ])
+  }, [segments])
+
   const total = useMemo(() => {
     const last = segments[segments.length - 1]
     return last ? last.offset + last.duration : 0
@@ -66,7 +86,8 @@ export function useTimer(
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
       if (settings.voice) {
         const label = seg.label.toLowerCase()
-        speak(seg.kind === 'work' ? `${label}. ${seg.name}` : label, settings.volume, settings.voiceURI)
+        const keys = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
+        void say(keys, seg.kind === 'work' ? `${label}. ${seg.name}` : label, voiceRef.current)
       }
     },
     [settings.vibrate, settings.voice, settings.volume, settings.voiceURI],
@@ -84,7 +105,7 @@ export function useTimer(
         setStatus('done')
         cues.current.finish()
         if (settings.vibrate) buzz([200, 100, 200, 100, 300])
-        if (settings.voice) speak('Allenamento completato', settings.volume, settings.voiceURI)
+        if (settings.voice) void say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
         finishRef.current(total, true)
         return
       }
@@ -109,9 +130,18 @@ export function useTimer(
       if (left > 3 || left < 1 || left === lastBeepRef.current) return
       const wentBackUp = lastBeepRef.current > 0 && left > lastBeepRef.current
       lastBeepRef.current = left
-      if (settings.countdownBeep) cues.current.countdown()
+      // Con la voce incisa il numero viene detto; il bip resta solo come
+      // ripiego, per non raddoppiare il segnale.
+      if (settings.recordedVoice && settings.voice) {
+        void say([NUMBER_CLIP[left]], '', voiceRef.current).then((detto) => {
+          if (!detto && settings.countdownBeep) cues.current.countdown()
+        })
+      } else if (settings.countdownBeep) {
+        cues.current.countdown()
+      }
       if (wentBackUp && settings.voice) {
-        speak(COACH_LINES[Math.floor(Math.random() * COACH_LINES.length)], settings.volume, settings.voiceURI)
+        const i = Math.floor(Math.random() * COACH_LINES.length)
+        void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
       }
     }
 
@@ -129,10 +159,12 @@ export function useTimer(
     settings.voice,
     settings.volume,
     settings.voiceURI,
+    settings.recordedVoice,
   ])
 
   const start = useCallback(() => {
     cues.current.unlock()
+    unlockVoice()
     bankedRef.current = 0
     anchorRef.current = performance.now()
     lastIndexRef.current = -1
@@ -143,6 +175,7 @@ export function useTimer(
 
   const resume = useCallback(() => {
     cues.current.unlock()
+    unlockVoice()
     anchorRef.current = performance.now()
     // Riparte dal segmento corrente senza riannunciarlo.
     lastIndexRef.current = indexAt(bankedRef.current)

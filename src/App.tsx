@@ -8,12 +8,17 @@ import { PresetScreen } from './components/PresetScreen'
 import { EditorScreen } from './components/EditorScreen'
 import { TimerScreen } from './components/TimerScreen'
 import { SettingsScreen } from './components/SettingsScreen'
+import { VoiceRecorderScreen } from './components/VoiceRecorderScreen'
 import { HistoryScreen } from './components/HistoryScreen'
 import { Gear, History, Library, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
 type Tab = 'timer' | 'preset' | 'storico' | 'impostazioni'
-type View = { kind: 'tabs' } | { kind: 'editor'; workout: Workout } | { kind: 'run'; workout: Workout }
+type View =
+  | { kind: 'tabs' }
+  | { kind: 'editor'; workout: Workout }
+  | { kind: 'run'; workout: Workout }
+  | { kind: 'voce' }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
@@ -102,7 +107,14 @@ export default function App() {
       case 'storico':
         return <HistoryScreen entries={history} />
       case 'impostazioni':
-        return <SettingsScreen settings={settings} onChange={patchSettings} historyCount={history.length} />
+        return (
+          <SettingsScreen
+            settings={settings}
+            onChange={patchSettings}
+            historyCount={history.length}
+            onOpenRecorder={() => setView({ kind: 'voce' })}
+          />
+        )
     }
   }, [tab, workouts, history, settings, startWorkout, duplicate, remove, patchSettings])
 
@@ -115,6 +127,10 @@ export default function App() {
         onFinish={recordFinish(view.workout)}
       />
     )
+  }
+
+  if (view.kind === 'voce') {
+    return <VoiceRecorderScreen workouts={workouts} onBack={() => setView({ kind: 'tabs' })} />
   }
 
   if (view.kind === 'editor') {

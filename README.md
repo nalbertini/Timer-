@@ -73,10 +73,26 @@ suonano metalliche, ed erano quelle che l'app pescava prima.
 Su iPhone e iPad le voci di qualità vanno scaricate una volta da
 Impostazioni › Accessibilità › Contenuto letto › Voci.
 
-Per una voce davvero umana la strada è un'altra: **registrare le frasi**. Sono
-poche e fisse (gli stati, i numeri da 3 a 1, i nomi degli esercizi, le battute
-di Maurizio) e si servirebbero come file audio. Per la modalità Maurizio, con
-la voce di Maurizio, varrebbe da sola il lavoro.
+### Voce incisa
+
+Per una voce davvero umana l'app preferisce, quando ci sono, delle **frasi
+registrate**. L'elenco è chiuso e corto — gli stati, i numeri da 3 a 1, le
+battute di Maurizio — più, facoltativi, i nomi degli esercizi.
+
+L'ordine è: registrazione fatta su quel dispositivo → file pubblicato in
+`public/voce/` → sintesi vocale. Quindi si può incidere un pezzo per volta, e
+dove manca la clip il timer torna da solo alla voce di sistema senza che nessuno
+debba configurare niente.
+
+**Impostazioni › Voce incisa › Incidi la voce** apre un registratore: ogni frase
+ha REGISTRA / FERMA, si riascolta e si rifà. Le clip restano su quel dispositivo
+e si sentono subito — si può incidere sul tablet in sala e sentirlo funzionare
+all'istante. Il tasto ESPORTA scarica uno zip da scompattare in `public/voce/`
+per darle a tutta la palestra; dentro c'è anche l'`index.json` che l'app usa per
+sapere cosa esiste senza tentare richieste a vuoto.
+
+Il dettaglio di nomi, formati e conversioni sta in
+[`public/voce/README.md`](public/voce/README.md).
 
 ## Sviluppo
 
@@ -100,6 +116,9 @@ installazione funzionino.
   sostituito con il file originale, e poi va rilanciato `npm run icons`.
 - L'indirizzo della palestra in `src/components/SettingsScreen.tsx` è un
   segnaposto.
+- Le clip della voce non ci sono ancora: l'elenco delle frasi da incidere è in
+  `public/voce/README.md`, e le battute di Maurizio hanno senso solo se le dice
+  Maurizio.
 - I timer sono locali al dispositivo. Per la libreria condivisa della palestra
   (istruttori che creano, soci che avviano) e per mandare un allenamento al
   tablet in sala serve un backend: non c'è ancora.

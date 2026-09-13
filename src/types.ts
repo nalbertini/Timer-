@@ -65,6 +65,8 @@ export interface Settings {
   voice: boolean
   /** Voce di sistema scelta dall'utente; null = la migliore che troviamo. */
   voiceURI: string | null
+  /** Usa le clip incise quando ci sono, invece della sintesi. */
+  recordedVoice: boolean
   vibrate: boolean
   volume: number
   keepAwake: boolean

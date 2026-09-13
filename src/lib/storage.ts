@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   vibrate: true,
   volume: 0.8,
   voiceURI: null,
+  recordedVoice: true,
   keepAwake: true,
   bigScreen: false,
 }
