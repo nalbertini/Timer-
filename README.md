@@ -36,6 +36,24 @@ altri i nomi si alternano a ogni round e vengono annunciati dalla voce.
 I timer, le impostazioni e lo storico stanno nel browser del dispositivo
 (`localStorage`), senza account e senza server.
 
+## La libreria di esercizi
+
+`src/lib/esercizi.ts` tiene un catalogo di 52 esercizi di partenza, pensati per
+una palestra di judo e divisi in sei categorie: judo, a corpo libero, attrezzi,
+core, cardio, mobilità. Sta in `localStorage` come i timer, quindi si cura
+liberamente: quelli aggiunti a mano si possono togliere, quelli di partenza no.
+
+Nell'editor, «aggiungi esercizio» apre il catalogo: si cerca (senza badare ad
+accenti e maiuscole), si filtra per categoria, si scelgono più esercizi in un
+colpo solo — un circuito si costruisce in blocco — e se un nome non c'è lo si
+crea scrivendolo, così il catalogo non diventa mai una gabbia.
+
+Il motivo vero per cui esiste, però, è un altro: la clip della voce di un
+esercizio si chiama come il suo nome (`esercizi/<nome>.mp3`). Finché i nomi si
+scrivevano a mano erano infiniti e non si potevano incidere; con un catalogo
+diventano un elenco finito, e il timer può arrivare ad annunciare anche gli
+esercizi.
+
 ## Modalità Maurizio
 
 Come l'allenatore che «perde il conto» per farti lavorare qualche secondo in

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { type Esercizio, loadEsercizi } from '../lib/esercizi'
+import { PickerEsercizi } from './PickerEsercizi'
 import type { Mode, Segment, Workout } from '../types'
 import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, totalDuration } from '../lib/engine'
 import { clock, uid } from '../lib/format'
@@ -90,13 +92,18 @@ export function EditorScreen({
   onSaveAndStart: (w: Workout) => void
 }) {
   const [w, setW] = useState<Workout>(initial)
+  const [catalogo, setCatalogo] = useState<Esercizio[]>(() => loadEsercizi())
+  const [scegliendo, setScegliendo] = useState(false)
   const set = (patch: Partial<Workout>) => setW((prev) => ({ ...prev, ...patch, builtin: false, updatedAt: Date.now() }))
 
   const fields = MODE_FIELDS[w.mode]
   const steppers = fields.filter((f) => f !== 'sets' || w.mode !== 'fortime')
   const segments = buildSegments(w)
 
-  const addExercise = () => set({ exercises: [...w.exercises, { id: uid(), name: '' }] })
+  const aggiungiDalCatalogo = (nomi: string[]) => {
+    set({ exercises: [...w.exercises, ...nomi.map((name) => ({ id: uid(), name }))] })
+    setScegliendo(false)
+  }
   const renameExercise = (id: string, name: string) =>
     set({ exercises: w.exercises.map((e) => (e.id === id ? { ...e, name } : e)) })
   const setExerciseDuration = (id: string, duration: number) =>
@@ -112,6 +119,17 @@ export function EditorScreen({
   }
 
   const named = { ...w, name: w.name.trim() || 'Timer senza nome' }
+
+  if (scegliendo) {
+    return (
+      <PickerEsercizi
+        catalogo={catalogo}
+        onCatalogo={setCatalogo}
+        onScegli={aggiungiDalCatalogo}
+        onChiudi={() => setScegliendo(false)}
+      />
+    )
+  }
 
   return (
     <div className="app">
@@ -222,7 +240,7 @@ export function EditorScreen({
               </button>
             </div>
           ))}
-          <button className="btn btn-dashed" style={{ minHeight: 50, fontSize: 15 }} onClick={addExercise}>
+          <button className="btn btn-dashed" style={{ minHeight: 50, fontSize: 15 }} onClick={() => setScegliendo(true)}>
             <Plus size={16} />
             AGGIUNGI {w.mode === 'circuit' ? 'STAZIONE' : 'ESERCIZIO'}
           </button>
