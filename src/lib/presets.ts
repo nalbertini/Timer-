@@ -52,7 +52,6 @@ export const PRESETS: Array<{ key: string; title: string; mode: Mode; make: () =
     make: () => ({
       ...blankWorkout('interval'),
       name: 'Tabata',
-      prepare: 10,
       work: 20,
       rest: 10,
       rounds: 8,
@@ -67,7 +66,6 @@ export const PRESETS: Array<{ key: string; title: string; mode: Mode; make: () =
     make: () => ({
       ...blankWorkout('interval'),
       name: 'HIIT 40/20',
-      prepare: 15,
       work: 40,
       rest: 20,
       rounds: 10,
