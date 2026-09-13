@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { HistoryEntry, Settings, Workout } from './types'
 import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory, saveSettings, saveWorkouts } from './lib/storage'
 import { blankWorkout } from './lib/presets'
+import { type Esercizio, loadEsercizi, normalizza, saveEsercizi } from './lib/esercizi'
 import { preload, unlockVoice } from './lib/voice'
 import { COACH_LINES } from './lib/engine'
 import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './lib/voiceClips'
@@ -13,10 +14,11 @@ import { TimerScreen } from './components/TimerScreen'
 import { SettingsScreen } from './components/SettingsScreen'
 import { VoiceRecorderScreen } from './components/VoiceRecorderScreen'
 import { HistoryScreen } from './components/HistoryScreen'
-import { Gear, History, Library, TimerIcon } from './components/Icons'
+import { EserciziScreen } from './components/EserciziScreen'
+import { Dumbbell, Gear, History, Library, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
-type Tab = 'timer' | 'preset' | 'storico' | 'impostazioni'
+type Tab = 'timer' | 'preset' | 'esercizi' | 'storico' | 'impostazioni'
 type View =
   | { kind: 'tabs' }
   | { kind: 'editor'; workout: Workout }
@@ -26,6 +28,7 @@ type View =
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
   { key: 'preset', label: 'PRESET', icon: Library },
+  { key: 'esercizi', label: 'ESERCIZI', icon: Dumbbell },
   { key: 'storico', label: 'STORICO', icon: History },
   { key: 'impostazioni', label: 'IMPOSTAZIONI', icon: Gear },
 ]
@@ -33,6 +36,7 @@ const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
 const TAB_TITLE: Record<Tab, string> = {
   timer: 'I TUOI TIMER',
   preset: 'PRESET',
+  esercizi: 'ESERCIZI',
   storico: 'STORICO',
   impostazioni: 'IMPOSTAZIONI',
 }
@@ -41,6 +45,9 @@ export default function App() {
   const [workouts, setWorkouts] = useState<Workout[]>(() => loadWorkouts())
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
+  // Il catalogo sta qui e non nell'editor: la sezione esercizi e la scelta
+  // dentro un timer devono vedere la stessa lista, non due copie.
+  const [catalogo, setCatalogo] = useState<Esercizio[]>(() => loadEsercizi())
   const [tab, setTab] = useState<Tab>('timer')
   const [view, setView] = useState<View>({ kind: 'tabs' })
 
@@ -80,6 +87,7 @@ export default function App() {
 
   useEffect(() => saveWorkouts(workouts), [workouts])
   useEffect(() => saveSettings(settings), [settings])
+  useEffect(() => saveEsercizi(catalogo), [catalogo])
 
   const patchSettings = useCallback((patch: Partial<Settings>) => {
     setSettings((s) => ({ ...DEFAULT_SETTINGS, ...s, ...patch }))
@@ -109,6 +117,35 @@ export default function App() {
     },
     [],
   )
+
+  // Quante volte ogni nome compare nei timer salvati: serve alla sezione
+  // esercizi per dire cosa è in uso prima di toccarlo.
+  const usiEsercizi = useMemo(() => {
+    const conto: Record<string, number> = {}
+    workouts.forEach((w) =>
+      w.exercises.forEach((e) => {
+        const k = normalizza(e.name)
+        if (k) conto[k] = (conto[k] ?? 0) + 1
+      }),
+    )
+    return conto
+  }, [workouts])
+
+  // Rinominare un esercizio nel catalogo lo rinomina anche nei timer che lo
+  // usano: per la palestra è la stessa cosa, non due nomi che si somigliano.
+  const rinominaEsercizio = useCallback((da: string, a: string) => {
+    // Il confronto è quello della ricerca, non quello esatto: se in un timer il
+    // nome è stato scritto con un'altra maiuscola o un altro accento, il conto
+    // qui sopra lo considera lo stesso esercizio e la rinomina deve seguirlo.
+    const stesso = (nome: string) => normalizza(nome) === normalizza(da)
+    setWorkouts((list) =>
+      list.map((w) =>
+        w.exercises.some((e) => stesso(e.name))
+          ? { ...w, exercises: w.exercises.map((e) => (stesso(e.name) ? { ...e, name: a } : e)) }
+          : w,
+      ),
+    )
+  }, [])
 
   const startWorkout = useCallback((w: Workout) => setView({ kind: 'run', workout: w }), [])
 
@@ -141,6 +178,15 @@ export default function App() {
         )
       case 'preset':
         return <PresetScreen onPick={(w) => setView({ kind: 'editor', workout: w })} />
+      case 'esercizi':
+        return (
+          <EserciziScreen
+            catalogo={catalogo}
+            onCatalogo={setCatalogo}
+            usi={usiEsercizi}
+            onRinomina={rinominaEsercizio}
+          />
+        )
       case 'storico':
         return <HistoryScreen entries={history} />
       case 'impostazioni':
@@ -153,7 +199,19 @@ export default function App() {
           />
         )
     }
-  }, [tab, workouts, history, settings, startWorkout, duplicate, remove, patchSettings])
+  }, [
+    tab,
+    workouts,
+    history,
+    settings,
+    catalogo,
+    usiEsercizi,
+    rinominaEsercizio,
+    startWorkout,
+    duplicate,
+    remove,
+    patchSettings,
+  ])
 
   if (view.kind === 'run') {
     return (
@@ -167,13 +225,15 @@ export default function App() {
   }
 
   if (view.kind === 'voce') {
-    return <VoiceRecorderScreen workouts={workouts} onBack={() => setView({ kind: 'tabs' })} />
+    return <VoiceRecorderScreen workouts={workouts} catalogo={catalogo} onBack={() => setView({ kind: 'tabs' })} />
   }
 
   if (view.kind === 'editor') {
     return (
       <EditorScreen
         initial={view.workout}
+        catalogo={catalogo}
+        onCatalogo={setCatalogo}
         onCancel={() => setView({ kind: 'tabs' })}
         onSave={(w) => {
           upsert(w)

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CATEGORIE, type Categoria, type Esercizio, normalizza, saveEsercizi } from '../lib/esercizi'
+import { CATEGORIE, type Categoria, type Esercizio, normalizza } from '../lib/esercizi'
 import { uid } from '../lib/format'
 import { Close, Plus, Trash } from './Icons'
 
@@ -40,17 +40,13 @@ export function PickerEsercizi({
     const nome = cerca.trim()
     if (!nome) return
     const nuovo: Esercizio = { id: uid(), nome, categoria: categoria === 'tutte' ? 'A corpo libero' : categoria, propri: true }
-    const lista = [...catalogo, nuovo]
-    saveEsercizi(lista)
-    onCatalogo(lista)
+    onCatalogo([...catalogo, nuovo])
     setScelti((p) => [...p, nome])
     setCerca('')
   }
 
   const elimina = (e: Esercizio) => {
-    const lista = catalogo.filter((x) => x.id !== e.id)
-    saveEsercizi(lista)
-    onCatalogo(lista)
+    onCatalogo(catalogo.filter((x) => x.id !== e.id))
     setScelti((p) => p.filter((n) => n !== e.nome))
   }
 

@@ -15,14 +15,14 @@ export interface Esercizio {
   id: string
   nome: string
   categoria: Categoria
-  /** Vero per quelli aggiunti a mano: solo quelli si possono togliere. */
+  /** Vero per quelli aggiunti a mano: nel picker solo quelli si tolgono al volo. */
   propri?: boolean
 }
 
 const CHIAVE = 'ods-timer:esercizi'
 
 /** Un punto di partenza per una palestra di judo, da curare a piacere. */
-function catalogoIniziale(): Esercizio[] {
+export function catalogoDiPartenza(): Esercizio[] {
   const per = (categoria: Categoria, nomi: string[]): Esercizio[] =>
     nomi.map((nome) => ({ id: uid(), nome, categoria }))
   return [
@@ -61,9 +61,11 @@ function leggi<T>(chiave: string, ripiego: T): T {
 }
 
 export function loadEsercizi(): Esercizio[] {
+  // Un elenco vuoto è una scelta, non un errore: chi svuota il catalogo per
+  // incollare quello vero della palestra non se lo deve ritrovare com'era.
   const salvati = leggi<Esercizio[] | null>(CHIAVE, null)
-  if (salvati && Array.isArray(salvati) && salvati.length > 0) return salvati
-  const iniziale = catalogoIniziale()
+  if (Array.isArray(salvati)) return salvati
+  const iniziale = catalogoDiPartenza()
   saveEsercizi(iniziale)
   return iniziale
 }
@@ -83,4 +85,44 @@ export function normalizza(s: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .trim()
+}
+
+/** Due nomi che si riferiscono allo stesso esercizio. */
+export const stessoNome = (a: string, b: string) => normalizza(a) === normalizza(b)
+
+/**
+ * Aggiunge un elenco di nomi al catalogo, saltando quelli che ci sono già e i
+ * doppioni interni all'elenco stesso. Serve a incollare la lista della
+ * palestra in un colpo solo invece di scriverla riga per riga.
+ */
+export function aggiungiNomi(
+  catalogo: Esercizio[],
+  nomi: string[],
+  categoria: Categoria,
+): { lista: Esercizio[]; aggiunti: string[]; saltati: string[] } {
+  const visti = new Set(catalogo.map((e) => normalizza(e.nome)))
+  const aggiunti: string[] = []
+  const saltati: string[] = []
+  const nuovi: Esercizio[] = []
+  for (const grezzo of nomi) {
+    const nome = grezzo.trim()
+    if (!nome) continue
+    const chiave = normalizza(nome)
+    if (visti.has(chiave)) {
+      saltati.push(nome)
+      continue
+    }
+    visti.add(chiave)
+    nuovi.push({ id: uid(), nome, categoria, propri: true })
+    aggiunti.push(nome)
+  }
+  return { lista: [...catalogo, ...nuovi], aggiunti, saltati }
+}
+
+/** I nomi di un testo incollato: uno per riga, oppure separati da virgola. */
+export function nomiDaTesto(testo: string): string[] {
+  return testo
+    .split(/[\n,;]+/)
+    .map((r) => r.replace(/^[\s\-–—•*\d.)]+/, '').trim())
+    .filter(Boolean)
 }

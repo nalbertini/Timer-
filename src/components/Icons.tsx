@@ -129,3 +129,14 @@ export const Edit = ({ size = 18 }: P) => (
     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
   </svg>
 )
+
+/** Un manubrio: la sezione degli esercizi. */
+export const Dumbbell = ({ size = 22 }: P) => (
+  <svg {...base(size)} aria-hidden="true">
+    <path d="M3 9v6" />
+    <path d="M6 6v12" />
+    <path d="M18 6v12" />
+    <path d="M21 9v6" />
+    <path d="M6 12h12" />
+  </svg>
+)

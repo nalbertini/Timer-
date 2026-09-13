@@ -43,7 +43,7 @@ body {
 }
 
 button { font: inherit; color: inherit; cursor: pointer; border: none; background: none; }
-input { font: inherit; color: inherit; }
+input, textarea { font: inherit; color: inherit; }
 
 .cond { font-family: var(--cond); font-variant-numeric: tabular-nums; }
 /* Il taglio obliquo riprende il lettering del marchio. */
@@ -120,15 +120,18 @@ input { font: inherit; color: inherit; }
 .switch[data-on='false'] > i { background: var(--faint); }
 
 .tabbar {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Colonne automatiche: le schede si dividono la barra qualunque sia il loro numero. */
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   border-top: 2px solid var(--line-soft); background: #171717;
-  padding: 10px 8px calc(var(--safe-b) + 12px);
+  padding: 10px 6px calc(var(--safe-b) + 12px);
 }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; min-height: 52px; padding: 0 2px; color: var(--dim);
-  font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-align: center;
+  gap: 5px; min-height: 52px; padding: 0 1px; color: var(--dim);
+  font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+@media (max-width: 359px) { .tab { font-size: 8px; letter-spacing: 0; } }
 .tab[data-on='true'] { color: var(--blu); }
 
 /* ---------- lista allenamenti ---------- */

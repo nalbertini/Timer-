@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type Esercizio, loadEsercizi } from '../lib/esercizi'
+import type { Esercizio } from '../lib/esercizi'
 import { PickerEsercizi } from './PickerEsercizi'
 import type { Mode, Segment, Workout } from '../types'
 import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, totalDuration } from '../lib/engine'
@@ -82,17 +82,20 @@ function rigaAnteprima(s: Segment): string {
 
 export function EditorScreen({
   initial,
+  catalogo,
+  onCatalogo,
   onSave,
   onCancel,
   onSaveAndStart,
 }: {
   initial: Workout
+  catalogo: Esercizio[]
+  onCatalogo: (lista: Esercizio[]) => void
   onSave: (w: Workout) => void
   onCancel: () => void
   onSaveAndStart: (w: Workout) => void
 }) {
   const [w, setW] = useState<Workout>(initial)
-  const [catalogo, setCatalogo] = useState<Esercizio[]>(() => loadEsercizi())
   const [scegliendo, setScegliendo] = useState(false)
   const set = (patch: Partial<Workout>) => setW((prev) => ({ ...prev, ...patch, builtin: false, updatedAt: Date.now() }))
 
@@ -124,7 +127,7 @@ export function EditorScreen({
     return (
       <PickerEsercizi
         catalogo={catalogo}
-        onCatalogo={setCatalogo}
+        onCatalogo={onCatalogo}
         onScegli={aggiungiDalCatalogo}
         onChiudi={() => setScegliendo(false)}
       />

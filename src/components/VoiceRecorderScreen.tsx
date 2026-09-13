@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Workout } from '../types'
+import type { Esercizio } from '../lib/esercizi'
 import { CLIPS, type ClipSpec, exerciseKey } from '../lib/voiceClips'
 import { deleteClip, getClip, listClips, putClip } from '../lib/clipStore'
 import { forgetClips, say, unlockVoice } from '../lib/voice'
@@ -18,25 +19,34 @@ function pickFormat(): { mime: string; ext: string } | null {
   return candidates.find((c) => MediaRecorder.isTypeSupported(c.mime)) ?? null
 }
 
-export function VoiceRecorderScreen({ workouts, onBack }: { workouts: Workout[]; onBack: () => void }) {
+export function VoiceRecorderScreen({
+  workouts,
+  catalogo,
+  onBack,
+}: {
+  workouts: Workout[]
+  catalogo: Esercizio[]
+  onBack: () => void
+}) {
   const [done, setDone] = useState<Set<string>>(new Set())
   const [active, setActive] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const recorder = useRef<MediaRecorder | null>(null)
   const format = useMemo(pickFormat, [])
 
-  // Gli esercizi che compaiono davvero nei timer della palestra: sono quelli
-  // che vale la pena incidere, gli altri restano alla sintesi.
+  // Gli esercizi incidibili: quelli del catalogo, più quelli che compaiono nei
+  // timer salvati e nel catalogo non ci sono (scritti a mano, o tolti dopo).
+  // Prima il catalogo, perché è l'elenco che la palestra cura davvero.
   const exercises = useMemo(() => {
     const seen = new Map<string, string>()
-    workouts.forEach((w) =>
-      w.exercises.forEach((e) => {
-        const k = exerciseKey(e.name)
-        if (k && !seen.has(k)) seen.set(k, e.name.trim())
-      }),
-    )
+    const aggiungi = (nome: string) => {
+      const k = exerciseKey(nome)
+      if (k && !seen.has(k)) seen.set(k, nome.trim())
+    }
+    catalogo.forEach((e) => aggiungi(e.nome))
+    workouts.forEach((w) => w.exercises.forEach((e) => aggiungi(e.name)))
     return [...seen.entries()].map(([key, text]): ClipSpec => ({ key, text, group: 'Stati' }))
-  }, [workouts])
+  }, [catalogo, workouts])
 
   const refresh = useCallback(() => {
     void listClips().then((keys) => setDone(new Set(keys)))
@@ -109,7 +119,7 @@ export function VoiceRecorderScreen({ workouts, onBack }: { workouts: Workout[];
     ['Stati', CLIPS.filter((c) => c.group === 'Stati')],
     ['Conto alla rovescia', CLIPS.filter((c) => c.group === 'Conto alla rovescia')],
     ['Maurizio', CLIPS.filter((c) => c.group === 'Maurizio')],
-    ['Esercizi dei tuoi timer', exercises],
+    ['Esercizi', exercises],
   ]
   const totale = CLIPS.length + exercises.length
 
