@@ -110,12 +110,20 @@ L'ordine è: registrazione fatta su quel dispositivo → file pubblicato in
 dove manca la clip il timer torna da solo alla voce di sistema senza che nessuno
 debba configurare niente.
 
+In `public/voce/` ci sono **14 clip**: i sei stati, «due» e «uno», e le sei
+battute di Maurizio. Manca `numeri/tre`, che è arrivato troncato: al suo posto
+il conto alla rovescia emette il bip, come quando la voce incisa è spenta.
+
 **Impostazioni › Voce incisa › Incidi la voce** apre un registratore: ogni frase
 ha REGISTRA / FERMA, si riascolta e si rifà. Le clip restano su quel dispositivo
 e si sentono subito — si può incidere sul tablet in sala e sentirlo funzionare
 all'istante. Il tasto ESPORTA scarica uno zip da scompattare in `public/voce/`
 per darle a tutta la palestra; dentro c'è anche l'`index.json` che l'app usa per
 sapere cosa esiste senza tentare richieste a vuoto.
+
+Le clip non stanno nella precache: entrano nella cache di runtime alla prima
+richiesta e da lì valgono anche senza rete. Chi tiene la voce spenta non se le
+scarica, e alla primissima apertura offline si ricade sulla sintesi.
 
 Il dettaglio di nomi, formati e conversioni sta in
 [`public/voce/README.md`](public/voce/README.md).
@@ -142,9 +150,8 @@ installazione funzionino.
   sostituito con il file originale, e poi va rilanciato `npm run icons`.
 - L'indirizzo della palestra in `src/components/SettingsScreen.tsx` è un
   segnaposto.
-- Le clip della voce non ci sono ancora: l'elenco delle frasi da incidere è in
-  `public/voce/README.md`, e le battute di Maurizio hanno senso solo se le dice
-  Maurizio.
+- Manca la clip `numeri/tre`, arrivata troncata: va rifatta.
+- Mancano, facoltative, le clip dei nomi degli esercizi (`esercizi/<nome>.mp3`).
 - I timer sono locali al dispositivo. Per la libreria condivisa della palestra
   (istruttori che creano, soci che avviano) e per mandare un allenamento al
   tablet in sala serve un backend: non c'è ancora.

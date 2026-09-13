@@ -35,6 +35,18 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         runtimeCaching: [
           {
+            // Le clip della voce: alla prima richiesta entrano in cache e da lì
+            // valgono anche senza rete. Non sono nella precache perché servono
+            // solo a chi tiene accesa la voce, e senza si ricade sulla sintesi.
+            urlPattern: /\/voce\/.*\.(mp3|m4a|ogg|wav|webm|json)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ods-voce',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // Le illustrazioni della modalità Maurizio pesano mezzo mega: non
             // entrano nella precache, si scaricano solo se qualcuno usa la
             // modalità, e da lì restano disponibili anche offline.
