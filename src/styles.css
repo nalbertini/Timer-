@@ -195,6 +195,7 @@ input { font: inherit; color: inherit; }
 
 .shell { display: flex; height: 100%; overflow: hidden; }
 .sidebar { display: none; }
+.content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
 
 @media (min-width: 1024px) {
   .sidebar {
@@ -202,7 +203,6 @@ input { font: inherit; color: inherit; }
     background: #171717; border-right: 2px solid var(--line-soft); padding: 26px 0;
   }
   .tabbar { display: none; }
-  .content { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
   .pad { padding: 0 32px; }
   .topbar { padding: 26px 32px 20px; }
   .rule { padding: 26px 32px 12px; }
