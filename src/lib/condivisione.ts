@@ -1,5 +1,5 @@
 import type { Mode, Workout } from '../types'
-import { uid } from './format'
+import { MAX_ESERCIZI, workoutSano } from './sano'
 
 /**
  * Mandare un allenamento a un altro dispositivo senza un server in mezzo.
@@ -39,8 +39,6 @@ interface Magro {
   e: Array<[string, number, number, number, number]>
 }
 
-const MODI: Mode[] = ['interval', 'circuit', 'emom', 'amrap', 'fortime']
-
 function magro(w: Workout): Magro {
   return {
     n: w.name,
@@ -58,48 +56,32 @@ function magro(w: Workout): Magro {
 }
 
 /**
- * Ricostruisce l'allenamento da quello che è arrivato.
+ * Rimette in piedi l'allenamento arrivato dal link.
  *
- * Tutto quello che entra da un link è roba di cui non si sa niente: può essere
- * troncata, vecchia, scritta a mano per gioco. Ogni campo viene quindi
- * riportato dentro i limiti dell'editor invece di essere creduto sulla parola,
- * e un allenamento con mille stazioni non deve poter esistere.
+ * Qui si torna solo dalla forma corta a quella piena; a riportare i valori
+ * dentro i limiti ci pensa `workoutSano`, che è lo stesso controllo del
+ * ripristino da file. Un timer che arriva da un link è una copia, quindi
+ * prende un'identità nuova.
  */
 function grasso(m: Magro): Workout | null {
   if (!m || typeof m !== 'object') return null
-  const numero = (v: unknown, min: number, max: number, ripiego: number) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 2) / 2)) : ripiego
-  }
-  const testo = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max).trim() : '')
-  const nome = testo(m.n, 60)
-  const mode = MODI.includes(m.m) ? m.m : 'interval'
-  const esercizi = Array.isArray(m.e) ? m.e.slice(0, 50) : []
-  return {
-    id: uid(),
-    name: nome || 'Timer ricevuto',
-    mode,
-    prepare: numero(m.p, 0, 120, 20),
-    work: numero(m.w, 5, 600, 30),
-    rest: numero(m.r, 0, 600, 15),
-    rounds: numero(m.R, 1, 99, 8),
-    sets: numero(m.s, 1, 20, 1),
-    setRest: numero(m.S, 0, 600, 60),
-    cooldown: numero(m.c, 0, 900, 0),
-    duration: numero(m.d, 60, 5400, 600),
-    exercises: esercizi
-      .map((e) => (Array.isArray(e) ? e : [e, 0, 0, 0, 0]))
-      .map(([nome, durata, serie, rip, kg]) => {
-        const ex: Workout['exercises'][number] = { id: uid(), name: testo(nome, 60) }
-        if (numero(durata, 0, 600, 0) > 0) ex.duration = numero(durata, 5, 600, 30)
-        if (numero(serie, 0, 20, 0) > 0) ex.sets = numero(serie, 1, 20, 1)
-        if (numero(rip, 0, 200, 0) > 0) ex.reps = numero(rip, 1, 200, 1)
-        if (numero(kg, 0, 500, 0) > 0) ex.kg = numero(kg, 0.5, 500, 1)
-        return ex
-      })
-      .filter((e) => e.name.length > 0),
-    updatedAt: Date.now(),
-  }
+  const e = Array.isArray(m.e) ? m.e.slice(0, MAX_ESERCIZI) : []
+  return workoutSano({
+    name: m.n,
+    mode: m.m,
+    prepare: m.p,
+    work: m.w,
+    rest: m.r,
+    rounds: m.R,
+    sets: m.s,
+    setRest: m.S,
+    cooldown: m.c,
+    duration: m.d,
+    exercises: e.map((x) => {
+      const [name, duration, sets, reps, kg] = Array.isArray(x) ? x : [x, 0, 0, 0, 0]
+      return { name, duration, sets, reps, kg }
+    }),
+  })
 }
 
 const base64url = (b: Uint8Array) => {

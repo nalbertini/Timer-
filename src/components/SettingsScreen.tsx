@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CoachLevel, Settings } from '../types'
 import { Cues, italianVoices, speak } from '../lib/audio'
 import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
 import { listClips } from '../lib/clipStore'
 import { CLIPS } from '../lib/voiceClips'
 import { COMPILATA_IL, cercaAggiornamenti } from '../lib/aggiornamento'
+import {
+  type Salvataggio,
+  applicaSalvataggio,
+  comeFile,
+  contenutoDi,
+  leggiSalvataggio,
+  nomeFile,
+  salvataggioCorrente,
+} from '../lib/salvataggio'
 import { Chevron } from './Icons'
 import { Logo } from './Logo'
 
@@ -46,8 +55,12 @@ export function SettingsScreen({
   onOpenRecorder: () => void
 }) {
   const [incise, setIncise] = useState(0)
+  const [daRipristinare, setDaRipristinare] = useState<Salvataggio | null>(null)
+  const [messaggio, setMessaggio] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [controllo, setControllo] = useState(false)
   const [esitoControllo, setEsito] = useState<string | null>(null)
+  const loadCorrente = contenutoDi(salvataggioCorrente())
   const dataCompilazione = new Intl.DateTimeFormat('it-IT', {
     day: '2-digit',
     month: 'short',
@@ -252,6 +265,117 @@ export function SettingsScreen({
           on={settings.bigScreen}
           onChange={(v) => onChange({ bigScreen: v })}
         />
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">DATI</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 10 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0 }}>
+          Timer, catalogo esercizi, impostazioni e storico vivono nella memoria di questo dispositivo. Un file di
+          salvataggio li mette al riparo, e serve anche per allineare un secondo dispositivo la prima volta.
+        </p>
+
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            className="btn btn-ghost grow"
+            style={{ minHeight: 50, fontSize: 15 }}
+            onClick={async () => {
+              setMessaggio(null)
+              const salvataggio = salvataggioCorrente()
+              const nome = nomeFile()
+              const blob = comeFile(salvataggio)
+              const c = contenutoDi(salvataggio)
+              const fatto = `Salvati ${c.timer} timer, ${c.esercizi} esercizi e le impostazioni.`
+              // Su un'app installata dal telefono il foglio di condivisione è
+              // la strada che porta davvero a «Salva su File»; il download
+              // resta per il browser sul computer.
+              const file = new File([blob], nome, { type: 'application/json' })
+              if (navigator.canShare?.({ files: [file] })) {
+                try {
+                  await navigator.share({ files: [file], title: nome })
+                  setMessaggio(fatto)
+                  return
+                } catch {
+                  // Condivisione annullata o negata: si prova col download.
+                }
+              }
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = nome
+              a.click()
+              setTimeout(() => URL.revokeObjectURL(url), 2000)
+              setMessaggio(fatto)
+            }}
+          >
+            SALVA TUTTO
+          </button>
+          <button
+            className="btn btn-ghost grow"
+            style={{ minHeight: 50, fontSize: 15 }}
+            onClick={() => {
+              setMessaggio(null)
+              fileRef.current?.click()
+            }}
+          >
+            RIPRISTINA
+          </button>
+        </div>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={async (e) => {
+            const f = e.target.files?.[0]
+            e.target.value = ''
+            if (!f) return
+            const letto = leggiSalvataggio(await f.text())
+            if (!letto) {
+              setMessaggio('Questo file non è un salvataggio di ODS Timer.')
+              return
+            }
+            setDaRipristinare(letto)
+          }}
+        />
+
+        {daRipristinare && (
+          <div className="card stack" style={{ gap: 10, padding: 14, borderColor: 'var(--giallo)' }}>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>
+              {contenutoDi(daRipristinare).timer} timer, {contenutoDi(daRipristinare).esercizi} esercizi
+            </span>
+            <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)' }}>
+              Sostituiscono quello che c’è adesso su questo dispositivo: {loadCorrente.timer} timer e{' '}
+              {loadCorrente.esercizi} esercizi. Non si può tornare indietro.
+            </span>
+            <div className="row" style={{ gap: 8 }}>
+              <button
+                className="btn btn-ghost grow"
+                style={{ minHeight: 46, fontSize: 15 }}
+                onClick={() => setDaRipristinare(null)}
+              >
+                ANNULLA
+              </button>
+              <button
+                className="btn btn-go grow"
+                style={{ minHeight: 46, fontSize: 15 }}
+                onClick={() => {
+                  applicaSalvataggio(daRipristinare)
+                  // L'app rilegge tutto all'avvio: ricaricare è il modo più
+                  // onesto di rimettere in piedi ogni schermata con i dati nuovi.
+                  window.location.reload()
+                }}
+              >
+                RIPRISTINA
+              </button>
+            </div>
+          </div>
+        )}
+
+        {messaggio && <span style={{ fontSize: 13, color: 'var(--verde)' }}>{messaggio}</span>}
       </div>
 
       <div className="rule">
