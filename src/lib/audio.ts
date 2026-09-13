@@ -100,11 +100,22 @@ function pickVoice(voiceURI: string | null): SpeechSynthesisVoice | undefined {
   return list[0]
 }
 
+let ultima = { testo: '', quando: -1e9 }
+
 export function speak(text: string, volume: number, voiceURI: string | null = null) {
   if (!('speechSynthesis' in window) || !text) return
+  const ora = performance.now()
+  // Una stessa frase ripetuta a un attimo di distanza non è mai voluta: è il
+  // doppione che alcuni browser producono da soli. Si scarta.
+  if (text === ultima.testo && ora - ultima.quando < 900) return
+  ultima = { testo: text, quando: ora }
   try {
-    // Una coda di annunci arretrati è peggio del silenzio: l'ultimo vince.
-    window.speechSynthesis.cancel()
+    const sintesi = window.speechSynthesis
+    // Una coda di annunci arretrati è peggio del silenzio: l'ultimo vince. Ma
+    // cancel() va chiamato solo se c'è davvero qualcosa da fermare: a vuoto,
+    // seguito subito da speak(), su Safari e su alcune build Android fa
+    // pronunciare la frase due volte.
+    if (sintesi.speaking || sintesi.pending) sintesi.cancel()
     const u = new SpeechSynthesisUtterance(text)
     const v = pickVoice(voiceURI)
     if (v) u.voice = v
@@ -113,7 +124,7 @@ export function speak(text: string, volume: number, voiceURI: string | null = nu
     u.rate = 1
     u.pitch = 1
     u.volume = volume
-    window.speechSynthesis.speak(u)
+    sintesi.speak(u)
   } catch {
     // Sintesi vocale non disponibile: i bip restano.
   }

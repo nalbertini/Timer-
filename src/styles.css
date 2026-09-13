@@ -219,13 +219,28 @@ input { font: inherit; color: inherit; }
 
 /* ---------- illustrazioni della modalità Maurizio ---------- */
 
-.adesivo-beccato {
-  /* In un angolo e piccola: durante l'esitazione i numeri restano la cosa più
-     importante dello schermo e non vanno coperti. */
-  position: absolute; right: 8px; bottom: 92px; z-index: 4;
-  height: 18vh; max-height: 140px; width: auto; pointer-events: none;
-  filter: drop-shadow(0 6px 18px #000000cc);
-  animation: entra 240ms ease-out;
+/* Quando lo becchi a sbagliare, l'illustrazione e la frase che gli scappa
+   prendono il centro dello schermo. Lo sfondo si scurisce ma non si annulla:
+   dietro deve restare leggibile il numero che sta tornando indietro, che è
+   poi il senso della gag. */
+.beccato {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 20px; pointer-events: none;
+  background: #121212cc;
+  animation: entra 200ms ease-out;
+}
+
+.beccato > img {
+  height: 34vh; max-height: 300px; width: auto;
+  filter: drop-shadow(0 10px 26px #000000cc);
+}
+
+.beccato-frase {
+  font-family: var(--cond); font-style: oblique 9deg; font-weight: 700;
+  font-size: clamp(22px, 6.5vw, 46px); letter-spacing: 0.05em; line-height: 1.1;
+  color: var(--giallo); text-align: center; text-wrap: balance; max-width: 92%;
+  text-shadow: 0 2px 12px #000000cc;
 }
 
 .adesivo-finale {
@@ -239,10 +254,11 @@ input { font: inherit; color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .adesivo-beccato, .adesivo-finale { animation: none; }
+  .beccato, .adesivo-finale { animation: none; }
 }
 
-/* Sugli schermi grandi c'è spazio vero: torna a sinistra e più generosa. */
 @media (min-width: 900px) and (orientation: landscape) {
-  .adesivo-beccato { left: 28px; right: auto; bottom: 130px; height: 34vh; max-height: 300px; }
+  .beccato { flex-direction: row; gap: 36px; }
+  .beccato > img { height: 46vh; max-height: 420px; }
+  .beccato-frase { max-width: 40%; text-align: left; }
 }

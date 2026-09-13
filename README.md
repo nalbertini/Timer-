@@ -69,8 +69,11 @@ Quanto succede, per livello:
 
 ### Le illustrazioni
 
-Quando Maurizio si tradisce compare per qualche secondo un'illustrazione in un
-angolo, e un'altra a fine allenamento. Stanno in `public/adesivi/` e sono
+Quando Maurizio si tradisce, al centro dello schermo compaiono per qualche
+secondo un'illustrazione e la frase che gli sta scappando. Lo sfondo si scurisce
+ma non si annulla: dietro deve restare leggibile il numero che sta tornando
+indietro, che è poi il senso della gag. Un'altra illustrazione chiude
+l'allenamento. Stanno in `public/adesivi/` e sono
 **fuori dalla precache**: mezzo mega non va scaricato da chi la modalità non la
 usa. Alla prima richiesta entrano nella cache di runtime e da lì funzionano
 anche offline.
@@ -89,6 +92,12 @@ suonano metalliche, ed erano quelle che l'app pescava prima.
 
 Su iPhone e iPad le voci di qualità vanno scaricate una volta da
 Impostazioni › Accessibilità › Contenuto letto › Voci.
+
+Due difese contro un difetto noto di `speechSynthesis`: `cancel()` viene
+chiamato solo se c'è davvero qualcosa da fermare — a vuoto, seguito subito da
+`speak()`, su Safari e su alcune build Android fa pronunciare la frase due volte
+— e una stessa frase ripetuta entro un secondo viene scartata, perché non è mai
+voluta.
 
 ### Voce incisa
 

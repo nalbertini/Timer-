@@ -79,15 +79,15 @@ export function TimerScreen({
     [workout, settings.coach, run],
   )
   // L'illustrazione che compare quando Maurizio si tradisce, e quella finale.
-  const [beccato, setBeccato] = useState<string | null>(null)
+  const [beccato, setBeccato] = useState<{ src: string; frase: string } | null>(null)
   const [finale] = useState(() => a_caso(FINALE))
   const timeoutBeccato = useRef<number | undefined>(undefined)
 
-  const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish, () => {
+  const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish, (frase) => {
     if (settings.coach === 'off') return
-    setBeccato(a_caso(BECCATO))
+    setBeccato({ src: a_caso(BECCATO), frase })
     window.clearTimeout(timeoutBeccato.current)
-    timeoutBeccato.current = window.setTimeout(() => setBeccato(null), 3500)
+    timeoutBeccato.current = window.setTimeout(() => setBeccato(null), 3200)
   })
   useEffect(() => () => window.clearTimeout(timeoutBeccato.current), [])
 
@@ -245,7 +245,12 @@ export function TimerScreen({
         )}
       </div>
 
-      {beccato && !done && <img className="adesivo-beccato" src={beccato} alt="" />}
+      {beccato && !done && (
+        <div className="beccato">
+          <img src={beccato.src} alt="" />
+          <span className="beccato-frase">{beccato.frase}</span>
+        </div>
+      )}
 
       <div style={{ height: 10, background: 'var(--surface-2)' }}>
         <div style={{ height: '100%', width: `${done ? 100 : view.progress * 100}%`, background: tinta }} />

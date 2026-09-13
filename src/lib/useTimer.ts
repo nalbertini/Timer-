@@ -31,8 +31,8 @@ export function useTimer(
   segments: Segment[],
   settings: Settings,
   onFinish: (seconds: number, completed: boolean) => void,
-  /** Chiamata quando il conto mostrato risale: Maurizio si è tradito. */
-  onCoachSlip?: () => void,
+  /** Chiamata quando il conto mostrato risale, con la frase che gli scappa. */
+  onCoachSlip?: (frase: string) => void,
 ) {
   const [status, setStatus] = useState<Status>('idle')
   const [elapsed, setElapsed] = useState(0)
@@ -138,11 +138,9 @@ export function useTimer(
       // L'esitazione può cadere ovunque nell'intervallo, non solo in fondo:
       // la battuta va quindi legata al numero che risale, non al conto finale.
       if (tornatoIndietro) {
-        slipRef.current?.()
-        if (settings.voice) {
-          const i = Math.floor(Math.random() * COACH_LINES.length)
-          void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
-        }
+        const i = Math.floor(Math.random() * COACH_LINES.length)
+        slipRef.current?.(COACH_LINES[i])
+        if (settings.voice) void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
         return
       }
 
