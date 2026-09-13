@@ -215,3 +215,34 @@ input { font: inherit; color: inherit; }
   .only-mobile { display: none !important; }
   .page-title { display: block; }
 }
+
+
+/* ---------- illustrazioni della modalità Maurizio ---------- */
+
+.adesivo-beccato {
+  /* In un angolo e piccola: durante l'esitazione i numeri restano la cosa più
+     importante dello schermo e non vanno coperti. */
+  position: absolute; right: 8px; bottom: 92px; z-index: 4;
+  height: 18vh; max-height: 140px; width: auto; pointer-events: none;
+  filter: drop-shadow(0 6px 18px #000000cc);
+  animation: entra 240ms ease-out;
+}
+
+.adesivo-finale {
+  height: 34vh; max-height: 300px; width: auto;
+  animation: entra 320ms ease-out;
+}
+
+@keyframes entra {
+  from { opacity: 0; transform: translateY(14px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adesivo-beccato, .adesivo-finale { animation: none; }
+}
+
+/* Sugli schermi grandi c'è spazio vero: torna a sinistra e più generosa. */
+@media (min-width: 900px) and (orientation: landscape) {
+  .adesivo-beccato { left: 28px; right: auto; bottom: 130px; height: 34vh; max-height: 300px; }
+}

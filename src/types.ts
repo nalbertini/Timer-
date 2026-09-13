@@ -52,8 +52,8 @@ export interface Segment {
   sets: number
   /** Istante di inizio del segmento dall'avvio dell'allenamento (secondi). */
   offset: number
-  /** Secondi regalati da Maurizio, già compresi in `duration`. */
-  bonus?: number
+  /** Il conto mostrato secondo per secondo, quando Maurizio ci mette del suo. */
+  display?: number[]
 }
 
 /** Quanto è disonesto Maurizio quando conta. */

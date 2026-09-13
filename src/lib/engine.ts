@@ -215,18 +215,21 @@ export function describe(w: Workout): string {
  * ------------------------------------------------------------------ */
 
 export interface CoachOptions {
-  /** Quanti intervalli di lavoro vengono allungati, da 0 a 1. */
+  /** Quanti intervalli di lavoro vengono toccati, da 0 a 1. */
   probability: number
-  /** Estremi in secondi, entrambi PARI: vedi `applyCoach`. */
-  minBonus: number
-  maxBonus: number
+  /** Quante esitazioni dentro un intervallo. */
+  minEventi: number
+  maxEventi: number
+  /** Secondi regalati da ogni singola esitazione. */
+  minExtra: number
+  maxExtra: number
 }
 
 export const COACH_LEVELS: Record<CoachLevel, CoachOptions | null> = {
   off: null,
-  distratto: { probability: 0.25, minBonus: 2, maxBonus: 4 },
-  classico: { probability: 0.5, minBonus: 2, maxBonus: 6 },
-  spietato: { probability: 0.85, minBonus: 4, maxBonus: 10 },
+  distratto: { probability: 0.3, minEventi: 1, maxEventi: 1, minExtra: 1, maxExtra: 2 },
+  classico: { probability: 0.55, minEventi: 1, maxEventi: 2, minExtra: 1, maxExtra: 3 },
+  spietato: { probability: 0.85, minEventi: 1, maxEventi: 3, minExtra: 2, maxExtra: 4 },
 }
 
 export const COACH_LABEL: Record<CoachLevel, string> = {
@@ -238,9 +241,9 @@ export const COACH_LABEL: Record<CoachLevel, string> = {
 
 export const COACH_HINT: Record<CoachLevel, string> = {
   off: 'Il timer conta onestamente.',
-  distratto: 'Ogni tanto perde il filo: un paio di secondi in più.',
-  classico: 'Il Maurizio di tutti i giorni: metà degli intervalli si allungano.',
-  spietato: 'Sbaglia a contare quasi sempre, e non di poco.',
+  distratto: 'Ogni tanto perde il filo, e per poco.',
+  classico: 'Il Maurizio di tutti i giorni: succede a circa un intervallo su due.',
+  spietato: 'Sbaglia quasi sempre, anche più volte nello stesso intervallo.',
 }
 
 /** Le frasi che gli scappano quando lo becchi a sbagliare. */
@@ -252,6 +255,50 @@ export const COACH_LINES = [
   'Dai che è quasi finita',
   'Scusate, mi sono distratto',
 ]
+
+const intero = (rand: () => number, min: number, max: number) => min + Math.floor(rand() * (max - min + 1))
+
+/**
+ * Costruisce il conto alla rovescia mostrato per un intervallo, con le sue
+ * esitazioni.
+ *
+ * Invece di una formula che produce sempre lo stesso rimbalzo alla stessa
+ * distanza dalla fine, si genera la sequenza completa dei numeri da mostrare,
+ * un elemento per secondo. Le esitazioni cadono in punti a caso e sono di due
+ * tipi: si inceppa su un numero, oppure torna indietro e riscende. La durata
+ * dell'intervallo è semplicemente la lunghezza della sequenza.
+ */
+export function hesitantCountdown(base: number, opts: CoachOptions, rand: () => number): number[] {
+  const seq: number[] = []
+  for (let n = base; n >= 1; n--) seq.push(n)
+
+  const eventi = intero(rand, opts.minEventi, opts.maxEventi)
+  for (let e = 0; e < eventi; e++) {
+    // Mai sul primo secondo (non si è ancora contato niente) né dopo l'ultimo.
+    const i = intero(rand, 1, seq.length - 1)
+    const val = seq[i]
+    const extra = intero(rand, opts.minExtra, opts.maxExtra)
+
+    if (rand() < 0.3) {
+      // Si inceppa: il numero resta lì qualche secondo. Tenuto corto, perché
+      // un numero fermo a lungo sembra l'app bloccata più che una gag.
+      seq.splice(i + 1, 0, ...Array(Math.min(extra, 2)).fill(val))
+    } else {
+      // Torna indietro e riscende: «dodici… tredici? dodici… undici».
+      // Il blocco è di lunghezza pari e chiude su `val`, così il numero
+      // successivo della sequenza originale, val - 1, segue senza salti.
+      const passi = Math.max(2, extra % 2 === 0 ? extra : extra + 1)
+      const blocco: number[] = []
+      for (let k = 0; k < passi; k++) blocco.push(k % 2 === 0 ? val + 1 : val)
+      seq.splice(i + 1, 0, ...blocco)
+    }
+  }
+
+  // Due esitazioni capitate vicine possono lasciare lo stesso numero fermo per
+  // molti secondi, e un numero fermo a lungo è l'unica cosa che sembra un
+  // blocco dell'app invece di una gag: non più di due secondi uguali di fila.
+  return seq.filter((v, i) => !(i >= 2 && seq[i - 1] === v && seq[i - 2] === v))
+}
 
 /**
  * Allunga gli intervalli di lavoro e ricalcola gli offset. Restituisce una
@@ -266,39 +313,23 @@ export function applyCoach(segments: Segment[], level: CoachLevel, rand: () => n
     // Solo il lavoro si allunga: sul recupero Maurizio conta benissimo. E un
     // intervallo troppo corto non regge un ripensamento credibile.
     const eligible = seg.kind === 'work' && !seg.countUp && seg.duration >= 10
-    // Il bonus è sempre pari, e non per capriccio: con un bonus dispari il
-    // rimbalzo 3-2-3-2 non può insieme attaccarsi al 3 e chiudere su 3,2,1,
-    // e il conto finirebbe per saltare un numero. Vincolare l'ingresso costa
-    // un secondo di granularità e rende la sequenza corretta per costruzione.
-    const passi = Math.floor((opts.maxBonus - opts.minBonus) / 2) + 1
-    const bonus =
-      eligible && rand() < opts.probability ? opts.minBonus + 2 * Math.floor(rand() * passi) : 0
-    const out: Segment = { ...seg, duration: seg.duration + bonus, offset, ...(bonus > 0 ? { bonus } : {}) }
+    if (!eligible || rand() >= opts.probability) {
+      const out: Segment = { ...seg, offset }
+      offset += out.duration
+      return out
+    }
+    const display = hesitantCountdown(seg.duration, opts, rand)
+    const out: Segment = { ...seg, duration: display.length, offset, display }
     offset += out.duration
     return out
   })
 }
 
-/**
- * Il numero da mostrare a schermo.
- *
- * L'intervallo deve sembrare quello nominale: il conto parte dalla durata
- * senza bonus e scende normalmente fino a 3, e solo lì comincia a rimbalzare
- * fra 3 e 2 prima di chiudere su 1 — «tre… due… tre! due… uno». Sottrarre il
- * bonus finché siamo lontani dalla fine è ciò che tiene il numero continuo:
- * senza, si passerebbe di colpo da 12 a 3.
- */
+/** Il numero da mostrare: un elemento della sequenza per ogni secondo passato. */
 export function coachedDisplay(seg: Segment | null, remaining: number): number {
-  if (!seg?.bonus || seg.countUp) return remaining
-  const tail = seg.bonus + 3
-  if (remaining > tail) return remaining - seg.bonus
-  const left = Math.ceil(remaining)
-  if (left <= 0) return remaining
-  // `left` scende da tail a 1: leggiamo la coda dall'inizio.
-  const step = tail - left
-  const wobble = seg.bonus
-  // Con `wobble` pari il rimbalzo parte da 3, attaccandosi al 4 appena
-  // mostrato, e finisce su 2, lasciando il posto al 3,2,1 di chiusura.
-  if (step < wobble) return step % 2 === 0 ? 3 : 2
-  return tail - step
+  if (!seg?.display || seg.countUp) return remaining
+  const i = Math.floor(seg.duration - remaining)
+  if (i < 0) return seg.display[0]
+  if (i >= seg.display.length) return 0
+  return seg.display[i]
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Settings, Workout } from '../types'
 import { applyCoach, buildSegments } from '../lib/engine'
+import { BECCATO, FINALE, a_caso } from '../lib/adesivi'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
 import { useWakeLock } from '../lib/wakeLock'
@@ -77,7 +78,19 @@ export function TimerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [workout, settings.coach, run],
   )
-  const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish)
+  // L'illustrazione che compare quando Maurizio si tradisce, e quella finale.
+  const [beccato, setBeccato] = useState<string | null>(null)
+  const [finale] = useState(() => a_caso(FINALE))
+  const timeoutBeccato = useRef<number | undefined>(undefined)
+
+  const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish, () => {
+    if (settings.coach === 'off') return
+    setBeccato(a_caso(BECCATO))
+    window.clearTimeout(timeoutBeccato.current)
+    timeoutBeccato.current = window.setTimeout(() => setBeccato(null), 3500)
+  })
+  useEffect(() => () => window.clearTimeout(timeoutBeccato.current), [])
+
   const seg = view.segment
 
   const startOrToggle = () => {
@@ -128,15 +141,18 @@ export function TimerScreen({
     return () => window.removeEventListener('keydown', onKey)
   }, [skip])
 
-  const color = seg ? STATE_COLOR[seg.kind] : 'var(--line)'
   const idle = view.status === 'idle'
   const done = view.status === 'done'
+  const color = seg ? STATE_COLOR[seg.kind] : 'var(--line)'
+  // A fine allenamento comanda il verde: bordo, barra e pulsante devono dire
+  // la stessa cosa, non restare sul colore dell'ultimo intervallo.
+  const tinta = done ? 'var(--verde)' : color
 
   const rounds = seg?.rounds ?? workout.rounds
   const roundDots = Array.from({ length: Math.min(rounds, 16) }, (_, i) => i + 1)
 
   return (
-    <div className="timer" style={{ ['--state' as string]: done ? 'var(--verde)' : color }}>
+    <div className="timer" style={{ ['--state' as string]: tinta }}>
       <div className="row" style={{ gap: 12, padding: 'calc(var(--safe-t) + 14px) 20px 0' }}>
         <button className="icon-btn" onClick={exit} aria-label="Chiudi il timer">
           <Close />
@@ -145,15 +161,24 @@ export function TimerScreen({
           <span className="ob" style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
             {workout.name.toUpperCase()}
           </span>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--dim)' }}>
-            {seg && seg.sets > 1 ? `SERIE ${seg.set} / ${seg.sets} · ` : ''}
-            RESTA {clock(view.remainingTotal)}
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              color: 'var(--dim)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {seg && seg.sets > 1 ? `SERIE ${seg.set} / ${seg.sets}` : workout.name.toUpperCase()}
           </span>
         </div>
         {settings.coach !== 'off' && (
           <span
             className="badge"
-            style={{ background: 'var(--giallo)', alignSelf: 'center' }}
+            style={{ background: 'var(--giallo)', alignSelf: 'center', fontSize: 9, letterSpacing: '0.1em', padding: '3px 6px' }}
             title="Maurizio ogni tanto perde il conto"
           >
             MAURIZIO
@@ -186,6 +211,7 @@ export function TimerScreen({
       <div className="timer-main">
         {done ? (
           <>
+            {settings.coach !== 'off' && <img className="adesivo-finale" src={finale} alt="" />}
             <span className="state-label">COMPLETATO</span>
             <Digits value={clock(view.total)} />
             <span className="exercise">{workout.name}</span>
@@ -205,7 +231,7 @@ export function TimerScreen({
                   {seg ? `${seg.round || 1}/${seg.rounds}` : '—'}
                 </span>
                 <span className="cond" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.16em', color: 'var(--dim)' }}>
-                  TOTALE {clock(view.total)}
+                  RESTA {clock(view.remainingTotal)}
                 </span>
               </div>
             </div>
@@ -219,8 +245,10 @@ export function TimerScreen({
         )}
       </div>
 
+      {beccato && !done && <img className="adesivo-beccato" src={beccato} alt="" />}
+
       <div style={{ height: 10, background: 'var(--surface-2)' }}>
-        <div style={{ height: '100%', width: `${view.progress * 100}%`, background: color }} />
+        <div style={{ height: '100%', width: `${done ? 100 : view.progress * 100}%`, background: tinta }} />
       </div>
 
       {view.next && !done && (
@@ -240,7 +268,7 @@ export function TimerScreen({
         </button>
         <button
           className="btn grow"
-          style={{ height: 68, background: done ? 'var(--verde)' : color, color: '#121212' }}
+          style={{ height: 68, background: tinta, color: '#121212' }}
           onClick={done ? exit : startOrToggle}
         >
           {view.status === 'running' ? <Pause size={22} /> : <Play size={22} />}

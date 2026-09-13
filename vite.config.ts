@@ -35,6 +35,18 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         runtimeCaching: [
           {
+            // Le illustrazioni della modalità Maurizio pesano mezzo mega: non
+            // entrano nella precache, si scaricano solo se qualcuno usa la
+            // modalità, e da lì restano disponibili anche offline.
+            urlPattern: /\/adesivi\/.*\.webp$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ods-adesivi',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // I font restano disponibili anche senza rete, dopo il primo caricamento.
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: 'CacheFirst',

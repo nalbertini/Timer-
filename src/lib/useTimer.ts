@@ -31,6 +31,8 @@ export function useTimer(
   segments: Segment[],
   settings: Settings,
   onFinish: (seconds: number, completed: boolean) => void,
+  /** Chiamata quando il conto mostrato risale: Maurizio si è tradito. */
+  onCoachSlip?: () => void,
 ) {
   const [status, setStatus] = useState<Status>('idle')
   const [elapsed, setElapsed] = useState(0)
@@ -39,9 +41,11 @@ export function useTimer(
   const bankedRef = useRef(0)
   const anchorRef = useRef(0)
   const lastIndexRef = useRef(-1)
-  const lastBeepRef = useRef(-1)
+  const lastShownRef = useRef(-1)
   const finishRef = useRef(onFinish)
   finishRef.current = onFinish
+  const slipRef = useRef(onCoachSlip)
+  slipRef.current = onCoachSlip
 
   cues.current.volume = settings.volume
 
@@ -118,30 +122,39 @@ export function useTimer(
 
       if (i !== lastIndexRef.current) {
         lastIndexRef.current = i
-        lastBeepRef.current = -1
+        lastShownRef.current = -1
         announce(seg)
         return
       }
 
       if (seg.countUp) return
-      // I bip seguono il numero MOSTRATO, non quello vero: altrimenti
-      // tradirebbero il ripensamento di Maurizio un attimo prima che si veda.
-      const left = Math.ceil(coachedDisplay(seg, seg.offset + seg.duration - now))
-      if (left > 3 || left < 1 || left === lastBeepRef.current) return
-      const wentBackUp = lastBeepRef.current > 0 && left > lastBeepRef.current
-      lastBeepRef.current = left
+      // Si reagisce al numero MOSTRATO, non a quello vero: altrimenti bip e
+      // voce tradirebbero il ripensamento un attimo prima che si veda.
+      const mostrato = Math.ceil(coachedDisplay(seg, seg.offset + seg.duration - now))
+      if (mostrato < 1 || mostrato === lastShownRef.current) return
+      const tornatoIndietro = lastShownRef.current > 0 && mostrato > lastShownRef.current
+      lastShownRef.current = mostrato
+
+      // L'esitazione può cadere ovunque nell'intervallo, non solo in fondo:
+      // la battuta va quindi legata al numero che risale, non al conto finale.
+      if (tornatoIndietro) {
+        slipRef.current?.()
+        if (settings.voice) {
+          const i = Math.floor(Math.random() * COACH_LINES.length)
+          void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
+        }
+        return
+      }
+
+      if (mostrato > 3) return
       // Con la voce incisa il numero viene detto; il bip resta solo come
       // ripiego, per non raddoppiare il segnale.
       if (settings.recordedVoice && settings.voice) {
-        void say([NUMBER_CLIP[left]], '', voiceRef.current).then((detto) => {
+        void say([NUMBER_CLIP[mostrato]], '', voiceRef.current).then((detto) => {
           if (!detto && settings.countdownBeep) cues.current.countdown()
         })
       } else if (settings.countdownBeep) {
         cues.current.countdown()
-      }
-      if (wentBackUp && settings.voice) {
-        const i = Math.floor(Math.random() * COACH_LINES.length)
-        void say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
       }
     }
 
@@ -168,7 +181,7 @@ export function useTimer(
     bankedRef.current = 0
     anchorRef.current = performance.now()
     lastIndexRef.current = -1
-    lastBeepRef.current = -1
+    lastShownRef.current = -1
     setElapsed(0)
     setStatus('running')
   }, [])
@@ -200,7 +213,7 @@ export function useTimer(
       bankedRef.current = t
       anchorRef.current = performance.now()
       setElapsed(t)
-      lastBeepRef.current = -1
+      lastShownRef.current = -1
       const i = indexAt(t)
       lastIndexRef.current = i
       if (status === 'done') setStatus('paused')
@@ -212,6 +225,10 @@ export function useTimer(
 
   const skip = useCallback(
     (step: 1 | -1) => {
+      // A fine allenamento «avanti» non porta da nessuna parte: senza questo,
+      // riportava indietro a un'ultima frazione di secondo, in pausa, come se
+      // l'allenamento non fosse mai finito. Indietro invece resta utile.
+      if (step === 1 && status === 'done') return
       const now = bankedRef.current + (status === 'running' ? (performance.now() - anchorRef.current) / 1000 : 0)
       const i = indexAt(now)
       if (i < 0) return
@@ -237,7 +254,7 @@ export function useTimer(
     bankedRef.current = 0
     setElapsed(0)
     lastIndexRef.current = -1
-    lastBeepRef.current = -1
+    lastShownRef.current = -1
     setStatus('idle')
   }, [status])
 

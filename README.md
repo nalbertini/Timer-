@@ -42,21 +42,38 @@ Come l'allenatore che «perde il conto» per farti lavorare qualche secondo in
 più. Spenta di default, con tre livelli: **distratto**, **classico**,
 **spietato**.
 
-Sono due meccanismi distinti, e tenerli separati è ciò che li rende gestibili:
+All'avvio, per ogni intervallo di lavoro, si genera la **sequenza completa dei
+numeri da mostrare**, un elemento per secondo. Le esitazioni cadono in punti a
+caso e sono di due tipi: si inceppa su un numero, oppure torna indietro e
+riscende — «dodici… tredici? dodici… undici». La durata dell'intervallo è
+semplicemente la lunghezza della sequenza, quindi offset, barra di avanzamento
+e durata totale restano coerenti e il motore del timer non sa nulla della cosa.
 
-1. **Il tempo in più** viene estratto all'avvio e cucito dentro la durata dei
-   segmenti di lavoro. Offset, barra di avanzamento e durata totale restano
-   coerenti, e il motore del timer non sa nulla della cosa. Il recupero non si
-   tocca mai: Maurizio conta benissimo quando sei fermo.
-2. **La sceneggiata** vive solo nel numero mostrato. Il conto scende normalmente
-   fino a 3, poi rimbalza: `4 3 2 3 2 3 2 1`. I bip e la voce seguono il numero
-   mostrato, non quello vero, altrimenti tradirebbero il trucco un attimo prima
-   che si veda.
+Generare la sequenza invece di applicare una formula è ciò che rende la gag
+imprevedibile: il punto cambia ogni volta, il numero di esitazioni pure, e su
+mille intervalli le sequenze osservate sono quasi tutte diverse fra loro. Il
+recupero non si tocca mai: quando sei fermo Maurizio conta benissimo.
 
-Il bonus è sempre di un numero **pari** di secondi. Non è un capriccio: con un
-bonus dispari il rimbalzo non può insieme attaccarsi al 3 e chiudere su 3-2-1,
-e il conto finirebbe per saltare un numero. Vincolare l'ingresso costa un
-secondo di granularità e rende la sequenza corretta per costruzione.
+Due vincoli, entrambi per non sembrare un difetto invece di uno scherzo:
+lo stesso numero non resta fermo più di due secondi, e bip e voce seguono il
+numero **mostrato**, non quello vero, altrimenti tradirebbero il trucco un
+attimo prima che si veda.
+
+Quanto succede, per livello:
+
+| Livello | Intervalli toccati | Secondi in più, quando succede |
+| --- | --- | --- |
+| Distratto | ~30% | ~1,7" |
+| Classico | ~55% | ~3,3" |
+| Spietato | ~85% | ~5,2" |
+
+### Le illustrazioni
+
+Quando Maurizio si tradisce compare per qualche secondo un'illustrazione in un
+angolo, e un'altra a fine allenamento. Stanno in `public/adesivi/` e sono
+**fuori dalla precache**: mezzo mega non va scaricato da chi la modalità non la
+usa. Alla prima richiesta entrano nella cache di runtime e da lì funzionano
+anche offline.
 
 ## La voce
 
