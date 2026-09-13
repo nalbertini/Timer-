@@ -140,3 +140,10 @@ export const Dumbbell = ({ size = 22 }: P) => (
     <path d="M6 12h12" />
   </svg>
 )
+
+/** Freccetta per spostare una riga su o giù nell'elenco. */
+export const Caret = ({ size = 14, verso = 'su' }: P & { verso?: 'su' | 'giu' }) => (
+  <svg {...base(size)} strokeWidth={2.5} aria-hidden="true">
+    <polyline points={verso === 'su' ? '6 15 12 9 18 15' : '6 9 12 15 18 9'} />
+  </svg>
+)

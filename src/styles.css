@@ -92,6 +92,16 @@ input, textarea { font: inherit; color: inherit; }
 .btn-dashed:hover { border-color: var(--dim); color: var(--text); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Le frecce per riordinare una riga: piccole ma con un'area di tocco vera,
+   e spente in cima e in fondo all'elenco invece di non fare niente. */
+.riordina {
+  width: 32px; height: 25px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--faint); background: var(--surface-2);
+}
+.riordina:hover:not(:disabled) { color: var(--text); }
+.riordina:disabled { opacity: 0.3; cursor: default; }
+
 .chip {
   padding: 10px 16px; white-space: nowrap;
   font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
@@ -310,6 +320,56 @@ input, textarea { font: inherit; color: inherit; }
      più in basso c'è la riga «prossimo». Resta la fascia vuota sotto
      l'anello. */
   .adesivo-stato { left: 0; right: auto; top: auto; bottom: 0; height: 16vh; max-height: 130px; }
+}
+
+/* ---------- modalità schermo grande ---------- */
+
+/* Il tablet appeso in sala si guarda da dieci metri, e chi lo guarda vuole
+   sapere due cose: quanto manca e cosa sta facendo. Tutto il resto si toglie
+   di mezzo — la riga «prossimo» sparisce, l'anello si stringe a fare da
+   contagiri e da posto per Maurizio, i margini laterali servono a chi tiene
+   il telefono in mano e non a un muro — e quello spazio va alle cifre. Le
+   regole stanno su un attributo e non in una media query perché è una scelta
+   di chi usa l'app, non una misura dello schermo.
+
+   Prima le misure di base, poi le condizioni per orientamento: hanno la
+   stessa specificità, quindi a decidere è l'ordine. */
+.timer[data-grande='true'] {
+  --anello: min(190px, 22vh, 24vw);
+}
+.timer[data-grande='true'] .timer-main { padding: 0 16px; gap: 24px; }
+.timer[data-grande='true'] .state-label { font-size: clamp(26px, 5vw, 64px); }
+.timer[data-grande='true'] .exercise { font-size: clamp(22px, 4.2vw, 54px); }
+.timer[data-grande='true'] .obiettivo { font-size: clamp(15px, 2.4vw, 30px); }
+.timer[data-grande='true'] .beccato-frase { font-size: clamp(13px, 2.6vw, 20px); }
+.timer[data-grande='true'] .timer-prossimo { display: none; }
+.timer[data-grande='true'] .timer-dots { padding-top: 10px; }
+.timer[data-grande='true'] .timer-controlli { gap: 10px; padding: 10px 20px calc(var(--safe-b) + 12px); }
+.timer[data-grande='true'] .tasto-salto { width: 56px; height: 56px; }
+.timer[data-grande='true'] .tasto-avvia { height: 56px; }
+.timer[data-grande='true'] .adesivo-stato { height: 11vh; max-height: 90px; }
+
+/* «00:45» è largo 2,53 volte il corpo del carattere — misurato, non stimato —
+   e se non ci sta va a capo su due righe e sfonda tutto quello che ha sotto,
+   compresi i comandi. Il limite vero non è quindi l'altezza ma la larghezza,
+   e cambia con l'orientamento, perché in orizzontale la colonna deve
+   dividersi lo schermo con l'anello. Da qui tetti diversi, ognuno con un
+   margine sopra il minimo calcolato per lo schermo più stretto della
+   sua categoria. */
+@media (orientation: portrait) {
+  .timer[data-grande='true'] .digits { font-size: min(35vw, 58vh); }
+}
+@media (orientation: landscape) {
+  .timer[data-grande='true'] .digits { font-size: min(29vw, 55vh); }
+}
+/* Un telefono girato di lato non ha spazio da regalare a nessuno: lì la
+   modalità schermo grande torna alle misure normali, invece di far
+   traboccare il nome dell'esercizio sotto la barra di avanzamento. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .timer[data-grande='true'] .digits { font-size: min(18vw, 30vh); }
+  .timer[data-grande='true'] .state-label { font-size: clamp(18px, 3.4vw, 30px); }
+  .timer[data-grande='true'] .exercise { font-size: clamp(16px, 3vw, 28px); }
+  .timer[data-grande='true'] .obiettivo { font-size: clamp(12px, 2vw, 18px); }
 }
 
 /* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */

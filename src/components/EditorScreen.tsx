@@ -4,7 +4,7 @@ import { PickerEsercizi } from './PickerEsercizi'
 import type { Exercise, Mode, Segment, Workout } from '../types'
 import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, descriviObiettivo, totalDuration } from '../lib/engine'
 import { clock, uid } from '../lib/format'
-import { Back, Drag, Minus, Play, Plus, Trash } from './Icons'
+import { Back, Caret, Minus, Play, Plus, Trash } from './Icons'
 
 type Field = keyof Workout
 
@@ -249,14 +249,27 @@ export function EditorScreen({
             return (
               <div key={ex.id} className="card stack" style={{ gap: 6, padding: '8px 10px' }}>
                 <div className="row" style={{ gap: 8 }}>
-                  <button
-                    className="icon-btn"
-                    style={{ width: 30, height: 44, border: 'none', color: 'var(--faint)' }}
-                    onClick={() => move(i, -1)}
-                    aria-label="Sposta su"
-                  >
-                    <Drag />
-                  </button>
+                  {/* Due frecce invece di una maniglia: sembrava trascinabile e
+                      non lo era, e sapeva solo salire — per far scendere una
+                      stazione bisognava far salire tutte le altre. */}
+                  <div className="stack" style={{ gap: 2, flexShrink: 0 }}>
+                    <button
+                      className="riordina"
+                      onClick={() => move(i, -1)}
+                      disabled={i === 0}
+                      aria-label={`Sposta ${ex.name || `la riga ${i + 1}`} più in alto`}
+                    >
+                      <Caret verso="su" />
+                    </button>
+                    <button
+                      className="riordina"
+                      onClick={() => move(i, 1)}
+                      disabled={i === w.exercises.length - 1}
+                      aria-label={`Sposta ${ex.name || `la riga ${i + 1}`} più in basso`}
+                    >
+                      <Caret verso="giu" />
+                    </button>
+                  </div>
                   <span className="num" style={{ fontSize: 15, fontWeight: 600, color: 'var(--faint)', width: 22 }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>

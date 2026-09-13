@@ -168,7 +168,7 @@ export function TimerScreen({
   const roundDots = Array.from({ length: Math.min(rounds, 16) }, (_, i) => i + 1)
 
   return (
-    <div className="timer" style={{ ['--state' as string]: tinta }}>
+    <div className="timer" data-grande={settings.bigScreen} style={{ ['--state' as string]: tinta }}>
       <div className="row timer-top">
         <button className="icon-btn" onClick={exit} aria-label="Chiudi il timer">
           <Close />
