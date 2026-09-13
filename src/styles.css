@@ -322,6 +322,14 @@ input, textarea { font: inherit; color: inherit; }
   .adesivo-stato { left: 0; right: auto; top: auto; bottom: 0; height: 16vh; max-height: 130px; }
 }
 
+/* Il QR sta su carta bianca anche dentro un'app nera: un lettore cerca moduli
+   scuri su chiaro, e invertirli è il modo più sicuro di non farsi leggere. */
+.qr-carta {
+  align-self: center; background: #ffffff; padding: 14px;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 180px; width: min(300px, 86vw);
+}
+
 /* ---------- modalità schermo grande ---------- */
 
 /* Il tablet appeso in sala si guarda da dieci metri, e chi lo guarda vuole

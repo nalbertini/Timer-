@@ -15,6 +15,9 @@ import { SettingsScreen } from './components/SettingsScreen'
 import { VoiceRecorderScreen } from './components/VoiceRecorderScreen'
 import { HistoryScreen } from './components/HistoryScreen'
 import { EserciziScreen } from './components/EserciziScreen'
+import { CondividiScreen } from './components/CondividiScreen'
+import { RicevutoScreen } from './components/RicevutoScreen'
+import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { Dumbbell, Gear, History, Library, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
@@ -23,6 +26,8 @@ type View =
   | { kind: 'tabs' }
   | { kind: 'editor'; workout: Workout }
   | { kind: 'run'; workout: Workout }
+  | { kind: 'condividi'; workout: Workout }
+  | { kind: 'ricevuto'; workout: Workout }
   | { kind: 'voce' }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
@@ -65,6 +70,25 @@ export default function App() {
       window.removeEventListener('pointerdown', sblocca)
       window.removeEventListener('keydown', sblocca)
     }
+  }, [])
+
+  // Un allenamento può arrivare dentro l'indirizzo, da un QR inquadrato sul
+  // tablet della sala o da un link su WhatsApp. Si mostra subito, e
+  // l'indirizzo si ripulisce: un ricarica non deve riproporlo all'infinito.
+  useEffect(() => {
+    const guarda = () => {
+      void workoutDaLink().then((w) => {
+        if (!w) return
+        pulisciLink()
+        setView({ kind: 'ricevuto', workout: w })
+      })
+    }
+    guarda()
+    // Un link aperto mentre l'app è già in primo piano non ricarica niente: il
+    // browser cambia solo il frammento. Senza ascoltarlo, il timer mandato su
+    // WhatsApp non arriverebbe mai a chi ha già l'app aperta.
+    window.addEventListener('hashchange', guarda)
+    return () => window.removeEventListener('hashchange', guarda)
   }, [])
 
   // Le clip si scaldano all'apertura dell'app, non all'apertura del timer.
@@ -175,6 +199,7 @@ export default function App() {
             onEdit={(w) => setView({ kind: 'editor', workout: w })}
             onDuplicate={duplicate}
             onDelete={remove}
+            onShare={(w) => setView({ kind: 'condividi', workout: w })}
             onNew={() => setView({ kind: 'editor', workout: blankWorkout('interval') })}
           />
         )
@@ -222,6 +247,26 @@ export default function App() {
         settings={settings}
         onExit={() => setView({ kind: 'tabs' })}
         onFinish={recordFinish(view.workout)}
+      />
+    )
+  }
+
+  if (view.kind === 'condividi') {
+    return <CondividiScreen workout={view.workout} onBack={() => setView({ kind: 'tabs' })} />
+  }
+
+  if (view.kind === 'ricevuto') {
+    const ricevuto = view.workout
+    return (
+      <RicevutoScreen
+        workout={ricevuto}
+        onSalva={() => {
+          upsert(ricevuto)
+          setTab('timer')
+          setView({ kind: 'tabs' })
+        }}
+        onAvvia={() => setView({ kind: 'run', workout: ricevuto })}
+        onChiudi={() => setView({ kind: 'tabs' })}
       />
     )
   }

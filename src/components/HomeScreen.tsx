@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { Mode, Workout } from '../types'
 import { MODE_BADGE, describe, totalDuration } from '../lib/engine'
 import { compact } from '../lib/format'
-import { Copy, Edit, Play, Plus, Trash } from './Icons'
+import { Copy, Edit, Play, Plus, Share, Trash } from './Icons'
 
 const MODE_TINT: Record<Mode, string> = {
   interval: 'var(--rosso)',
@@ -27,6 +27,7 @@ export function HomeScreen({
   onEdit,
   onDuplicate,
   onDelete,
+  onShare,
   onNew,
 }: {
   workouts: Workout[]
@@ -34,6 +35,7 @@ export function HomeScreen({
   onEdit: (w: Workout) => void
   onDuplicate: (w: Workout) => void
   onDelete: (w: Workout) => void
+  onShare: (w: Workout) => void
   onNew: () => void
 }) {
   const [filter, setFilter] = useState<Mode | 'all'>('all')
@@ -116,6 +118,14 @@ export function HomeScreen({
                   >
                     <Copy size={16} />
                     DUPLICA
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }}
+                    onClick={() => onShare(w)}
+                  >
+                    <Share size={16} />
+                    INVIA
                   </button>
                   <div className="grow" />
                   <button

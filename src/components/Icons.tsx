@@ -147,3 +147,14 @@ export const Caret = ({ size = 14, verso = 'su' }: P & { verso?: 'su' | 'giu' })
     <polyline points={verso === 'su' ? '6 15 12 9 18 15' : '6 9 12 15 18 9'} />
   </svg>
 )
+
+/** Mandare un allenamento a un altro dispositivo: il QR è la strada corta. */
+export const Share = ({ size = 18 }: P) => (
+  <svg {...base(size)} aria-hidden="true">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <path d="M14 14h3v3h-3z" />
+    <path d="M20 14v3M17 20h4M14 20v1" />
+  </svg>
+)
