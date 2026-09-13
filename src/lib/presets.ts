@@ -9,7 +9,9 @@ export function blankWorkout(mode: Mode): Workout {
     id: uid(),
     name: '',
     mode,
-    prepare: 10,
+    // Venti secondi: il tempo che serve davvero per mettersi in posizione in
+    // sala, che è il modo in cui la palestra comincia un allenamento.
+    prepare: 20,
     work: 30,
     rest: 15,
     rounds: 8,
@@ -35,9 +37,9 @@ export function blankWorkout(mode: Mode): Workout {
     case 'emom':
       return { ...base, name: 'Nuovo EMOM', work: 60, rest: 0, rounds: 10 }
     case 'amrap':
-      return { ...base, name: 'Nuovo AMRAP', duration: 900, prepare: 10 }
+      return { ...base, name: 'Nuovo AMRAP', duration: 900 }
     case 'fortime':
-      return { ...base, name: 'Nuovo For Time', duration: 900, prepare: 10 }
+      return { ...base, name: 'Nuovo For Time', duration: 900 }
   }
 }
 
@@ -120,7 +122,6 @@ export function seedLibrary(): Workout[] {
     w({
       name: 'Brucia grassi',
       mode: 'interval',
-      prepare: 10,
       work: 20,
       rest: 10,
       rounds: 8,
@@ -131,7 +132,6 @@ export function seedLibrary(): Workout[] {
     w({
       name: 'EMOM 12 · gambe',
       mode: 'emom',
-      prepare: 10,
       work: 60,
       rounds: 12,
       exercises: ex('Goblet squat', 'Affondi alternati', 'Stacco rumeno', 'Step up'),
@@ -139,14 +139,12 @@ export function seedLibrary(): Workout[] {
     w({
       name: 'AMRAP del sabato',
       mode: 'amrap',
-      prepare: 10,
       duration: 1200,
       exercises: ex('10 kettlebell swing', '10 push up', '10 box jump'),
     }),
     w({
       name: 'Circuito sala attrezzi',
       mode: 'circuit',
-      prepare: 15,
       work: 45,
       rest: 15,
       rounds: 4,
@@ -155,7 +153,6 @@ export function seedLibrary(): Workout[] {
     w({
       name: 'Core express',
       mode: 'interval',
-      prepare: 10,
       work: 20,
       rest: 10,
       rounds: 8,
@@ -166,7 +163,6 @@ export function seedLibrary(): Workout[] {
     w({
       name: 'Benchmark mensile',
       mode: 'fortime',
-      prepare: 10,
       duration: 900,
       exercises: ex('50 air squat', '40 sit up', '30 push up', '20 burpee', '10 pull up'),
     }),

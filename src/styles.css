@@ -145,7 +145,13 @@ input, textarea { font: inherit; color: inherit; }
 
 /* ---------- timer ---------- */
 
-.timer { position: relative; height: 100%; display: flex; flex-direction: column; }
+/* `--anello` è la misura dell'anello, e quindi anche quella dell'illustrazione
+   che ne prende il posto: una manopola sola, che le media query girano
+   insieme invece di lasciare che le due misure si allontanino. */
+.timer {
+  position: relative; height: 100%; display: flex; flex-direction: column;
+  --anello: min(300px, 34vh, 58vw);
+}
 .timer::after {
   content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
   border: 10px solid var(--state);
@@ -242,23 +248,29 @@ input, textarea { font: inherit; color: inherit; }
    prendono il centro dello schermo. Lo sfondo si scurisce ma non si annulla:
    dietro deve restare leggibile il numero che sta tornando indietro, che è
    poi il senso della gag. */
+/* Maurizio prende il posto dell'anello, non quello dello schermo.
+   Copriva tutto per tre secondi, e con lui sparivano il numero — cioè proprio
+   la cosa che sta facendo ridere — e il nome dell'esercizio. Occupando la
+   stessa misura dell'anello, il blocco sotto non si sposta di un pixel. */
 .beccato {
-  position: absolute; inset: 0; z-index: 4;
+  flex-shrink: 0; width: var(--anello); height: var(--anello);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 10px; padding: 20px; pointer-events: none;
-  background: #121212cc;
+  gap: 4px; pointer-events: none;
   animation: entra 200ms ease-out;
 }
 
 .beccato > img {
-  height: 34vh; max-height: 300px; width: auto;
+  /* Si stringe se la frase è lunga: il riquadro ha la misura dell'anello e non
+     cresce, quindi a cedere deve essere l'illustrazione, non il testo. */
+  height: 62%; min-height: 0; flex-shrink: 1;
+  width: auto; max-width: 100%; object-fit: contain;
   filter: drop-shadow(0 10px 26px #000000cc);
 }
 
 .beccato-frase {
   font-family: var(--cond); font-style: oblique 9deg; font-weight: 700;
-  font-size: clamp(22px, 6.5vw, 46px); letter-spacing: 0.05em; line-height: 1.1;
-  color: var(--giallo); text-align: center; text-wrap: balance; max-width: 92%;
+  font-size: clamp(15px, 4vw, 24px); letter-spacing: 0.04em; line-height: 1.08;
+  color: var(--giallo); text-align: center; text-wrap: balance;
   text-shadow: 0 2px 12px #000000cc;
 }
 
@@ -286,30 +298,18 @@ input, textarea { font: inherit; color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .beccato, /* Gli stati tranquilli: piccola e in un angolo, non deve rubare la scena ai
-   numeri né competere con l'illustrazione centrale di Maurizio. */
-.adesivo-stato {
-  /* In alto a destra dentro il blocco centrale, non dello schermo: è lo spazio
-     morto accanto all'anello, e ancorata qui non può invadere l'intestazione
-     quando il nome dell'allenamento va a capo. */
-  position: absolute; right: 0; top: 0; z-index: 3;
-  height: 15vh; max-height: 118px; width: auto; pointer-events: none;
-  opacity: 0.92;
-  filter: drop-shadow(0 4px 14px #000000aa);
-  animation: entra 260ms ease-out;
-}
-
-.adesivo-finale { animation: none; }
+  .beccato,
+  .adesivo-stato,
+  .adesivo-finale {
+    animation: none;
+  }
 }
 
 @media (min-width: 900px) and (orientation: landscape) {
-  .beccato { flex-direction: row; gap: 36px; }
-  .beccato > img { height: 46vh; max-height: 420px; }
   /* In orizzontale l'angolo in alto a destra è occupato dall'intestazione, e
      più in basso c'è la riga «prossimo». Resta la fascia vuota sotto
      l'anello. */
   .adesivo-stato { left: 0; right: auto; top: auto; bottom: 0; height: 16vh; max-height: 130px; }
-  .beccato-frase { max-width: 40%; text-align: left; }
 }
 
 /* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */
@@ -356,7 +356,7 @@ input, textarea { font: inherit; color: inherit; }
    barra di avanzamento. Ora la misura la decide la finestra. */
 .anello {
   position: relative; flex-shrink: 0;
-  width: min(300px, 34vh, 58vw); aspect-ratio: 1;
+  width: var(--anello); aspect-ratio: 1;
 }
 .anello > svg { width: 100%; height: 100%; }
 
@@ -370,7 +370,7 @@ input, textarea { font: inherit; color: inherit; }
 /* Schermi bassi: si stringe tutto invece di lasciare che il contenuto
    trabocchi dietro gli elementi sotto. */
 @media (max-height: 740px) and (orientation: portrait) {
-  .anello { width: min(300px, 26vh, 50vw); }
+  .timer { --anello: min(300px, 26vh, 50vw); }
   .timer-main { gap: 2px; }
   .timer-top { padding-top: calc(var(--safe-t) + 8px); }
   .timer-dots { padding-top: 8px; }
@@ -387,7 +387,7 @@ input, textarea { font: inherit; color: inherit; }
    d'angolo sparisce, perché lì lo spazio semplicemente non c'è. */
 @media (orientation: landscape) and (max-height: 560px) {
   .timer-main { gap: 20px; padding: 0 16px; }
-  .anello { width: min(300px, 50vh, 27vw); }
+  .timer { --anello: min(300px, 50vh, 27vw); }
   .digits { font-size: min(18vw, 30vh); }
   .state-label { font-size: clamp(18px, 3.4vw, 30px); letter-spacing: 0.2em; }
   .exercise { font-size: clamp(16px, 3vw, 28px); }
@@ -399,5 +399,4 @@ input, textarea { font: inherit; color: inherit; }
   .tasto-salto { width: 50px; height: 50px; }
   .tasto-avvia { height: 50px; }
   .adesivo-stato { display: none; }
-  .beccato > img { height: 42vh; }
 }

@@ -235,6 +235,15 @@ export function TimerScreen({
           </>
         ) : (
           <>
+            {/* Quando Maurizio si tradisce prende il posto dell'anello, non quello
+                di tutto lo schermo: le cifre e il nome dell'esercizio devono
+                restare leggibili anche mentre fa la scenetta. */}
+            {beccato ? (
+              <div className="beccato">
+                <img src={beccato.src} alt="" />
+                <span className="beccato-frase">{beccato.frase}</span>
+              </div>
+            ) : (
             <div className="anello">
               <Ring progress={view.progress} color={color} />
               <div
@@ -252,6 +261,7 @@ export function TimerScreen({
                 </span>
               </div>
             </div>
+            )}
 
             <div className="timer-col" style={{ alignItems: 'center', gap: 4 }}>
               <span className="state-label">{idle ? 'PRONTO' : (seg?.label ?? '')}</span>
@@ -262,13 +272,6 @@ export function TimerScreen({
           </>
         )}
       </div>
-
-      {beccato && !done && (
-        <div className="beccato">
-          <img src={beccato.src} alt="" />
-          <span className="beccato-frase">{beccato.frase}</span>
-        </div>
-      )}
 
       <div style={{ height: 10, background: 'var(--surface-2)' }}>
         <div style={{ height: '100%', width: `${done ? 100 : view.progress * 100}%`, background: tinta }} />
