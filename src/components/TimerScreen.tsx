@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Settings, Workout } from '../types'
-import { buildSegments } from '../lib/engine'
+import { applyCoach, buildSegments } from '../lib/engine'
 import { clock } from '../lib/format'
 import { useTimer } from '../lib/useTimer'
 import { useWakeLock } from '../lib/wakeLock'
@@ -69,9 +69,21 @@ export function TimerScreen({
   onExit: () => void
   onFinish: (seconds: number, completed: boolean) => void
 }) {
-  const segments = useMemo(() => buildSegments(workout), [workout])
+  // I secondi regalati da Maurizio si estraggono a ogni avvio: due giri dello
+  // stesso allenamento non cadono negli stessi punti.
+  const [run, setRun] = useState(0)
+  const segments = useMemo(
+    () => applyCoach(buildSegments(workout), settings.coach),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [workout, settings.coach, run],
+  )
   const { view, toggle, stop, skip } = useTimer(segments, settings, onFinish)
   const seg = view.segment
+
+  const startOrToggle = () => {
+    if (view.status === 'idle' || view.status === 'done') setRun((n) => n + 1)
+    toggle()
+  }
 
   useWakeLock(settings.keepAwake && view.status === 'running')
 
@@ -99,20 +111,22 @@ export function TimerScreen({
   // senza per questo riagganciare il listener a ogni render.
   const exitRef = useRef(exit)
   exitRef.current = exit
+  const startOrToggleRef = useRef(startOrToggle)
+  startOrToggleRef.current = startOrToggle
 
   // La barra spaziatrice mette in pausa: comoda sul tablet con tastiera e su desktop.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault()
-        toggle()
+        startOrToggleRef.current()
       } else if (e.code === 'ArrowRight') skip(1)
       else if (e.code === 'ArrowLeft') skip(-1)
       else if (e.code === 'Escape') exitRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggle, skip])
+  }, [skip])
 
   const color = seg ? STATE_COLOR[seg.kind] : 'var(--line)'
   const idle = view.status === 'idle'
@@ -136,6 +150,15 @@ export function TimerScreen({
             RESTA {clock(view.remainingTotal)}
           </span>
         </div>
+        {settings.coach !== 'off' && (
+          <span
+            className="badge"
+            style={{ background: 'var(--giallo)', alignSelf: 'center' }}
+            title="Maurizio ogni tanto perde il conto"
+          >
+            MAURIZIO
+          </span>
+        )}
         <button className="icon-btn" onClick={stop} aria-label="Azzera il timer">
           <span className="cond" style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em' }}>
             RESET
@@ -218,7 +241,7 @@ export function TimerScreen({
         <button
           className="btn grow"
           style={{ height: 68, background: done ? 'var(--verde)' : color, color: '#121212' }}
-          onClick={done ? exit : toggle}
+          onClick={done ? exit : startOrToggle}
         >
           {view.status === 'running' ? <Pause size={22} /> : <Play size={22} />}
           <span style={{ fontSize: 22 }}>

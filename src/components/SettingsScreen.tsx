@@ -1,5 +1,7 @@
-import type { Settings } from '../types'
-import { Cues, speak } from '../lib/audio'
+import { useEffect, useState } from 'react'
+import type { CoachLevel, Settings } from '../types'
+import { Cues, italianVoices, speak } from '../lib/audio'
+import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
 import { Logo } from './Logo'
 
 const cues = new Cues()
@@ -37,6 +39,19 @@ export function SettingsScreen({
   onChange: (patch: Partial<Settings>) => void
   historyCount: number
 }) {
+  // getVoices() è spesso vuoto al primo giro: il sistema le carica dopo.
+  const [vociIt, setVociIt] = useState(() => italianVoices())
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return
+    const aggiorna = () => setVociIt(italianVoices())
+    window.speechSynthesis.addEventListener('voiceschanged', aggiorna)
+    const t = window.setTimeout(aggiorna, 300)
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', aggiorna)
+      window.clearTimeout(t)
+    }
+  }, [])
+
   const tryVolume = (v: number) => {
     onChange({ volume: v })
     cues.volume = v
@@ -63,7 +78,7 @@ export function SettingsScreen({
           on={settings.voice}
           onChange={(v) => {
             onChange({ voice: v })
-            if (v) speak('Voce attiva', settings.volume)
+            if (v) speak('Voce attiva', settings.volume, settings.voiceURI)
           }}
         />
         <Toggle
@@ -92,6 +107,69 @@ export function SettingsScreen({
             aria-label="Volume dei segnali acustici"
           />
         </div>
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">VOCE</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 8 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0 }}>
+          Le voci disponibili le mette il dispositivo, non l'app: cambiano fra telefono, tablet e computer. Quelle
+          marcate «enhanced» o «premium» suonano molto meno metalliche — su iPhone e iPad si scaricano da
+          Impostazioni › Accessibilità › Contenuto letto › Voci.
+        </p>
+        {vociIt.length === 0 ? (
+          <div className="card" style={{ padding: '12px 14px', fontSize: 14, color: 'var(--dim)' }}>
+            Questo dispositivo non espone voci italiane.
+          </div>
+        ) : (
+          <div className="stack" style={{ gap: 2 }}>
+            {vociIt.map((v) => {
+              const attiva = settings.voiceURI ? settings.voiceURI === v.voiceURI : v === vociIt[0]
+              return (
+                <button
+                  key={v.voiceURI}
+                  className="card row"
+                  style={{ gap: 12, padding: '0 14px', minHeight: 54, textAlign: 'left', borderColor: attiva ? 'var(--blu)' : 'var(--line)' }}
+                  onClick={() => {
+                    onChange({ voiceURI: v.voiceURI })
+                    speak('Lavoro. Burpee più salto', settings.volume, v.voiceURI)
+                  }}
+                >
+                  <div style={{ width: 10, height: 10, background: attiva ? 'var(--blu)' : 'var(--line)' }} />
+                  <div className="stack grow" style={{ gap: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600 }}>{v.name}</span>
+                    <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+                      {v.lang}
+                      {v.localService === false ? ' · dalla rete' : ' · sul dispositivo'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--dim)' }}>PROVA</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">MODALITÀ MAURIZIO</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 8 }}>
+        <p style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: 0 }}>
+          Come l'allenatore che perde il conto per farti lavorare qualche secondo in più: il tempo in più viene
+          deciso all'avvio e sparso a caso fra gli intervalli di lavoro. Il recupero non si tocca.
+        </p>
+        <div className="row" style={{ gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+          {(Object.keys(COACH_LEVELS) as CoachLevel[]).map((l) => (
+            <button key={l} className="chip" data-on={settings.coach === l} onClick={() => onChange({ coach: l })}>
+              {COACH_LABEL[l].toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontSize: 13, color: 'var(--dim)' }}>{COACH_HINT[settings.coach]}</span>
       </div>
 
       <div className="rule">

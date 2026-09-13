@@ -6,10 +6,12 @@ const KEY_SETTINGS = 'ods-timer:settings'
 const KEY_HISTORY = 'ods-timer:history'
 
 export const DEFAULT_SETTINGS: Settings = {
+  coach: 'off',
   countdownBeep: true,
   voice: true,
   vibrate: true,
   volume: 0.8,
+  voiceURI: null,
   keepAwake: true,
   bigScreen: false,
 }

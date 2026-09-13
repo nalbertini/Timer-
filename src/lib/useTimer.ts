@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Segment, Settings } from '../types'
 import { Cues, buzz, speak } from './audio'
+import { COACH_LINES, coachedDisplay } from './engine'
 
 export type Status = 'idle' | 'running' | 'paused' | 'done'
 
@@ -65,10 +66,10 @@ export function useTimer(
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
       if (settings.voice) {
         const label = seg.label.toLowerCase()
-        speak(seg.kind === 'work' ? `${label}. ${seg.name}` : label, settings.volume)
+        speak(seg.kind === 'work' ? `${label}. ${seg.name}` : label, settings.volume, settings.voiceURI)
       }
     },
-    [settings.vibrate, settings.voice, settings.volume],
+    [settings.vibrate, settings.voice, settings.volume, settings.voiceURI],
   )
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export function useTimer(
         setStatus('done')
         cues.current.finish()
         if (settings.vibrate) buzz([200, 100, 200, 100, 300])
-        if (settings.voice) speak('Allenamento completato', settings.volume)
+        if (settings.voice) speak('Allenamento completato', settings.volume, settings.voiceURI)
         finishRef.current(total, true)
         return
       }
@@ -101,18 +102,34 @@ export function useTimer(
         return
       }
 
-      if (!settings.countdownBeep || seg.countUp) return
-      const left = Math.ceil(seg.offset + seg.duration - now)
-      if (left <= 3 && left >= 1 && left !== lastBeepRef.current) {
-        lastBeepRef.current = left
-        cues.current.countdown()
+      if (seg.countUp) return
+      // I bip seguono il numero MOSTRATO, non quello vero: altrimenti
+      // tradirebbero il ripensamento di Maurizio un attimo prima che si veda.
+      const left = Math.ceil(coachedDisplay(seg, seg.offset + seg.duration - now))
+      if (left > 3 || left < 1 || left === lastBeepRef.current) return
+      const wentBackUp = lastBeepRef.current > 0 && left > lastBeepRef.current
+      lastBeepRef.current = left
+      if (settings.countdownBeep) cues.current.countdown()
+      if (wentBackUp && settings.voice) {
+        speak(COACH_LINES[Math.floor(Math.random() * COACH_LINES.length)], settings.volume, settings.voiceURI)
       }
     }
 
     const id = window.setInterval(tick, 100)
     tick()
     return () => window.clearInterval(id)
-  }, [status, total, segments, indexAt, announce, settings.countdownBeep, settings.vibrate, settings.voice, settings.volume])
+  }, [
+    status,
+    total,
+    segments,
+    indexAt,
+    announce,
+    settings.countdownBeep,
+    settings.vibrate,
+    settings.voice,
+    settings.volume,
+    settings.voiceURI,
+  ])
 
   const start = useCallback(() => {
     cues.current.unlock()
@@ -195,7 +212,8 @@ export function useTimer(
     const index = indexAt(elapsed)
     const segment = segments[index] ?? null
     const into = segment ? elapsed - segment.offset : 0
-    const display = segment ? (segment.countUp ? into : segment.duration - into) : 0
+    const real = segment ? (segment.countUp ? into : segment.duration - into) : 0
+    const display = segment ? coachedDisplay(segment, real) : 0
     return {
       status,
       segment,

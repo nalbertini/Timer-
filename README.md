@@ -36,6 +36,48 @@ altri i nomi si alternano a ogni round e vengono annunciati dalla voce.
 I timer, le impostazioni e lo storico stanno nel browser del dispositivo
 (`localStorage`), senza account e senza server.
 
+## Modalità Maurizio
+
+Come l'allenatore che «perde il conto» per farti lavorare qualche secondo in
+più. Spenta di default, con tre livelli: **distratto**, **classico**,
+**spietato**.
+
+Sono due meccanismi distinti, e tenerli separati è ciò che li rende gestibili:
+
+1. **Il tempo in più** viene estratto all'avvio e cucito dentro la durata dei
+   segmenti di lavoro. Offset, barra di avanzamento e durata totale restano
+   coerenti, e il motore del timer non sa nulla della cosa. Il recupero non si
+   tocca mai: Maurizio conta benissimo quando sei fermo.
+2. **La sceneggiata** vive solo nel numero mostrato. Il conto scende normalmente
+   fino a 3, poi rimbalza: `4 3 2 3 2 3 2 1`. I bip e la voce seguono il numero
+   mostrato, non quello vero, altrimenti tradirebbero il trucco un attimo prima
+   che si veda.
+
+Il bonus è sempre di un numero **pari** di secondi. Non è un capriccio: con un
+bonus dispari il rimbalzo non può insieme attaccarsi al 3 e chiudere su 3-2-1,
+e il conto finirebbe per saltare un numero. Vincolare l'ingresso costa un
+secondo di granularità e rende la sequenza corretta per costruzione.
+
+## La voce
+
+L'app usa la sintesi vocale del dispositivo (`speechSynthesis`): le voci le
+mette il sistema operativo, non l'app, e cambiano fra telefono, tablet e
+computer.
+
+In Impostazioni › Voce c'è l'elenco delle voci italiane disponibili, ordinate
+dalla più naturale alla più sintetica, ognuna con un tasto di prova. Il
+criterio: premia le versioni *enhanced*, *premium* e *neural* e quelle servite
+dalla rete, penalizza le *compact* installate di serie — che sono quelle che
+suonano metalliche, ed erano quelle che l'app pescava prima.
+
+Su iPhone e iPad le voci di qualità vanno scaricate una volta da
+Impostazioni › Accessibilità › Contenuto letto › Voci.
+
+Per una voce davvero umana la strada è un'altra: **registrare le frasi**. Sono
+poche e fisse (gli stati, i numeri da 3 a 1, i nomi degli esercizi, le battute
+di Maurizio) e si servirebbero come file audio. Per la modalità Maurizio, con
+la voce di Maurizio, varrebbe da sola il lavoro.
+
 ## Sviluppo
 
 ```bash

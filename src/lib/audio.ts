@@ -68,16 +68,50 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
 }
 
-export function speak(text: string, volume: number) {
+/**
+ * Quasi tutti i sistemi espongono più voci italiane, e la prima dell'elenco è
+ * di norma la più metallica. Questo punteggio preferisce le versioni
+ * «enhanced»/«premium» e quelle servite dalla rete, che suonano molto più
+ * naturali di quelle compatte installate di serie.
+ */
+function rank(v: SpeechSynthesisVoice): number {
+  const n = v.name.toLowerCase()
+  let score = 0
+  if (/(enhanced|premium|neural|natural|siri)/.test(n)) score += 6
+  if (/(alice|federica|luca|emma|elsa|carla)/.test(n)) score += 3
+  if (v.localService === false) score += 2
+  if (n.includes('google')) score += 2
+  if (/(compact|compatta|eloquence)/.test(n)) score -= 4
+  if (v.default) score += 1
+  return score
+}
+
+/** Le voci italiane disponibili, dalla più naturale alla più sintetica. */
+export function italianVoices(): SpeechSynthesisVoice[] {
+  return voices.filter((v) => v.lang?.toLowerCase().startsWith('it')).sort((a, b) => rank(b) - rank(a))
+}
+
+function pickVoice(voiceURI: string | null): SpeechSynthesisVoice | undefined {
+  const list = italianVoices()
+  if (voiceURI) {
+    const chosen = list.find((v) => v.voiceURI === voiceURI)
+    if (chosen) return chosen
+  }
+  return list[0]
+}
+
+export function speak(text: string, volume: number, voiceURI: string | null = null) {
   if (!('speechSynthesis' in window) || !text) return
   try {
     // Una coda di annunci arretrati è peggio del silenzio: l'ultimo vince.
     window.speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
-    const it = voices.find((v) => v.lang?.toLowerCase().startsWith('it'))
-    if (it) u.voice = it
-    u.lang = 'it-IT'
-    u.rate = 1.05
+    const v = pickVoice(voiceURI)
+    if (v) u.voice = v
+    u.lang = v?.lang ?? 'it-IT'
+    // Ritmo naturale: sopra 1.05 il parlato inizia a suonare meccanico.
+    u.rate = 1
+    u.pitch = 1
     u.volume = volume
     window.speechSynthesis.speak(u)
   } catch {

@@ -1,4 +1,4 @@
-import type { Mode, Segment, Workout } from '../types'
+import type { CoachLevel, Mode, Segment, Workout } from '../types'
 
 export const MODE_LABEL: Record<Mode, string> = {
   interval: 'Intervalli',
@@ -197,4 +197,108 @@ export function describe(w: Workout): string {
     case 'fortime':
       return `cronometro in salita · limite ${Math.round(w.duration / 60)} min`
   }
+}
+
+
+/* ------------------------------------------------------------------ *
+ * Modalità Maurizio
+ *
+ * L'allenatore che «perde il conto» per farti lavorare qualche secondo
+ * in più. Due parti distinte, e tenerle separate è ciò che rende la cosa
+ * gestibile:
+ *
+ *  1. il tempo in più è deciso all'avvio e cucito dentro la durata dei
+ *     segmenti, così offset, barra di avanzamento e durata totale restano
+ *     coerenti e il motore non sa nulla di tutto questo;
+ *  2. la sceneggiata è solo nel numero mostrato, che negli ultimi secondi
+ *     torna indietro invece di scendere dritto.
+ * ------------------------------------------------------------------ */
+
+export interface CoachOptions {
+  /** Quanti intervalli di lavoro vengono allungati, da 0 a 1. */
+  probability: number
+  /** Estremi in secondi, entrambi PARI: vedi `applyCoach`. */
+  minBonus: number
+  maxBonus: number
+}
+
+export const COACH_LEVELS: Record<CoachLevel, CoachOptions | null> = {
+  off: null,
+  distratto: { probability: 0.25, minBonus: 2, maxBonus: 4 },
+  classico: { probability: 0.5, minBonus: 2, maxBonus: 6 },
+  spietato: { probability: 0.85, minBonus: 4, maxBonus: 10 },
+}
+
+export const COACH_LABEL: Record<CoachLevel, string> = {
+  off: 'Spenta',
+  distratto: 'Distratto',
+  classico: 'Classico',
+  spietato: 'Spietato',
+}
+
+export const COACH_HINT: Record<CoachLevel, string> = {
+  off: 'Il timer conta onestamente.',
+  distratto: 'Ogni tanto perde il filo: un paio di secondi in più.',
+  classico: 'Il Maurizio di tutti i giorni: metà degli intervalli si allungano.',
+  spietato: 'Sbaglia a contare quasi sempre, e non di poco.',
+}
+
+/** Le frasi che gli scappano quando lo becchi a sbagliare. */
+export const COACH_LINES = [
+  'Ho perso il conto, ricominciamo',
+  'No aspetta, tre',
+  'Ancora un attimo',
+  'Eh no, quello non valeva',
+  'Dai che è quasi finita',
+  'Scusate, mi sono distratto',
+]
+
+/**
+ * Allunga gli intervalli di lavoro e ricalcola gli offset. Restituisce una
+ * nuova lista: i segmenti in ingresso non vengono toccati.
+ */
+export function applyCoach(segments: Segment[], level: CoachLevel, rand: () => number = Math.random): Segment[] {
+  const opts = COACH_LEVELS[level]
+  if (!opts) return segments
+
+  let offset = 0
+  return segments.map((seg) => {
+    // Solo il lavoro si allunga: sul recupero Maurizio conta benissimo. E un
+    // intervallo troppo corto non regge un ripensamento credibile.
+    const eligible = seg.kind === 'work' && !seg.countUp && seg.duration >= 10
+    // Il bonus è sempre pari, e non per capriccio: con un bonus dispari il
+    // rimbalzo 3-2-3-2 non può insieme attaccarsi al 3 e chiudere su 3,2,1,
+    // e il conto finirebbe per saltare un numero. Vincolare l'ingresso costa
+    // un secondo di granularità e rende la sequenza corretta per costruzione.
+    const passi = Math.floor((opts.maxBonus - opts.minBonus) / 2) + 1
+    const bonus =
+      eligible && rand() < opts.probability ? opts.minBonus + 2 * Math.floor(rand() * passi) : 0
+    const out: Segment = { ...seg, duration: seg.duration + bonus, offset, ...(bonus > 0 ? { bonus } : {}) }
+    offset += out.duration
+    return out
+  })
+}
+
+/**
+ * Il numero da mostrare a schermo.
+ *
+ * L'intervallo deve sembrare quello nominale: il conto parte dalla durata
+ * senza bonus e scende normalmente fino a 3, e solo lì comincia a rimbalzare
+ * fra 3 e 2 prima di chiudere su 1 — «tre… due… tre! due… uno». Sottrarre il
+ * bonus finché siamo lontani dalla fine è ciò che tiene il numero continuo:
+ * senza, si passerebbe di colpo da 12 a 3.
+ */
+export function coachedDisplay(seg: Segment | null, remaining: number): number {
+  if (!seg?.bonus || seg.countUp) return remaining
+  const tail = seg.bonus + 3
+  if (remaining > tail) return remaining - seg.bonus
+  const left = Math.ceil(remaining)
+  if (left <= 0) return remaining
+  // `left` scende da tail a 1: leggiamo la coda dall'inizio.
+  const step = tail - left
+  const wobble = seg.bonus
+  // Con `wobble` pari il rimbalzo parte da 3, attaccandosi al 4 appena
+  // mostrato, e finisce su 2, lasciando il posto al 3,2,1 di chiusura.
+  if (step < wobble) return step % 2 === 0 ? 3 : 2
+  return tail - step
 }

@@ -52,11 +52,19 @@ export interface Segment {
   sets: number
   /** Istante di inizio del segmento dall'avvio dell'allenamento (secondi). */
   offset: number
+  /** Secondi regalati da Maurizio, già compresi in `duration`. */
+  bonus?: number
 }
 
+/** Quanto è disonesto Maurizio quando conta. */
+export type CoachLevel = 'off' | 'distratto' | 'classico' | 'spietato'
+
 export interface Settings {
+  coach: CoachLevel
   countdownBeep: boolean
   voice: boolean
+  /** Voce di sistema scelta dall'utente; null = la migliore che troviamo. */
+  voiceURI: string | null
   vibrate: boolean
   volume: number
   keepAwake: boolean
