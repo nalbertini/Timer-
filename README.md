@@ -110,8 +110,13 @@ L'ordine è: registrazione fatta su quel dispositivo → file pubblicato in
 dove manca la clip il timer torna da solo alla voce di sistema senza che nessuno
 debba configurare niente.
 
-In `public/voce/` ci sono le **15 clip**: i sei stati, i tre numeri e le sei
-battute di Maurizio.
+In `public/voce/` ci sono **16 clip**: il saluto iniziale, i sei stati, i tre
+numeri e le sei battute di Maurizio.
+
+Il saluto (`stato/intro`) si sente una volta sola, all'avvio, incatenato prima
+del «preparati». Dura più di un annuncio normale, quindi vale la regola della
+sintesi: l'ultimo annuncio vince e taglia quello prima, invece di accavallarsi
+— serve quando la preparazione è corta o si salta subito al lavoro.
 
 In riproduzione il silenzio iniziale di ogni clip viene saltato. Le
 registrazioni ne hanno quantità diverse — fra i tre numeri si andava da 0,02 a

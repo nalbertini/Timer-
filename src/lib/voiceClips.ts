@@ -16,6 +16,9 @@ export interface ClipSpec {
   hint?: string
 }
 
+/** Il saluto che apre l'allenamento, prima del conto alla rovescia iniziale. */
+export const INTRO_CLIP = 'stato/intro'
+
 export const STATE_CLIP: Record<SegmentKind | 'finish', string> = {
   prepare: 'stato/preparati',
   work: 'stato/lavoro',
@@ -26,6 +29,12 @@ export const STATE_CLIP: Record<SegmentKind | 'finish', string> = {
 }
 
 export const CLIPS: ClipSpec[] = [
+  {
+    key: INTRO_CLIP,
+    text: 'Oggi ho preparato un allenamento…',
+    group: 'Stati',
+    hint: 'Il saluto prima di partire: si sente una volta sola, all\u2019avvio',
+  },
   { key: 'stato/preparati', text: 'Preparati', group: 'Stati' },
   { key: 'stato/lavoro', text: 'Lavoro', group: 'Stati', hint: 'Deciso, è quello che si sente più spesso' },
   { key: 'stato/recupero', text: 'Recupero', group: 'Stati' },

@@ -12,6 +12,7 @@ import { CLIP_DIR, CLIP_EXTENSIONS } from './voiceClips'
  */
 
 let ctx: AudioContext | null = null
+let inCorso: AudioBufferSourceNode[] = []
 interface Clip {
   buffer: AudioBuffer
   /** Secondi di silenzio da saltare in testa. */
@@ -174,6 +175,17 @@ export async function say(
     if (clips.length > 0) {
       const c = context()
       if (c && c.state === 'running') {
+        // Come per la sintesi, l'ultimo annuncio vince: il saluto iniziale dura
+        // sei secondi e con una preparazione corta si accavallerebbe a quello
+        // dopo. Si taglia invece di sovrapporre.
+        inCorso.forEach((s) => {
+          try {
+            s.stop()
+          } catch {
+            // Già finita da sola.
+          }
+        })
+        inCorso = []
         // Incatenate sull'orologio audio: niente buchi né sovrapposizioni.
         let when = c.currentTime
         for (const { buffer, attacco } of clips) {
@@ -183,6 +195,10 @@ export async function say(
           src.buffer = buffer
           src.connect(gain).connect(c.destination)
           src.start(when, attacco)
+          src.onended = () => {
+            inCorso = inCorso.filter((x) => x !== src)
+          }
+          inCorso.push(src)
           when += buffer.duration - attacco
         }
         return true

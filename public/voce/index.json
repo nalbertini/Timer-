@@ -1,6 +1,7 @@
 {
   "ext": "mp3",
   "clips": [
+    "stato/intro",
     "stato/preparati",
     "stato/lavoro",
     "stato/recupero",

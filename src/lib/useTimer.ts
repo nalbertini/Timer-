@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Segment, Settings } from '../types'
 import { Cues, buzz } from './audio'
 import { COACH_LINES, coachedDisplay } from './engine'
-import { preload, say, unlockVoice } from './voice'
-import { NUMBER_CLIP, STATE_CLIP, exerciseKey } from './voiceClips'
+import { hasClip, preload, say, unlockVoice } from './voice'
+import { INTRO_CLIP, NUMBER_CLIP, STATE_CLIP, exerciseKey } from './voiceClips'
 
 export type Status = 'idle' | 'running' | 'paused' | 'done'
 
@@ -42,6 +42,7 @@ export function useTimer(
   const anchorRef = useRef(0)
   const lastIndexRef = useRef(-1)
   const lastShownRef = useRef(-1)
+  const introRef = useRef(false)
   const finishRef = useRef(onFinish)
   finishRef.current = onFinish
   const slipRef = useRef(onCoachSlip)
@@ -60,6 +61,7 @@ export function useTimer(
   // Le clip che serviranno in questo allenamento, scaldate in anticipo.
   useEffect(() => {
     preload([
+      INTRO_CLIP,
       ...Object.values(STATE_CLIP),
       ...Object.values(NUMBER_CLIP),
       ...COACH_LINES.map((_, i) => `maurizio/${i + 1}`),
@@ -90,8 +92,17 @@ export function useTimer(
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
       if (settings.voice) {
         const label = seg.label.toLowerCase()
-        const keys = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
-        void say(keys, seg.kind === 'work' ? `${label}. ${seg.name}` : label, voiceRef.current)
+        const base = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
+        const testo = seg.kind === 'work' ? `${label}. ${seg.name}` : label
+        const conIntro = introRef.current
+        introRef.current = false
+        void (async () => {
+          // Il saluto apre solo il primo annuncio dell'allenamento, e solo se la
+          // clip c'è davvero: in testa a una catena, una clip mancante farebbe
+          // ripiegare sulla sintesi anche tutto il resto.
+          const keys = conIntro && (await hasClip(INTRO_CLIP)) ? [INTRO_CLIP, ...base] : base
+          await say(keys, testo, voiceRef.current)
+        })()
       }
     },
     [settings.vibrate, settings.voice, settings.volume, settings.voiceURI],
@@ -176,6 +187,7 @@ export function useTimer(
   const start = useCallback(() => {
     cues.current.unlock()
     unlockVoice()
+    introRef.current = true
     bankedRef.current = 0
     anchorRef.current = performance.now()
     lastIndexRef.current = -1
