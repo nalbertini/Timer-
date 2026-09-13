@@ -1,0 +1,142 @@
+import { useMemo, useState } from 'react'
+import type { Mode, Workout } from '../types'
+import { MODE_BADGE, describe, totalDuration } from '../lib/engine'
+import { compact } from '../lib/format'
+import { Copy, Edit, Play, Plus, Trash } from './Icons'
+
+const MODE_TINT: Record<Mode, string> = {
+  interval: 'var(--rosso)',
+  circuit: 'var(--blu)',
+  emom: 'var(--verde)',
+  amrap: 'var(--giallo)',
+  fortime: 'var(--blu)',
+}
+
+const FILTERS: Array<{ key: Mode | 'all'; label: string }> = [
+  { key: 'all', label: 'TUTTI' },
+  { key: 'interval', label: 'INTERVALLI' },
+  { key: 'emom', label: 'EMOM' },
+  { key: 'amrap', label: 'AMRAP' },
+  { key: 'circuit', label: 'CIRCUITO' },
+  { key: 'fortime', label: 'FOR TIME' },
+]
+
+export function HomeScreen({
+  workouts,
+  onStart,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onNew,
+}: {
+  workouts: Workout[]
+  onStart: (w: Workout) => void
+  onEdit: (w: Workout) => void
+  onDuplicate: (w: Workout) => void
+  onDelete: (w: Workout) => void
+  onNew: () => void
+}) {
+  const [filter, setFilter] = useState<Mode | 'all'>('all')
+  const [open, setOpen] = useState<string | null>(null)
+
+  const shown = useMemo(
+    () => (filter === 'all' ? workouts : workouts.filter((w) => w.mode === filter)),
+    [workouts, filter],
+  )
+
+  return (
+    <>
+      <div className="row pad" style={{ gap: 8, paddingTop: 14, paddingBottom: 14, overflowX: 'auto' }}>
+        {FILTERS.map((f) => (
+          <button key={f.key} className="chip" data-on={filter === f.key} onClick={() => setFilter(f.key)}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">I TUOI TIMER</span>
+        <div className="rule-line" />
+        <span className="num" style={{ fontSize: 15, fontWeight: 600, color: 'var(--dim)' }}>
+          {shown.length}
+        </span>
+      </div>
+
+      <div className="pad wlist stack" style={{ gap: 10, paddingBottom: 16 }}>
+        {shown.length === 0 && (
+          <p style={{ color: 'var(--dim)', fontSize: 15, lineHeight: 1.5, margin: '4px 0 0' }}>
+            Nessun timer di questo tipo. Creane uno con il pulsante qui sotto.
+          </p>
+        )}
+
+        {shown.map((w) => {
+          const tint = MODE_TINT[w.mode]
+          const isOpen = open === w.id
+          return (
+            <div key={w.id} className="card stack">
+              <div className="wcard">
+                <div className="stack grow" style={{ gap: 6, minWidth: 0 }}>
+                  <div className="row" style={{ gap: 8 }}>
+                    <span className="badge" style={{ background: tint }}>
+                      {MODE_BADGE[w.mode]}
+                    </span>
+                    <span className="num" style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--dim)' }}>
+                      {compact(totalDuration(w))}
+                    </span>
+                  </div>
+                  <button
+                    className="wcard-name"
+                    style={{ textAlign: 'left', padding: 0 }}
+                    onClick={() => setOpen(isOpen ? null : w.id)}
+                  >
+                    {w.name.toUpperCase()}
+                  </button>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--dim)' }}>{describe(w)}</span>
+                </div>
+                <button
+                  className="play-btn"
+                  style={{ borderColor: tint, color: tint }}
+                  onClick={() => onStart(w)}
+                  aria-label={`Avvia ${w.name}`}
+                >
+                  <Play />
+                </button>
+              </div>
+
+              {isOpen && (
+                <div className="row" style={{ gap: 8, padding: '0 15px 13px' }}>
+                  <button className="btn btn-ghost" style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }} onClick={() => onEdit(w)}>
+                    <Edit size={16} />
+                    MODIFICA
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    style={{ minHeight: 44, padding: '0 14px', fontSize: 15 }}
+                    onClick={() => onDuplicate(w)}
+                  >
+                    <Copy size={16} />
+                    DUPLICA
+                  </button>
+                  <div className="grow" />
+                  <button
+                    className="icon-btn"
+                    style={{ borderColor: 'var(--line)', color: 'var(--rosso)' }}
+                    onClick={() => onDelete(w)}
+                    aria-label={`Elimina ${w.name}`}
+                  >
+                    <Trash size={17} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        <button className="btn btn-dashed" onClick={onNew}>
+          <Plus />
+          NUOVO TIMER
+        </button>
+      </div>
+    </>
+  )
+}
