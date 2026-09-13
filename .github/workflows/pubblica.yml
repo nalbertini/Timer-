@@ -38,12 +38,11 @@ jobs:
       # se non compila, non si pubblica.
       - run: npm run build
 
-      - uses: actions/configure-pages@v5
-        with:
-          # Accende Pages da solo, se il repository lo consente: risparmia un
-          # passaggio a mano. Se fallisce, va acceso da Settings › Pages.
-          enablement: true
-
+      # Niente `configure-pages`: serve a calcolare il base path, e qui non
+      # occorre perché `vite.config.ts` usa percorsi relativi. Con
+      # `enablement: true` provava anche ad accendere Pages da solo, ma il
+      # token del workflow non ne ha il diritto e faceva fallire in rosso la
+      # compilazione — cioè l'unica cosa che qui dice qualcosa sul codice.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

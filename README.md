@@ -162,9 +162,10 @@ push sul branch principale. L'indirizzo è
 sottocartella: per questo `vite.config.ts` usa `base: './'` e tutti i percorsi —
 icone, manifest, `start_url`, `scope` — sono relativi.
 
-Una volta sola, a mano: **Settings › Pages › Source: GitHub Actions**. Il
-workflow prova ad accenderlo da solo (`enablement: true`), ma se il repository
-non lo consente il primo tentativo fallisce lì.
+Una volta sola, a mano: **Settings › Pages › Source: GitHub Actions**. Non è
+automatizzabile — il token del workflow non ha il diritto di accendere Pages —
+quindi finché non è fatto il job di pubblicazione fallisce, mentre quello di
+compilazione passa lo stesso.
 
 Il job di compilazione gira comunque a ogni push, anche senza Pages acceso, e
 fa da controllo: dentro `npm run build` c'è `tsc -b`, quindi se i tipi non
