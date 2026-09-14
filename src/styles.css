@@ -60,6 +60,11 @@ input, textarea { font: inherit; color: inherit; }
 
 .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* L'area di una scheda che riempie invece di scorrere: cronometro e conto alla
+   rovescia vogliono l'altezza intera, come il timer di un allenamento. */
+.pieno { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* `hidden` deve vincere su `display: flex`, altrimenti non nasconde niente. */
+[hidden] { display: none !important; }
 .pad { padding: 0 20px; }
 .stack { display: flex; flex-direction: column; }
 .row { display: flex; align-items: center; }
@@ -436,6 +441,26 @@ input, textarea { font: inherit; color: inherit; }
 }
 
 /* ---------- gli attrezzi al volo: cronometro e conto alla rovescia ---------- */
+
+/* Le sei durate come tessere: due righe da tre, grandi abbastanza da premerle
+   senza guardare mentre si parla alla sala. */
+.volo-griglia { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.volo-tessera {
+  min-height: 84px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--line); background: var(--surface);
+  transition: border-color 120ms, background 120ms;
+}
+.volo-tessera:hover { border-color: var(--verde); }
+.volo-tessera:active { background: var(--surface-2); }
+.volo-tessera-n {
+  font-size: 30px; font-weight: 700; letter-spacing: 0.01em; color: var(--text);
+}
+.volo-crono { gap: 14px; padding: 0 14px; min-height: 72px; text-align: left; color: var(--text); }
+.volo-crono:hover { border-color: var(--blu); }
+@media (min-width: 560px) {
+  .volo-griglia { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
 
 .al-volo { gap: 12px; padding: 12px 14px 14px; }
 .al-volo-crono {

@@ -61,11 +61,15 @@ export function SettingsScreen({
   onChange,
   historyCount,
   onOpenRecorder,
+  onOpenStorico,
+  onOpenEsercizi,
 }: {
   settings: Settings
   onChange: (patch: Partial<Settings>) => void
   historyCount: number
   onOpenRecorder: () => void
+  onOpenStorico: () => void
+  onOpenEsercizi: () => void
 }) {
   const [incise, setIncise] = useState(0)
   const [daRipristinare, setDaRipristinare] = useState<Salvataggio | null>(null)
@@ -137,6 +141,25 @@ export function SettingsScreen({
             {COACH_HINT[settings.coach]}
           </span>
         </div>
+      </div>
+
+      {/* Il catalogo non è più una scheda della barra: si cura ogni tanto, non a
+          ogni lezione. Resta però la prima voce, perché è quella per cui si
+          entra nelle impostazioni più spesso. */}
+      <div className="rule">
+        <span className="rule-label">ESERCIZI</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 8 }}>
+        <button className="card row" style={{ gap: 12, padding: '0 14px', minHeight: 64, textAlign: 'left' }} onClick={onOpenEsercizi}>
+          <div className="stack grow" style={{ gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>Libreria esercizi</span>
+            <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+              L’elenco della palestra: crea, rinomina, sposta di categoria
+            </span>
+          </div>
+          <Chevron />
+        </button>
       </div>
 
       <div className="rule">
@@ -463,6 +486,37 @@ export function SettingsScreen({
             <span style={{ fontSize: 12, color: 'var(--dim)' }}>Collegno (TO)</span>
           </div>
         </div>
+
+        {/* La guida sta dentro l'app e non su un link esterno: va aperta anche
+            in palestra, dove la rete è quella che è, e deve valere per
+            chiunque abbia l'indirizzo dell'app. */}
+        <a
+          className="card row"
+          href="guida.html"
+          target="_blank"
+          rel="noopener"
+          style={{ gap: 12, padding: '0 14px', minHeight: 60, textDecoration: 'none', color: 'inherit' }}
+        >
+          <div className="stack grow" style={{ gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>Guida all'app</span>
+            <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+              Tutte le funzioni, con le schermate. Funziona anche senza rete.
+            </span>
+          </div>
+          <Chevron />
+        </a>
+
+        {/* Lo storico non è più una scheda — in palestra non si guarda — ma
+            continua a registrare, entra nel salvataggio e si apre da qui. */}
+        <button className="card row" style={{ gap: 12, padding: '0 14px', minHeight: 60, textAlign: 'left' }} onClick={onOpenStorico}>
+          <div className="stack grow" style={{ gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>Storico allenamenti</span>
+            <span style={{ fontSize: 12, color: 'var(--dim)' }}>
+              {historyCount === 0 ? 'ancora nessuno registrato' : `${historyCount} portati a termine`}
+            </span>
+          </div>
+          <Chevron />
+        </button>
 
         <div className="row" style={{ gap: 10, padding: '16px 2px 0' }}>
           <span style={{ fontSize: 12, color: 'var(--faint)', letterSpacing: '0.1em' }}>ODS TIMER 1.0</span>

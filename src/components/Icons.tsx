@@ -116,6 +116,26 @@ export const History = ({ size = 22 }: P) => (
   </svg>
 )
 
+/** Il cronometro: la corona sopra è quella del pulsante, il taglio è il quadrante. */
+export const Crono = ({ size = 22 }: P) => (
+  <svg {...base(size)} aria-hidden="true">
+    <circle cx="12" cy="13.5" r="7.5" />
+    <path d="M12 10v3.5h2.5" />
+    <path d="M9.5 2.5h5" />
+    <path d="M18.5 6.5l1.5-1.5" />
+  </svg>
+)
+
+/** Una clessidra: il conto alla rovescia. */
+export const Clessidra = ({ size = 22 }: P) => (
+  <svg {...base(size)} aria-hidden="true">
+    <path d="M6 3h12" />
+    <path d="M6 21h12" />
+    <path d="M7 3c0 4 5 5 5 9s-5 5-5 9" />
+    <path d="M17 3c0 4-5 5-5 9s5 5 5 9" />
+  </svg>
+)
+
 export const Drag = ({ size = 16 }: P) => (
   <svg {...base(size)} aria-hidden="true">
     <line x1="4" y1="8" x2="20" y2="8" />

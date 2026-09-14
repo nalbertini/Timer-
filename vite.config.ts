@@ -57,6 +57,18 @@ export default defineConfig({
             },
           },
           {
+            // Le schermate della guida: stessa logica delle illustrazioni. La
+            // guida in sé è precaricata — sono cinquanta kilobyte — ma le sue
+            // immagini si scaricano solo se qualcuno la apre davvero.
+            urlPattern: /\/guida\/.*\.webp$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ods-guida',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // Le illustrazioni della modalità Maurizio pesano mezzo mega: non
             // entrano nella precache, si scaricano solo se qualcuno usa la
             // modalità, e da lì restano disponibili anche offline.

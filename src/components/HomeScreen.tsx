@@ -1,18 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { Mode, Workout } from '../types'
-import { MODE_BADGE, describe, totalDuration } from '../lib/engine'
+import { MODE_BADGE, MODE_TINT, describe, totalDuration } from '../lib/engine'
 import { clock, compact } from '../lib/format'
 import { type Interrotto, doveEraRimasto } from '../lib/ripresa'
 import { Copy, Edit, Play, Plus, Share, Trash } from './Icons'
-import { DURATE_AL_VOLO, etichettaDurata } from './AlVolo'
-
-const MODE_TINT: Record<Mode, string> = {
-  interval: 'var(--rosso)',
-  circuit: 'var(--blu)',
-  emom: 'var(--verde)',
-  amrap: 'var(--giallo)',
-  fortime: 'var(--blu)',
-}
 
 const FILTERS: Array<{ key: Mode | 'all'; label: string }> = [
   { key: 'all', label: 'TUTTI' },
@@ -30,8 +21,6 @@ export function HomeScreen({
   onDuplicate,
   onDelete,
   onShare,
-  onCrono,
-  onAlVolo,
   onRiprendi,
   onScarta,
   interrotto,
@@ -43,8 +32,6 @@ export function HomeScreen({
   onDuplicate: (w: Workout) => void
   onDelete: (w: Workout) => void
   onShare: (w: Workout) => void
-  onCrono: () => void
-  onAlVolo: (secondi: number) => void
   /** L'allenamento lasciato a metà l'ultima volta, se c'è. */
   interrotto: Interrotto | null
   onRiprendi: () => void
@@ -88,29 +75,6 @@ export function HomeScreen({
           </div>
         </div>
       )}
-
-      {/* Due attrezzi che non chiedono di scrivere un allenamento: il minuto
-          di pausa che si annuncia a voce, e il cronometro per vedere quanto ci
-          mette. Stanno in cima perché si usano a lezione iniziata, con venti
-          persone ferme che aspettano. */}
-      <div className="pad" style={{ paddingTop: 14 }}>
-        <div className="card stack al-volo">
-          <div className="row" style={{ gap: 10 }}>
-            <span className="rule-label" style={{ color: 'var(--faint)' }}>AL VOLO</span>
-            <div className="grow" />
-            <button className="btn btn-ghost al-volo-crono" onClick={onCrono}>
-              CRONOMETRO
-            </button>
-          </div>
-          <div className="al-volo-scelte">
-            {DURATE_AL_VOLO.map((s) => (
-              <button key={s} className="chip" onClick={() => onAlVolo(s)} aria-label={`Conto alla rovescia di ${s} secondi`}>
-                {etichettaDurata(s)}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       <div className="row pad" style={{ gap: 8, paddingTop: 14, paddingBottom: 14, overflowX: 'auto' }}>
         {FILTERS.map((f) => (

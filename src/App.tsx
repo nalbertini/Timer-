@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { HistoryEntry, Settings, Workout } from './types'
 import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory, saveSettings, saveWorkouts } from './lib/storage'
-import { blankWorkout } from './lib/presets'
 import { type Esercizio, loadEsercizi, normalizza, saveEsercizi } from './lib/esercizi'
 import { preload, unlockVoice } from './lib/voice'
 import { COACH_LINES, EXTRA_LINES } from './lib/engine'
@@ -17,13 +16,13 @@ import { HistoryScreen } from './components/HistoryScreen'
 import { EserciziScreen } from './components/EserciziScreen'
 import { CondividiScreen } from './components/CondividiScreen'
 import { RicevutoScreen } from './components/RicevutoScreen'
-import { ContaAllaRovesciaScreen, CronometroScreen } from './components/AlVolo'
+import { CountdownTab, CronometroScreen } from './components/AlVolo'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
-import { Dumbbell, Gear, History, Library, TimerIcon } from './components/Icons'
+import { Back, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
-type Tab = 'timer' | 'preset' | 'esercizi' | 'storico' | 'impostazioni'
+type Tab = 'timer' | 'crono' | 'countdown' | 'impostazioni'
 type View =
   | { kind: 'tabs' }
   | { kind: 'editor'; workout: Workout }
@@ -31,24 +30,27 @@ type View =
   | { kind: 'condividi'; workout: Workout }
   | { kind: 'ricevuto'; workout: Workout }
   | { kind: 'voce' }
-  | { kind: 'crono' }
-  | { kind: 'alvolo'; secondi: number }
+  | { kind: 'storico' }
+  | { kind: 'esercizi' }
+  | { kind: 'schema' }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
-  { key: 'preset', label: 'PRESET', icon: Library },
-  { key: 'esercizi', label: 'ESERCIZI', icon: Dumbbell },
-  { key: 'storico', label: 'STORICO', icon: History },
+  { key: 'crono', label: 'CRONOMETRO', icon: Crono },
+  { key: 'countdown', label: 'COUNTDOWN', icon: Clessidra },
   { key: 'impostazioni', label: 'IMPOSTAZIONI', icon: Gear },
 ]
 
 const TAB_TITLE: Record<Tab, string> = {
   timer: 'I TUOI TIMER',
-  preset: 'PRESET',
-  esercizi: 'ESERCIZI',
-  storico: 'STORICO',
+  crono: 'CRONOMETRO',
+  countdown: 'CONTO ALLA ROVESCIA',
   impostazioni: 'IMPOSTAZIONI',
 }
+
+/* Le due schede degli attrezzi riempiono l'area, non scorrono: le cifre grandi
+   vogliono l'altezza intera, e sotto c'è già la barra delle schede. */
+const PIENE: Tab[] = ['crono', 'countdown']
 
 export default function App() {
   const [workouts, setWorkouts] = useState<Workout[]>(() => loadWorkouts())
@@ -211,8 +213,6 @@ export default function App() {
             onDuplicate={duplicate}
             onDelete={remove}
             onShare={(w) => setView({ kind: 'condividi', workout: w })}
-            onCrono={() => setView({ kind: 'crono' })}
-            onAlVolo={(secondi) => setView({ kind: 'alvolo', secondi })}
             interrotto={interrotto}
             onRiprendi={() => {
               if (!interrotto) return
@@ -223,22 +223,13 @@ export default function App() {
               scordaInterrotto()
               setInterrotto(null)
             }}
-            onNew={() => setView({ kind: 'editor', workout: blankWorkout('interval') })}
+            onNew={() => setView({ kind: 'schema' })}
           />
         )
-      case 'preset':
-        return <PresetScreen onPick={(w) => setView({ kind: 'editor', workout: w })} />
-      case 'esercizi':
-        return (
-          <EserciziScreen
-            catalogo={catalogo}
-            onCatalogo={setCatalogo}
-            usi={usiEsercizi}
-            onRinomina={rinominaEsercizio}
-          />
-        )
-      case 'storico':
-        return <HistoryScreen entries={history} />
+      case 'crono':
+      case 'countdown':
+        // Restano montati sempre, più sotto: qui non ci arriva mai.
+        return null
       case 'impostazioni':
         return (
           <SettingsScreen
@@ -246,6 +237,8 @@ export default function App() {
             onChange={patchSettings}
             historyCount={history.length}
             onOpenRecorder={() => setView({ kind: 'voce' })}
+            onOpenStorico={() => setView({ kind: 'storico' })}
+            onOpenEsercizi={() => setView({ kind: 'esercizi' })}
           />
         )
     }
@@ -276,17 +269,21 @@ export default function App() {
     )
   }
 
-  if (view.kind === 'crono') {
-    return <CronometroScreen settings={settings} onExit={() => setView({ kind: 'tabs' })} />
-  }
-
-  if (view.kind === 'alvolo') {
+  if (view.kind === 'storico') {
     return (
-      <ContaAllaRovesciaScreen
-        secondi={view.secondi}
-        settings={settings}
-        onExit={() => setView({ kind: 'tabs' })}
-      />
+      <div className="app">
+        <div className="topbar">
+          <button className="icon-btn" onClick={() => setView({ kind: 'tabs' })} aria-label="Indietro">
+            <Back />
+          </button>
+          <span className="ob grow" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.1em' }}>
+            STORICO
+          </span>
+        </div>
+        <div className="scroll">
+          <HistoryScreen entries={history} />
+        </div>
+      </div>
     )
   }
 
@@ -307,6 +304,47 @@ export default function App() {
         onAvvia={() => setView({ kind: 'run', workout: ricevuto })}
         onChiudi={() => setView({ kind: 'tabs' })}
       />
+    )
+  }
+
+  if (view.kind === 'schema') {
+    return (
+      <div className="app">
+        <div className="topbar">
+          <button className="icon-btn" onClick={() => setView({ kind: 'tabs' })} aria-label="Indietro">
+            <Back />
+          </button>
+          <span className="ob grow" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.1em' }}>
+            NUOVO TIMER
+          </span>
+        </div>
+        <div className="scroll">
+          <PresetScreen onPick={(w) => setView({ kind: 'editor', workout: w })} />
+        </div>
+      </div>
+    )
+  }
+
+  if (view.kind === 'esercizi') {
+    return (
+      <div className="app">
+        <div className="topbar">
+          <button className="icon-btn" onClick={() => setView({ kind: 'tabs' })} aria-label="Indietro">
+            <Back />
+          </button>
+          <span className="ob grow" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.1em' }}>
+            ESERCIZI
+          </span>
+        </div>
+        <div className="scroll">
+          <EserciziScreen
+            catalogo={catalogo}
+            onCatalogo={setCatalogo}
+            usi={usiEsercizi}
+            onRinomina={rinominaEsercizio}
+          />
+        </div>
+      </div>
     )
   }
 
@@ -363,7 +401,17 @@ export default function App() {
           </span>
         </header>
 
-        <div className="scroll">{body}</div>
+        {/* Cronometro e conto alla rovescia restano montati anche quando si
+            guarda un'altra scheda, nascosti e non smontati: un conto avviato e
+            poi lasciato per controllare un timer deve continuare a contare, e
+            suonare quando scade anche se in quel momento sei altrove. */}
+        <div className="pieno" hidden={tab !== 'crono'}>
+          <CronometroScreen settings={settings} />
+        </div>
+        <div className="pieno" hidden={tab !== 'countdown'}>
+          <CountdownTab settings={settings} />
+        </div>
+        {!PIENE.includes(tab) && <div className="scroll">{body}</div>}
 
         <nav className="tabbar">
           {TABS.map((t) => {

@@ -3,7 +3,7 @@ import type { Settings } from '../types'
 import { Cues, speak } from '../lib/audio'
 import { useWakeLock } from '../lib/wakeLock'
 import { pad } from '../lib/format'
-import { Close, Pause, Play } from './Icons'
+import { Back, Pause, Play } from './Icons'
 
 /**
  * I due strumenti che non hanno bisogno di un allenamento scritto.
@@ -18,6 +18,12 @@ import { Close, Pause, Play } from './Icons'
  * mette in pausa la pagina non faccia restare indietro il conto.
  */
 
+/** Le durate che si chiedono davvero in sala, in secondi. */
+export const DURATE_AL_VOLO = [30, 45, 60, 90, 120, 180]
+
+export const etichettaDurata = (s: number) =>
+  s < 60 ? `${s}\u2033` : s % 60 === 0 ? `${s / 60}\u2032` : `${Math.floor(s / 60)}\u2032${s % 60}`
+
 /* ------------------------------------------------------------------ *
  * Cronometro
  * ------------------------------------------------------------------ */
@@ -28,7 +34,7 @@ const minutiSecondi = (ms: number) => {
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`
 }
 
-export function CronometroScreen({ settings, onExit }: { settings: Settings; onExit: () => void }) {
+export function CronometroScreen({ settings }: { settings: Settings }) {
   // `partito` è l'istante in cui è ripartito, `banca` quello già accumulato
   // prima dell'ultima pausa: il tempo mostrato è sempre la somma dei due letta
   // adesso, mai un contatore incrementato a ogni tick.
@@ -82,15 +88,11 @@ export function CronometroScreen({ settings, onExit }: { settings: Settings; onE
   return (
     <div className="timer" style={{ ['--state' as string]: 'var(--blu)' }}>
       <div className="row timer-top">
-        <button className="icon-btn" onClick={onExit} aria-label="Chiudi il cronometro">
-          <Close />
-        </button>
-        <div className="stack grow" style={{ gap: 1, minWidth: 0 }}>
-          <span className="ob titolo-timer">CRONOMETRO</span>
+        <span className="stack grow" style={{ gap: 1, minWidth: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--dim)' }}>
             {giri.length ? `${giri.length} GIRI SEGNATI` : 'CONTA IN SALITA'}
           </span>
-        </div>
+        </span>
         <button className="icon-btn testo" onClick={azzera} aria-label="Azzera il cronometro">
           <span className="cond" style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em' }}>
             AZZERA
@@ -157,19 +159,51 @@ export function CronometroScreen({ settings, onExit }: { settings: Settings; onE
  * Conto alla rovescia al volo
  * ------------------------------------------------------------------ */
 
-/** Le durate che si chiedono davvero in sala, in secondi. */
-export const DURATE_AL_VOLO = [30, 45, 60, 90, 120, 180]
+/**
+ * La scheda del conto alla rovescia: prima le durate, poi il conto.
+ *
+ * Restare nella stessa scheda invece di aprire una schermata sopra è ciò che
+ * permette di tornare alle durate senza chiudere niente, che è il gesto che si
+ * fa quando la sala chiede un altro mezzo minuto.
+ */
+export function CountdownTab({ settings }: { settings: Settings }) {
+  const [scelta, setScelta] = useState<number | null>(null)
+  if (scelta === null) return <ScegliDurata onScegli={setScelta} />
+  return <ContaAllaRovesciaScreen key={scelta} secondi={scelta} settings={settings} onIndietro={() => setScelta(null)} />
+}
 
-export const etichettaDurata = (s: number) => (s < 60 ? `${s}″` : s % 60 === 0 ? `${s / 60}′` : `${Math.floor(s / 60)}′${s % 60}`)
+function ScegliDurata({ onScegli }: { onScegli: (secondi: number) => void }) {
+  return (
+    <div className="scroll">
+      <p className="pad" style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--dim)', margin: '16px 0 0' }}>
+        Parte al tocco, senza passare dall'editor. La durata si cambia anche a conto già iniziato.
+      </p>
+      <div className="pad" style={{ paddingTop: 14, paddingBottom: 24 }}>
+        <div className="volo-griglia">
+          {DURATE_AL_VOLO.map((s) => (
+            <button
+              key={s}
+              className="volo-tessera"
+              onClick={() => onScegli(s)}
+              aria-label={`Conto alla rovescia di ${s} secondi`}
+            >
+              <span className="num volo-tessera-n">{etichettaDurata(s)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-export function ContaAllaRovesciaScreen({
+function ContaAllaRovesciaScreen({
   secondi,
   settings,
-  onExit,
+  onIndietro,
 }: {
   secondi: number
   settings: Settings
-  onExit: () => void
+  onIndietro: () => void
 }) {
   const [durata, setDurata] = useState(secondi)
   // Parte subito: chi tocca «90″» ha già dato il via a voce.
@@ -245,11 +279,10 @@ export function ContaAllaRovesciaScreen({
   return (
     <div className="timer" style={{ ['--state' as string]: tinta }}>
       <div className="row timer-top">
-        <button className="icon-btn" onClick={onExit} aria-label="Chiudi il conto alla rovescia">
-          <Close />
+        <button className="icon-btn" onClick={onIndietro} aria-label="Torna alle durate">
+          <Back />
         </button>
         <div className="stack grow" style={{ gap: 1, minWidth: 0 }}>
-          <span className="ob titolo-timer">AL VOLO</span>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--dim)' }}>
             {etichettaDurata(durata)} IN TUTTO
           </span>

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { Esercizio } from '../lib/esercizi'
 import { PickerEsercizi } from './PickerEsercizi'
-import type { Exercise, Mode, Segment, Workout } from '../types'
-import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, buildSegments, descriviObiettivo, totalDuration } from '../lib/engine'
+import type { Exercise, Segment, Workout } from '../types'
+import { MODE_BADGE, MODE_FIELDS, MODE_HINT, MODE_LABEL, MODE_TINT, buildSegments, descriviObiettivo, totalDuration } from '../lib/engine'
 import { clock, uid } from '../lib/format'
 import { Back, Caret, Minus, Play, Plus, Trash } from './Icons'
 
@@ -19,7 +19,6 @@ const FIELD_META: Record<string, { label: string; unit: string; step: number; mi
   duration: { label: 'DURATA', unit: 'min', step: 60, min: 60, max: 5400, tint: 'var(--giallo)' },
 }
 
-const MODES: Mode[] = ['interval', 'circuit', 'emom', 'amrap', 'fortime']
 
 function Stepper({
   field,
@@ -200,20 +199,19 @@ export function EditorScreen({
           />
         </div>
 
+        {/* Lo schema si sceglie nella schermata prima, e qui si legge soltanto:
+            un elenco di schemi da ri-scegliere dentro l'editor era un bivio
+            offerto due volte, e la seconda volta non serviva a nessuno. */}
         <div className="rule">
           <span className="rule-label">SCHEMA</span>
           <div className="rule-line" />
         </div>
-        <div className="pad row" style={{ gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
-          {MODES.map((m) => (
-            <button key={m} className="chip" data-on={w.mode === m} onClick={() => set({ mode: m })}>
-              {MODE_BADGE[m]}
-            </button>
-          ))}
+        <div className="pad row" style={{ gap: 10, alignItems: 'flex-start', paddingTop: 2 }}>
+          <span className="badge" style={{ background: MODE_TINT[w.mode], flexShrink: 0, marginTop: 2 }}>
+            {MODE_BADGE[w.mode]}
+          </span>
+          <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)' }}>{MODE_HINT[w.mode]}</span>
         </div>
-        <p className="pad" style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--dim)', margin: '6px 0 0' }}>
-          {MODE_HINT[w.mode]}
-        </p>
 
         <div className="rule">
           <span className="rule-label">STRUTTURA</span>
