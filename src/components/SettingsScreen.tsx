@@ -5,7 +5,7 @@ import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
 import { audioDa, modoAudio, type ModoAudio } from '../lib/storage'
 import { listClips } from '../lib/clipStore'
 import { CLIPS } from '../lib/voiceClips'
-import { COMPILATA_IL, cercaAggiornamenti } from '../lib/aggiornamento'
+import { COMMIT, COMPILATA_IL, VERSIONE, cercaAggiornamenti } from '../lib/aggiornamento'
 import {
   type Salvataggio,
   applicaSalvataggio,
@@ -438,6 +438,19 @@ export function SettingsScreen({
       </div>
       <div className="pad stack" style={{ gap: 8 }}>
         <div className="card stack" style={{ gap: 8, padding: 14 }}>
+          {/* Il numero dice a che punto è il progetto, il commit dice quale
+              copia esatta stai guardando: è quello che serve quando si prova
+              una cosa sul telefono e ci si chiede se è già dentro. */}
+          <div className="row" style={{ gap: 10, alignItems: 'baseline' }}>
+            <span className="grow ob" style={{ fontSize: 21, fontWeight: 700, letterSpacing: '0.04em' }}>
+              ODS TIMER {VERSIONE}
+            </span>
+            {COMMIT && (
+              <span className="num" style={{ fontSize: 13, fontWeight: 600, color: 'var(--faint)', letterSpacing: '0.08em' }}>
+                {COMMIT}
+              </span>
+            )}
+          </div>
           <div className="row" style={{ gap: 10, alignItems: 'baseline' }}>
             <span className="grow" style={{ fontSize: 15, fontWeight: 600 }}>
               Compilata il
@@ -519,7 +532,7 @@ export function SettingsScreen({
         </button>
 
         <div className="row" style={{ gap: 10, padding: '16px 2px 0' }}>
-          <span style={{ fontSize: 12, color: 'var(--faint)', letterSpacing: '0.1em' }}>ODS TIMER 1.0</span>
+          <span style={{ fontSize: 12, color: 'var(--faint)', letterSpacing: '0.1em' }}>ODS TIMER {VERSIONE}</span>
           <div className="grow" />
           <span style={{ fontSize: 12, color: 'var(--faint)', letterSpacing: '0.1em' }}>
             {historyCount} allenamenti svolti

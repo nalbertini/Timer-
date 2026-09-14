@@ -90,3 +90,9 @@ export async function cercaAggiornamenti(): Promise<EsitoControllo> {
 
 /** Il momento in cui è stata compilata questa versione. */
 export const COMPILATA_IL = __BUILD_DATE__
+
+/** Il numero di versione, preso da `package.json`: una fonte sola. */
+export const VERSIONE = __APP_VERSION__
+
+/** Il commit da cui è compilata questa copia, vuoto fuori dal repository. */
+export const COMMIT = __APP_COMMIT__

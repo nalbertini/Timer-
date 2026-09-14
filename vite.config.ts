@@ -1,11 +1,35 @@
+import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const versione = JSON.parse(readFileSync('./package.json', 'utf8')).version as string
+
+/**
+ * Il commit da cui è compilata questa copia.
+ *
+ * Il numero di versione dice a che punto è il progetto; il commit dice quale
+ * copia esatta stai guardando, ed è quello che serve quando si prova una cosa
+ * sul telefono e si vuole sapere se è già dentro. Fuori da un repository — o
+ * in un archivio scaricato — non c'è, e la riga si limita al numero.
+ */
+function commit(): string {
+  try {
+    return execSync('git rev-parse --short=7 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return ''
+  }
+}
+
 export default defineConfig({
   // Il momento della compilazione, mostrato nelle impostazioni: su un tablet
   // in sala «che versione sto guardando?» è una domanda che capita davvero.
-  define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString()) },
+  define: {
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __APP_VERSION__: JSON.stringify(versione),
+    __APP_COMMIT__: JSON.stringify(commit()),
+  },
   // Percorsi relativi: l'app funziona anche servita da una sottocartella,
   // non solo dalla radice del dominio.
   base: './',

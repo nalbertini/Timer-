@@ -456,6 +456,10 @@ input, textarea { font: inherit; color: inherit; }
 .volo-tessera-n {
   font-size: 30px; font-weight: 700; letter-spacing: 0.01em; color: var(--text);
 }
+/* Senza l'intestazione dell'app sopra, la scelta delle durate si tiene da sé
+   lo spazio della barra di stato. */
+.scelta-durate { padding-top: calc(var(--safe-t) + 18px); }
+.scelta-durate .volo-griglia { row-gap: 12px; }
 .volo-crono { gap: 14px; padding: 0 14px; min-height: 72px; text-align: left; color: var(--text); }
 .volo-crono:hover { border-color: var(--blu); }
 @media (min-width: 560px) {
@@ -480,23 +484,62 @@ input, textarea { font: inherit; color: inherit; }
 /* Dentro il conto alla rovescia la stessa fila serve a cambiare durata. */
 .timer .al-volo-scelte { margin: 0 20px; }
 
-.crono-main {
-  flex-grow: 1; min-height: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; padding: 0 20px;
+/* Gli attrezzi hanno sotto di sé la barra delle schede: un centinaio di pixel
+   che il timer dell'allenamento non paga, perché da acceso è a schermo pieno e
+   la copre. Il conto deve però restare raggiungibile mentre gira — ci si va e
+   si torna mentre la sala lavora — quindi la barra resta, e quei pixel li
+   ridà l'anello, che qui è tarato sull'altezza vera della finestra.
+   Sotto una certa altezza cadono prima i due testi di contorno e poi
+   l'anello: quello che non si può perdere sono le cifre. */
+.timer[data-attrezzo='true'] { --anello: min(300px, 22vh, 46vw); }
+@media (max-height: 700px) {
+  .timer[data-attrezzo='true'] { --anello: min(300px, 16vh, 34vw); }
+  .timer[data-attrezzo='true'] .state-label,
+  .timer[data-attrezzo='true'] .exercise { display: none; }
 }
+@media (max-height: 600px) {
+  .timer[data-attrezzo='true'] .anello { display: none; }
+}
+
+/* Telefono girato di lato: trecentosessanta pixel in tutto, un centinaio dei
+   quali se li prende la barra delle schede. Lì si stringe tutto — la barra per
+   prima, che senza etichette resta comunque riconoscibile — altrimenti i
+   comandi scivolano sopra le schede e non si preme più niente. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .tabbar { padding: 4px 6px max(6px, var(--safe-b)); }
+  .tab { min-height: 34px; gap: 2px; font-size: 8px; }
+  .timer[data-attrezzo='true'] .timer-top { padding-top: calc(var(--safe-t) + 2px); }
+  .timer[data-attrezzo='true'] .sottotitolo-timer { display: none; }
+  .timer[data-attrezzo='true'] .icon-btn { height: 36px; min-height: 36px; }
+  .timer[data-attrezzo='true'] .digits { font-size: min(11vw, 17vh); }
+  .timer[data-attrezzo='true'] .crono-centesimi { font-size: min(4.5vw, 8vh); }
+  .timer[data-attrezzo='true'] .timer-controlli { gap: 8px; padding: 4px 14px max(6px, var(--safe-b)); }
+  .timer[data-attrezzo='true'] .tasto-avvia,
+  .timer[data-attrezzo='true'] .tasto-giro { height: 40px; }
+  .timer[data-attrezzo='true'] .al-volo-scelte .chip { min-height: 30px; font-size: 15px; }
+  .timer[data-attrezzo='true'] .crono-giri { max-height: 10vh; }
+  .timer[data-attrezzo='true'] .titolo-timer { font-size: 15px; }
+}
+
 .crono-cifre { display: flex; align-items: baseline; justify-content: center; gap: 2px; min-width: 0; }
 /* «00:16.63» è molto più largo di «00:45»: i minuti restano grandi, i centesimi
    scendono a un terzo. Da lontano si legge il minuto, in mano il centesimo. */
 .digits-crono { font-size: min(26vw, 32vh); }
+/* Di fianco all'anello la colonna è larga la metà, e «00:16» più i centesimi
+   ci andavano a capo: da lontano si leggeva «00:» sopra e «16» sotto. */
+@media (min-width: 640px) and (orientation: landscape) {
+  .digits-crono { font-size: min(16vw, 25vh); }
+}
 .crono-centesimi {
   font-size: min(9vw, 11vh); font-weight: 700; color: var(--dim);
   letter-spacing: -0.02em;
 }
 
 .crono-giri {
-  width: 100%; max-width: 420px; max-height: 34vh; overflow-y: auto;
-  border-top: 2px solid var(--line-soft);
+  /* Fra le cifre e i comandi, dove il timer degli allenamenti tiene la riga
+     del prossimo intervallo: la stessa fascia, lo stesso posto. */
+  flex-shrink: 0; max-height: 26vh; overflow-y: auto;
+  margin: 0 20px; border-top: 2px solid var(--line-soft);
 }
 .crono-giro {
   display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline;
@@ -513,8 +556,7 @@ input, textarea { font: inherit; color: inherit; }
 
 @media (max-height: 740px) and (orientation: portrait) {
   .tasto-giro { height: 58px; }
-  .crono-main { gap: 12px; }
-  .crono-giri { max-height: 26vh; }
+  .crono-giri { max-height: 20vh; }
 }
 
 /* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */

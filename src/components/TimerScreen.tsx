@@ -7,6 +7,7 @@ import { useTimer } from '../lib/useTimer'
 import { segnalaTimerAperto } from '../lib/aggiornamento'
 import { type Interrotto, salvaInterrotto, scordaInterrotto } from '../lib/ripresa'
 import { useWakeLock } from '../lib/wakeLock'
+import { DentroAnello, Digits, Ring } from './Quadrante'
 import { Close, Next, Pause, Play, Prev } from './Icons'
 
 const STATE_COLOR = {
@@ -18,48 +19,7 @@ const STATE_COLOR = {
 } as const
 
 /** Anello a ingranaggio: il tratteggio richiama i denti del marchio. */
-function Ring({ progress, color }: { progress: number; color: string }) {
-  const r = 43
-  const circumference = 2 * Math.PI * r
-  return (
-    <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
-      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="9" strokeDasharray="9 10.4" />
-      <circle
-        cx="50"
-        cy="50"
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="9"
-        strokeDasharray={`${(circumference * progress).toFixed(2)} ${circumference.toFixed(2)}`}
-      />
-    </svg>
-  )
-}
 
-/**
- * Ogni cifra occupa esattamente la larghezza dello zero del font corrente (1ch).
- * `tabular-nums` da solo non basta: vale solo se il font espone la feature
- * `tnum`, altrimenti i numeri cambiano larghezza a ogni secondo e il blocco,
- * essendo centrato, balla da destra a sinistra.
- */
-function Digits({ value }: { value: string }) {
-  return (
-    <div className="digits" role="timer" aria-label={value}>
-      {value.split('').map((ch, i) =>
-        ch >= '0' && ch <= '9' ? (
-          <span key={i} aria-hidden="true" style={{ display: 'inline-block', width: '1ch', textAlign: 'center' }}>
-            {ch}
-          </span>
-        ) : (
-          <span key={i} aria-hidden="true">
-            {ch}
-          </span>
-        ),
-      )}
-    </div>
-  )
-}
 
 export function TimerScreen({
   workout,
@@ -316,20 +276,16 @@ export function TimerScreen({
             ) : (
             <div className="anello">
               <Ring progress={view.progress} color={color} />
-              <div
-                className="stack"
-                style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', gap: 2 }}
-              >
-                {/* Le tre scritte si misurano sull'anello e non su un numero
-                    fisso: quando l'anello si stringe — schermo grande sul
-                    telefono, schermi piccoli — un «1/8» da 46 px gli usciva
-                    fuori e «RESTA» andava a capo sopra i trattini. */}
-                <span className="cond anello-etichetta">GIRO</span>
-                <span className="num anello-giro" style={{ color }}>
-                  {seg ? `${seg.round || 1}/${seg.rounds}` : '—'}
-                </span>
-                <span className="cond anello-etichetta anello-resta">RESTA {clock(view.remainingTotal)}</span>
-              </div>
+              {/* Le tre scritte si misurano sull'anello e non su un numero
+                  fisso: quando l'anello si stringe — schermo grande sul
+                  telefono, schermi piccoli — un «1/8» da 46 px gli usciva
+                  fuori e «RESTA» andava a capo sopra i trattini. */}
+              <DentroAnello
+                etichetta="GIRO"
+                numero={seg ? `${seg.round || 1}/${seg.rounds}` : '—'}
+                sotto={`RESTA ${clock(view.remainingTotal)}`}
+                colore={color}
+              />
             </div>
             )}
 

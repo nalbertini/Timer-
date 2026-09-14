@@ -390,16 +390,24 @@ export default function App() {
       </nav>
 
       <div className="app content">
-        <header className="topbar">
-          <div style={{ display: 'contents' }} className="only-mobile">
-            <Logo width={58} />
-            <Wordmark />
-          </div>
-          <div className="grow" />
-          <span className="ob page-title" style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--dim)' }}>
-            {TAB_TITLE[tab]}
-          </span>
-        </header>
+        {/* Cronometro e conto alla rovescia si prendono lo schermo dall'alto:
+            hanno già una loro riga di intestazione, e soprattutto riservavano
+            una seconda volta lo spazio della barra di stato che questa
+            intestazione aveva già preso — sessantun pixel di nulla su un
+            telefono, e la cornice colorata che cominciava a metà. Senza, la
+            cornice inquadra tutto lo schermo, che è il motivo per cui c'è. */}
+        {!PIENE.includes(tab) && (
+          <header className="topbar">
+            <div style={{ display: 'contents' }} className="only-mobile">
+              <Logo width={58} />
+              <Wordmark />
+            </div>
+            <div className="grow" />
+            <span className="ob page-title" style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--dim)' }}>
+              {TAB_TITLE[tab]}
+            </span>
+          </header>
+        )}
 
         {/* Cronometro e conto alla rovescia restano montati anche quando si
             guarda un'altra scheda, nascosti e non smontati: un conto avviato e
