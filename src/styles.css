@@ -171,10 +171,13 @@ input, textarea { font: inherit; color: inherit; }
 .timer {
   position: relative; height: 100%; display: flex; flex-direction: column;
   --anello: min(300px, 34vh, 58vw);
+  /* La cornice colorata è anche un ingombro: chi si appoggia ai bordi deve
+     sapere quanto è spessa, altrimenti ci finisce sotto. */
+  --bordo: 10px;
 }
 .timer::after {
   content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
-  border: 10px solid var(--state);
+  border: var(--bordo) solid var(--state);
 }
 .timer-main {
   position: relative;
@@ -223,7 +226,7 @@ input, textarea { font: inherit; color: inherit; }
 @media (min-width: 640px) and (orientation: landscape) {
   .timer-main { flex-direction: row; gap: 56px; padding: 0 60px; }
   .digits { font-size: min(20vw, 34vh); }
-  .timer::after { border-width: 14px; }
+  .timer { --bordo: 14px; }
 }
 
 /* ---------- barra laterale su desktop ---------- */
@@ -300,7 +303,7 @@ input, textarea { font: inherit; color: inherit; }
   /* In alto a destra dentro il blocco centrale, non dello schermo: è lo spazio
      morto accanto all'anello, e ancorata qui non può invadere l'intestazione
      quando il nome dell'allenamento va a capo. */
-  position: absolute; right: 0; top: 0; z-index: 3;
+  position: absolute; right: var(--bordo); top: 0; z-index: 3;
   height: 15vh; max-height: 118px; width: auto; pointer-events: none;
   opacity: 0.92;
   filter: drop-shadow(0 4px 14px #000000aa);
@@ -329,7 +332,7 @@ input, textarea { font: inherit; color: inherit; }
   /* In orizzontale l'angolo in alto a destra è occupato dall'intestazione, e
      più in basso c'è la riga «prossimo». Resta la fascia vuota sotto
      l'anello. */
-  .adesivo-stato { left: 0; right: auto; top: auto; bottom: 0; height: 16vh; max-height: 130px; }
+  .adesivo-stato { left: var(--bordo); right: auto; top: auto; bottom: var(--bordo); height: 16vh; max-height: 130px; }
 }
 
 /* Il QR sta su carta bianca anche dentro un'app nera: un lettore cerca moduli
@@ -360,7 +363,6 @@ input, textarea { font: inherit; color: inherit; }
 .timer[data-grande='true'] .exercise { font-size: clamp(22px, 4.2vw, 54px); }
 .timer[data-grande='true'] .obiettivo { font-size: clamp(15px, 2.4vw, 30px); }
 .timer[data-grande='true'] .beccato-frase { font-size: clamp(13px, 2.6vw, 20px); }
-.timer[data-grande='true'] .timer-prossimo { display: none; }
 .timer[data-grande='true'] .btn-piu { min-width: 96px; font-size: 20px; min-height: 48px; }
 .timer[data-grande='true'] .timer-dots { padding-top: 10px; }
 .timer[data-grande='true'] .timer-controlli { gap: 10px; padding: 10px 20px calc(var(--safe-b) + 12px); }
@@ -378,6 +380,18 @@ input, textarea { font: inherit; color: inherit; }
 @media (orientation: portrait) {
   .timer[data-grande='true'] .digits { font-size: min(35vw, 58vh); }
 }
+
+/* Schermo grande su un telefono tenuto in verticale. La modalità è tarata sul
+   tablet appeso in sala, dove 24vw sono trecento pixel di anello; su un
+   telefono da 412 sono novantanove, e un anello da novantanove non è più un
+   contagiri — è un bottone con dentro tre scritte che non ci stanno. Le cifre
+   restano larghe quanto lo schermo permette, quindi l'altezza che avanza può
+   andare solo all'anello e ai due testi, ed è lì che va. */
+@media (orientation: portrait) and (max-width: 560px) and (min-height: 560px) {
+  .timer[data-grande='true'] { --anello: min(190px, 22vh, 42vw); }
+  .timer[data-grande='true'] .state-label { font-size: clamp(26px, 7.5vw, 64px); }
+  .timer[data-grande='true'] .exercise { font-size: clamp(22px, 6vw, 54px); }
+}
 @media (orientation: landscape) {
   .timer[data-grande='true'] .digits { font-size: min(29vw, 55vh); }
 }
@@ -389,6 +403,12 @@ input, textarea { font: inherit; color: inherit; }
   .timer[data-grande='true'] .state-label { font-size: clamp(18px, 3.4vw, 30px); }
   .timer[data-grande='true'] .exercise { font-size: clamp(16px, 3vw, 28px); }
   .timer[data-grande='true'] .obiettivo { font-size: clamp(12px, 2vw, 18px); }
+  /* Anche i comandi: le misure da tablet sono più specifiche di quelle del
+     telefono ruotato e restavano in piedi, rubando alla colonna centrale i
+     pochi pixel che le mancavano per non finire sotto la barra. */
+  .timer[data-grande='true'] .timer-controlli { gap: 8px; padding: 8px 14px calc(var(--safe-b) + 8px); }
+  .timer[data-grande='true'] .tasto-salto { width: 50px; height: 50px; }
+  .timer[data-grande='true'] .tasto-avvia { height: 50px; }
 }
 
 /* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */
@@ -436,8 +456,34 @@ input, textarea { font: inherit; color: inherit; }
 .anello {
   position: relative; flex-shrink: 0;
   width: var(--anello); aspect-ratio: 1;
+  /* L'anello si misura da sé: sotto una certa taglia la terza riga non ci sta
+     comunque, e a deciderlo dev'essere il cerchio, non la finestra — la stessa
+     misura arriva da media query diverse. */
+  container-type: size;
+}
+@container (max-width: 96px) {
+  /* Il totale che resta si legge anche sulla barra in fondo; il giro no. */
+  .anello-resta { display: none; }
 }
 .anello > svg { width: 100%; height: 100%; }
+
+/* Dentro un cerchio la fascia scrivibile è circa sette decimi del diametro:
+   le tre scritte si danno il corpo in frazioni dell'anello. Le frazioni sono
+   scelte perché sull'anello del tablet in sala — 176 px in schermo grande —
+   ridiano esattamente i 15, 46 e 13 px di prima: quello era già il caso
+   giusto, ed è quello che non deve cambiare. */
+.anello-etichetta {
+  font-size: clamp(8px, calc(var(--anello) * 0.085), 15px);
+  font-weight: 700; letter-spacing: 0.2em; color: var(--dim); white-space: nowrap;
+}
+.anello-giro {
+  font-size: clamp(20px, calc(var(--anello) * 0.26), 46px);
+  font-weight: 700; line-height: 1;
+}
+.anello-resta {
+  font-size: clamp(8px, calc(var(--anello) * 0.074), 13px);
+  font-weight: 600; letter-spacing: 0.16em;
+}
 
 .timer-top { gap: 12px; padding: calc(var(--safe-t) + 14px) 20px 0; }
 .timer-dots { padding: 16px 20px 0; }
@@ -458,6 +504,10 @@ input, textarea { font: inherit; color: inherit; }
 .btn-piu:not(:disabled) { border-color: var(--state); color: var(--text); }
 .btn-piu:active:not(:disabled) { background: var(--surface-2); }
 .btn-piu:disabled { opacity: 0.35; }
+/* Quando la riga del prossimo non c'è — schermo grande, o ultimo intervallo —
+   il tasto resterebbe un rettangolino spaesato in un angolo. Da solo si prende
+   tutta la riga: è anche l'unico gesto che si fa guardando la sala. */
+.timer-azioni > .btn-piu:only-child { flex-grow: 1; }
 .timer-controlli { gap: 12px; padding: 16px 20px calc(var(--safe-b) + 20px); }
 .tasto-salto { width: 68px; height: 68px; }
 .tasto-avvia { height: 68px; }
@@ -465,7 +515,7 @@ input, textarea { font: inherit; color: inherit; }
 /* Schermi bassi: si stringe tutto invece di lasciare che il contenuto
    trabocchi dietro gli elementi sotto. */
 @media (max-height: 740px) and (orientation: portrait) {
-  .timer { --anello: min(300px, 26vh, 50vw); }
+  .timer { --anello: min(300px, 24vh, 50vw); }
   .timer-main { gap: 2px; }
   .timer-top { padding-top: calc(var(--safe-t) + 8px); }
   .timer-dots { padding-top: 8px; }
@@ -483,7 +533,7 @@ input, textarea { font: inherit; color: inherit; }
    d'angolo sparisce, perché lì lo spazio semplicemente non c'è. */
 @media (orientation: landscape) and (max-height: 560px) {
   .timer-main { gap: 20px; padding: 0 16px; }
-  .timer { --anello: min(300px, 50vh, 27vw); }
+  .timer { --anello: min(300px, 44vh, 27vw); }
   .digits { font-size: min(18vw, 30vh); }
   .state-label { font-size: clamp(18px, 3.4vw, 30px); letter-spacing: 0.2em; }
   .exercise { font-size: clamp(16px, 3vw, 28px); }

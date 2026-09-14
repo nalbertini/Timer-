@@ -320,15 +320,15 @@ export function TimerScreen({
                 className="stack"
                 style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', gap: 2 }}
               >
-                <span className="cond" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--dim)' }}>
-                  GIRO
-                </span>
-                <span className="num" style={{ fontSize: 46, fontWeight: 700, lineHeight: 1, color }}>
+                {/* Le tre scritte si misurano sull'anello e non su un numero
+                    fisso: quando l'anello si stringe — schermo grande sul
+                    telefono, schermi piccoli — un «1/8» da 46 px gli usciva
+                    fuori e «RESTA» andava a capo sopra i trattini. */}
+                <span className="cond anello-etichetta">GIRO</span>
+                <span className="num anello-giro" style={{ color }}>
                   {seg ? `${seg.round || 1}/${seg.rounds}` : '—'}
                 </span>
-                <span className="cond" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.16em', color: 'var(--dim)' }}>
-                  RESTA {clock(view.remainingTotal)}
-                </span>
+                <span className="cond anello-etichetta anello-resta">RESTA {clock(view.remainingTotal)}</span>
               </div>
             </div>
             )}
@@ -350,7 +350,9 @@ export function TimerScreen({
       {/* Il «+30″» sta accanto alla riga del prossimo intervallo e non fra i
           comandi: quelli si premono al volo, questo lo preme l'istruttore
           guardando la sala. In modalità schermo grande la riga del prossimo
-          sparisce ma il tasto resta, perché è lì che serve di più. */}
+          non si costruisce — prima si nascondeva col CSS, e il tasto restava
+          un rettangolino spaesato accanto a un vuoto — così il «+30″» si
+          prende tutta la riga, che è dove serve di più. */}
       <div className="row timer-azioni">
         <button
           className="btn-piu"
@@ -360,7 +362,7 @@ export function TimerScreen({
         >
           +30&Prime;
         </button>
-        {view.next && view.next.extra === undefined && !done && (
+        {view.next && view.next.extra === undefined && !done && !settings.bigScreen && (
         <div className="row card timer-prossimo">
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--dim)' }}>PROSSIMO</span>
           <div className="grow" style={{ minWidth: 8 }} />
