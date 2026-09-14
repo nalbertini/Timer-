@@ -332,7 +332,18 @@ input, textarea { font: inherit; color: inherit; }
   /* In orizzontale l'angolo in alto a destra è occupato dall'intestazione, e
      più in basso c'è la riga «prossimo». Resta la fascia vuota sotto
      l'anello. */
-  .adesivo-stato { left: var(--bordo); right: auto; top: auto; bottom: var(--bordo); height: 16vh; max-height: 130px; }
+  /* Il tetto era 130 px mentre il file ne ha trecento: su un 1920×1080
+     l'illustrazione occupava il 6% della larghezza e del judogi non si
+     leggeva niente. Il tetto ora è la misura vera del disegno, così cresce
+     invece di restare un francobollo. */
+  .adesivo-stato { left: var(--bordo); right: auto; top: auto; bottom: var(--bordo); height: 16vh; max-height: 300px; }
+}
+
+/* Sotto l'anello, su uno schermo grande, resta una fascia vuota alta fra i 250
+   e i 440 px: misurata, non stimata. Lì l'illustrazione può stare comoda senza
+   avvicinarsi né all'anello né alla colonna delle cifre. */
+@media (min-width: 1200px) and (min-height: 900px) and (orientation: landscape) {
+  .adesivo-stato { height: 22vh; }
 }
 
 /* Il QR sta su carta bianca anche dentro un'app nera: un lettore cerca moduli
@@ -447,6 +458,19 @@ input, textarea { font: inherit; color: inherit; }
   .maurizio-livelli { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .maurizio-faccia { width: 110px; }
 }
+
+/* Un interruttore a tre posizioni per i segnali acustici. Stessa forma dei
+   livelli di Maurizio, colore diverso: il giallo è suo, il blu è quello dei
+   segnali — lo stesso del volume, due righe più sotto. */
+.segmenti { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.segmento {
+  min-height: 52px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  border: 2px solid var(--line); background: var(--surface-2); color: #b8b8b2;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.segmento:hover { border-color: var(--dim); color: var(--text); }
+.segmento[data-on='true'] { background: var(--blu); border-color: var(--blu); color: #121212; }
 
 /* ---------- misure del timer, elastiche ---------- */
 

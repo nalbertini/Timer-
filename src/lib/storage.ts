@@ -21,6 +21,27 @@ export const DEFAULT_SETTINGS: Settings = {
 }
 
 /**
+ * I segnali acustici come una scelta sola, a tre posizioni.
+ *
+ * Sotto restano i due interruttori di sempre — il bip e la voce — perché è
+ * così che il timer li legge, e perché un salvataggio scritto prima di questa
+ * modifica continua a valere. Sopra però si presentano come tre stati che si
+ * escludono: in palestra si vuole «zitto», «solo i bip» o «anche la voce»,
+ * non una combinazione da comporre. La quarta combinazione possibile — voce
+ * accesa e bip spenti — non la chiedeva nessuno: si legge come «voce» e alla
+ * prima scelta si riallinea.
+ */
+export type ModoAudio = 'muto' | 'bip' | 'voce'
+
+export function modoAudio(s: Pick<Settings, 'countdownBeep' | 'voice'>): ModoAudio {
+  return s.voice ? 'voce' : s.countdownBeep ? 'bip' : 'muto'
+}
+
+export function audioDa(m: ModoAudio): Pick<Settings, 'countdownBeep' | 'voice'> {
+  return { countdownBeep: m !== 'muto', voice: m === 'voce' }
+}
+
+/**
  * Ogni lettura è difensiva: in incognito, con i dati del sito bloccati o dopo
  * una pulizia del browser, localStorage lancia o restituisce spazzatura.
  */

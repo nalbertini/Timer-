@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CoachLevel, Settings } from '../types'
 import { Cues, italianVoices, speak } from '../lib/audio'
 import { COACH_HINT, COACH_LABEL, COACH_LEVELS } from '../lib/engine'
+import { audioDa, modoAudio, type ModoAudio } from '../lib/storage'
 import { listClips } from '../lib/clipStore'
 import { CLIPS } from '../lib/voiceClips'
 import { COMPILATA_IL, cercaAggiornamenti } from '../lib/aggiornamento'
@@ -16,6 +17,18 @@ import {
 } from '../lib/salvataggio'
 import { Chevron } from './Icons'
 import { Logo } from './Logo'
+
+const AUDIO_ETICHETTA: Record<ModoAudio, string> = {
+  muto: 'MUTO',
+  bip: 'SOLO BIP',
+  voce: 'BIP + VOCE',
+}
+
+const AUDIO_SUGGERIMENTO: Record<ModoAudio, string> = {
+  muto: 'Nessun suono. Restano il colore dello schermo, la barra e la vibrazione: in una sala con la musica alta è spesso l’unica cosa che si vede davvero.',
+  bip: 'Tre bip sugli ultimi tre secondi di ogni intervallo, e uno più lungo al cambio.',
+  voce: 'I bip più la voce, che annuncia lo stato e il nome dell’esercizio.',
+}
 
 const cues = new Cues()
 
@@ -91,6 +104,8 @@ export function SettingsScreen({
     cues.work()
   }
 
+  const modo = modoAudio(settings)
+
   return (
     <>
       <div className="pad" style={{ paddingTop: 16 }}>
@@ -129,27 +144,43 @@ export function SettingsScreen({
         <div className="rule-line" />
       </div>
       <div className="pad stack" style={{ gap: 2 }}>
-        <Toggle
-          label="Bip conto alla rovescia"
-          hint="Tre bip sugli ultimi 3 secondi di ogni intervallo"
-          on={settings.countdownBeep}
-          onChange={(v) => onChange({ countdownBeep: v })}
-        />
-        <Toggle
-          label="Voce italiana"
-          hint="Annuncia lo stato e il nome dell'esercizio"
-          on={settings.voice}
-          onChange={(v) => {
-            onChange({ voice: v })
-            if (v) speak('Voce attiva', settings.volume, settings.voiceURI)
-          }}
-        />
-        <Toggle
-          label="Dice il prossimo esercizio"
-          hint="Nel recupero annuncia dove si va dopo, così ci si prepara"
-          on={settings.announceNext}
-          onChange={(v) => onChange({ announceNext: v })}
-        />
+        {/* Una scelta sola a tre posizioni invece di due interruttori da
+            combinare: in palestra si vuole «zitto», «solo i bip» o «anche la
+            voce», e le combinazioni restanti non le chiedeva nessuno. */}
+        <div className="card stack" style={{ gap: 10, padding: '12px 14px 14px' }}>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>Segnali acustici</span>
+          <div className="segmenti">
+            {(['muto', 'bip', 'voce'] as ModoAudio[]).map((m) => (
+              <button
+                key={m}
+                className="segmento"
+                data-on={modo === m}
+                aria-pressed={modo === m}
+                onClick={() => {
+                  onChange(audioDa(m))
+                  if (m === 'voce') speak('Voce attiva', settings.volume, settings.voiceURI)
+                }}
+              >
+                <span className="ob" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.06em' }}>
+                  {AUDIO_ETICHETTA[m]}
+                </span>
+              </button>
+            ))}
+          </div>
+          <span style={{ fontSize: 13, lineHeight: 1.4, color: modo === 'muto' ? 'var(--dim)' : 'var(--blu)' }}>
+            {AUDIO_SUGGERIMENTO[modo]}
+          </span>
+        </div>
+
+        {/* Un'opzione della voce: senza voce non ha niente da dire. */}
+        {modo === 'voce' && (
+          <Toggle
+            label="Dice il prossimo esercizio"
+            hint="Nel recupero annuncia dove si va dopo, così ci si prepara"
+            on={settings.announceNext}
+            onChange={(v) => onChange({ announceNext: v })}
+          />
+        )}
         <Toggle
           label="Vibrazione"
           hint="Solo su telefono e tablet che la supportano"
