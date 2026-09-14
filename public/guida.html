@@ -95,6 +95,11 @@
 
   .corpo {
     display: grid;
+    /* `minmax(0, …)` e non `1fr`: senza, la colonna si allarga fino alla
+       larghezza minima della tabella più larga — 520 px — e si porta dietro
+       tutta la pagina, indice compreso. Con questo le tabelle scorrono nel
+       loro riquadro e il resto resta dentro lo schermo. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 48px;
     align-items: start;
   }
@@ -323,6 +328,8 @@
   }
 </style>
 
+</head>
+<body>
 <style>
   .ritorno {
     position: sticky; top: 0; z-index: 10;
@@ -336,8 +343,6 @@
   .ritorno:hover { color: #1b8ac4; }
   @media print { .ritorno { display: none; } }
 </style>
-</head>
-<body>
 <a class="ritorno" href="./">‹ TORNA ALL'APP</a>
 <div class="guscio">
 
@@ -368,8 +373,8 @@
       <div class="indice-titolo">INDICE</div>
       <ol>
         <li><a href="#cose">Cos'è e dove vive</a></li>
-        <li><a href="#schede">Le cinque schede</a></li>
-        <li><a href="#alvolo-tools">Cronometro e minuti al volo</a></li>
+        <li><a href="#schede">Le quattro schede</a></li>
+        <li><a href="#alvolo-tools">Cronometro e countdown</a></li>
         <li><a href="#schemi">I cinque schemi</a></li>
         <li><a href="#editor">Costruire un timer</a></li>
         <li><a href="#esercizi">La libreria esercizi</a></li>
@@ -415,6 +420,10 @@
             di numeri in più — e la prima apertura mette in cache tutto il necessario: da lì funziona
             anche con il telefono in modalità aereo.
           </p>
+          <p>
+            <strong>Anche questa guida è dentro l'app</strong>, in fondo alle impostazioni: si apre senza rete
+            e vale per chiunque abbia l'indirizzo, senza dover mandare niente.
+          </p>
         </div>
 
         <p>
@@ -430,23 +439,18 @@
       <figcaption>La scheda TIMER appena installata, con i sei timer già pronti.</figcaption>
     </figure>
     <figure>
-      <img src="guida/preset.webp" alt="La scheda PRESET con i sei schemi classici" width="820" height="1688" loading="lazy">
-      <figcaption>PRESET: sei schemi classici che aprono l’editor con i valori già dentro.</figcaption>
+      <img src="guida/scheda-aperta.webp" alt="Una scheda timer aperta con MODIFICA, DUPLICA, INVIA e il cestino" width="820" height="1688" loading="lazy">
+      <figcaption>Toccando una scheda compaiono le sue azioni: modifica, duplica, invia, elimina.</figcaption>
     </figure>
         </div>
       </section>
 
       <section id="schede">
         <div class="occhiello">ORIENTARSI</div>
-        <h2>Le cinque schede</h2>
+        <h2>Le quattro schede</h2>
         <p>
-          In fondo allo schermo (di lato, sul computer) ci sono cinque voci. Sono tutta la navigazione
-          che l'app ha.
-        </p>
-        <p>
-          Lo <strong>storico</strong> degli allenamenti non è più una di queste: in palestra non lo guarda
-          nessuno, e quel posto serviva agli attrezzi. Continua a registrare ogni allenamento portato a
-          termine, entra nelle copie di sicurezza, e si apre da IMPOSTAZIONI in fondo.
+          In fondo allo schermo (di lato, sul computer) ci sono quattro voci. Sono tutta la navigazione
+          che l'app ha, e sono quattro perché in una lezione si entra solo lì.
         </p>
 
         <div class="tabella-scorre">
@@ -456,47 +460,60 @@
             </thead>
             <tbody>
               <tr><td class="nome-schema">TIMER</td><td>I tuoi allenamenti. Da qui si avvia, si modifica, si duplica, si manda, si elimina.</td></tr>
-              <tr><td class="nome-schema">PRESET</td><td>Sei schemi classici già impostati: Tabata, HIIT 40/20, EMOM, AMRAP, For Time, Circuito. Toccarne uno apre l'editor con i valori già dentro.</td></tr>
-              <tr><td class="nome-schema">ESERCIZI</td><td>Il catalogo della palestra: si crea, si rinomina, si sposta di categoria, si cancella.</td></tr>
-              <tr><td class="nome-schema">AL VOLO</td><td>Il cronometro e il conto alla rovescia: i due attrezzi che non chiedono di scrivere un allenamento.</td></tr>
-              <tr><td class="nome-schema">IMPOSTAZIONI</td><td>Maurizio, suoni, voce, schermo, copie di sicurezza, storico, versione, e questa guida.</td></tr>
+              <tr><td class="nome-schema">CRONOMETRO</td><td>Conta in salita, con i centesimi e i giri. Per un randori, una navetta, un test.</td></tr>
+              <tr><td class="nome-schema">COUNTDOWN</td><td>Sei durate che partono al tocco, per «novanta secondi e si riparte».</td></tr>
+              <tr><td class="nome-schema">IMPOSTAZIONI</td><td>Maurizio, suoni, voce, schermo, libreria esercizi, copie di sicurezza, storico, versione, e questa guida.</td></tr>
             </tbody>
           </table>
+        </div>
+
+        <h3>Le tre cose che non sono schede</h3>
+        <p>
+          Tre parti dell'app non stanno nella barra, di proposito: sono cose che si fanno una volta ogni
+          tanto, non a lezione iniziata.
+        </p>
+        <ul>
+          <li><strong>Gli schemi</strong> (Tabata, HIIT, EMOM, AMRAP, For Time, Circuito) non sono una destinazione ma un punto di partenza: compaiono come prima schermata dopo <span class="tasto">+ NUOVO TIMER</span>, che è l'unico momento in cui servono.</li>
+          <li><strong>La libreria esercizi</strong> è la prima voce delle impostazioni: il catalogo si cura ogni tanto, non a ogni lezione.</li>
+          <li><strong>Lo storico</strong> è in fondo alle impostazioni. Continua a registrare ogni allenamento portato a termine e a viaggiare nelle copie di sicurezza, ma non occupa un posto in barra.</li>
+        </ul>
+
+        <div class="scatti">
+    <figure>
+      <img src="guida/impostazioni-dati.webp" alt="Le voci in fondo alle impostazioni: guida, storico, copie di sicurezza" width="820" height="1688" loading="lazy">
+      <figcaption>In fondo alle impostazioni: le copie di sicurezza, questa guida e lo storico.</figcaption>
+    </figure>
         </div>
       </section>
 
       <section id="alvolo-tools">
         <div class="occhiello">SENZA SCRIVERE NIENTE</div>
-        <h2>Cronometro e minuti al volo</h2>
+        <h2>Cronometro e countdown</h2>
         <p class="guida-intro">
-          La quarta scheda della barra. Due attrezzi che non chiedono di costruire un allenamento: si usano
-          a lezione iniziata, con venti persone ferme che aspettano, e lì nessuno si mette a compilare un
+          Due schede della barra, una per attrezzo. Non chiedono di costruire un allenamento: si usano a
+          lezione iniziata, con venti persone ferme che aspettano, e lì nessuno si mette a compilare un
           editor.
         </p>
 
-        <h3>I minuti al volo</h3>
+        <h3>Countdown</h3>
         <p>
           Sei durate — <strong>30″, 45″, 1′, 1′30, 2′, 3′</strong> — che partono al tocco. È la risposta a
           «novanta secondi e si riparte», che prima costringeva a creare e salvare un timer apposta.
         </p>
         <ul>
-          <li>La stessa fila di durate resta dentro la schermata: <strong>si cambia idea a conto già iniziato</strong>, perché la sala risponde meglio o peggio del previsto.</li>
+          <li>La freccia in alto a sinistra torna alle durate senza chiudere niente: <strong>si cambia idea a conto già iniziato</strong>, perché la sala risponde meglio o peggio del previsto.</li>
           <li>C'è il <span class="tasto">+30″</span> del timer grande, e <span class="tasto">RIFAI</span> per ripartire da capo.</li>
           <li>Allo zero la cornice passa da verde a <strong>rosso</strong>, con la scritta TEMPO e il segnale di fine: si vede da tutta la sala anche senza sentire niente.</li>
         </ul>
 
         <div class="scatti">
     <figure>
-      <img src="guida/alvolo-scheda.webp" alt="La scheda AL VOLO con le sei durate e il tasto del cronometro" width="820" height="1688" loading="lazy">
-      <figcaption>La scheda AL VOLO: sei durate da premere senza guardare, e il cronometro sotto.</figcaption>
+      <img src="guida/countdown-durate.webp" alt="La scheda COUNTDOWN con le sei durate" width="820" height="1688" loading="lazy">
+      <figcaption>Sei durate da premere senza guardare.</figcaption>
     </figure>
     <figure>
-      <img src="guida/al-volo.webp" alt="Conto alla rovescia al volo in corso" width="820" height="1688" loading="lazy">
-      <figcaption>Il conto in corsa. Sotto, la fila delle durate per cambiare idea senza uscire.</figcaption>
-    </figure>
-    <figure>
-      <img src="guida/al-volo-tempo.webp" alt="Conto alla rovescia arrivato a zero, cornice rossa e scritta TEMPO" width="820" height="1688" loading="lazy">
-      <figcaption>Allo zero: cornice rossa, TEMPO, e il tasto diventa RIFAI.</figcaption>
+      <img src="guida/countdown.webp" alt="Conto alla rovescia in corso, cornice verde" width="820" height="1688" loading="lazy">
+      <figcaption>Il conto in corsa: la freccia in alto torna alle durate, RIFAI ricomincia.</figcaption>
     </figure>
         </div>
 
@@ -519,11 +536,17 @@
     </figure>
         </div>
 
-        <div class="scheda">
+        <div class="scheda primo-passo">
+          <span class="etichetta-scheda">CONTINUANO A CONTARE</span>
           <p>
-            In tutti e due il tempo arriva dall'orologio e non da un contatore aumentato a ogni battito: è la
-            stessa regola del timer degli allenamenti, e serve perché un telefono che mette in pausa la pagina
-            non faccia restare indietro il conto.
+            Tutti e due <strong>non si fermano quando guardi un'altra scheda</strong>. Avvii un minuto e mezzo,
+            passi ai timer per controllare il prossimo blocco, e il conto continua: quando scade suona anche se
+            in quel momento sei altrove. È il motivo per cui lo avvii.
+          </p>
+          <p>
+            E il tempo arriva sempre dall'orologio, mai da un contatore aumentato a ogni battito: la stessa
+            regola del timer degli allenamenti, perché un telefono che mette in pausa la pagina non faccia
+            restare indietro il conto.
           </p>
         </div>
       </section>
@@ -590,8 +613,11 @@
         <div class="occhiello">COSTRUIRE</div>
         <h2>Costruire un timer</h2>
         <p class="guida-intro">
-          Dalla scheda TIMER, <span class="tasto">+</span> crea un allenamento nuovo; <span class="tasto">MODIFICA</span>
-          apre uno esistente. Da PRESET si parte invece da uno schema già impostato, che poi si cambia come si vuole.
+          Dalla scheda TIMER, <span class="tasto">+ NUOVO TIMER</span> apre prima la scelta dello schema — Tabata,
+          HIIT 40/20, EMOM, AMRAP, For Time, Circuito, ognuno con il suo disegnino — e poi l'editor con i valori
+          già dentro. <span class="tasto">MODIFICA</span> su una scheda apre direttamente l'editor.
+          Lo schema si sceglie lì e dentro l'editor si legge soltanto: era un bivio offerto due volte, e la
+          seconda volta non serviva a nessuno.
         </p>
 
         <h3>I parametri, con i loro limiti</h3>
@@ -649,6 +675,10 @@
 
         <div class="scatti">
     <figure>
+      <img src="guida/schema.webp" alt="La scelta dello schema dopo NUOVO TIMER" width="820" height="1688" loading="lazy">
+      <figcaption>Dopo NUOVO TIMER: sei schemi, ognuno con il disegno di come scandisce il tempo.</figcaption>
+    </figure>
+    <figure>
       <img src="guida/editor.webp" alt="L’editor di un circuito con i parametri" width="820" height="1688" loading="lazy">
       <figcaption>L’editor mostra solo i parametri che quello schema usa davvero.</figcaption>
     </figure>
@@ -663,8 +693,8 @@
         <div class="occhiello">IL CATALOGO</div>
         <h2>La libreria esercizi</h2>
         <p class="guida-intro">
-          La scheda ESERCIZI è dove si cura l'elenco della palestra, una volta, invece di rincorrerlo
-          mentre si scrive un timer.
+          IMPOSTAZIONI → <strong>Libreria esercizi</strong>: l'elenco della palestra si cura lì, una volta,
+          invece di rincorrerlo mentre si scrive un timer.
         </p>
         <p>
           Gli esercizi sono raggruppati in sei categorie — <strong>Judo, A corpo libero, Attrezzi, Core, Cardio,
@@ -994,10 +1024,6 @@
     <figure>
       <img src="guida/invia.webp" alt="La schermata INVIA con il QR code e il link" width="820" height="1688" loading="lazy">
       <figcaption>INVIA: il QR si inquadra con la fotocamera di sistema, senza installare niente.</figcaption>
-    </figure>
-    <figure>
-      <img src="guida/scheda-aperta.webp" alt="Una scheda timer aperta con MODIFICA, DUPLICA, INVIA e il cestino" width="820" height="1688" loading="lazy">
-      <figcaption>Le azioni compaiono toccando la scheda: modifica, duplica, invia, elimina.</figcaption>
     </figure>
         </div>
 
