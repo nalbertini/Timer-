@@ -1,0 +1,338 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Segment, Settings } from '../types'
+import { Cues, buzz } from './audio'
+import { COACH_LINES, EXTRA_LINES, coachedDisplay } from './engine'
+import { hasClip, preload, say, unlockVoice } from './voice'
+import { INTRO_CLIP, NUMBER_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './voiceClips'
+
+export type Status = 'idle' | 'running' | 'paused' | 'done'
+
+export interface TimerView {
+  status: Status
+  segment: Segment | null
+  index: number
+  /** Secondi mostrati nel quadrante: scendono, o salgono nei For Time. */
+  display: number
+  /** Da 0 a 1 dentro il segmento corrente. */
+  progress: number
+  /** Secondi che mancano alla fine dell'allenamento. */
+  remainingTotal: number
+  elapsed: number
+  total: number
+  next: Segment | null
+}
+
+/**
+ * Il tempo viene sempre ricavato dall'orologio, mai accumulato tick dopo tick:
+ * così un tab in background, messo in pausa dal sistema, riallinea da solo il
+ * conteggio invece di restare indietro.
+ */
+export function useTimer(
+  segments: Segment[],
+  settings: Settings,
+  onFinish: (seconds: number, completed: boolean) => void,
+  /** Chiamata quando il conto mostrato risale, con la frase che gli scappa. */
+  onCoachSlip?: (frase: string) => void,
+) {
+  const [status, setStatus] = useState<Status>('idle')
+  const [elapsed, setElapsed] = useState(0)
+
+  const cues = useRef(new Cues())
+  const bankedRef = useRef(0)
+  const anchorRef = useRef(0)
+  const lastIndexRef = useRef(-1)
+  const lastShownRef = useRef(-1)
+  const introRef = useRef(false)
+  const finishRef = useRef(onFinish)
+  finishRef.current = onFinish
+  const slipRef = useRef(onCoachSlip)
+  slipRef.current = onCoachSlip
+
+  cues.current.volume = settings.volume
+
+  const voiceOpts = {
+    volume: settings.volume,
+    voiceURI: settings.voiceURI,
+    useRecorded: settings.recordedVoice,
+  }
+  const voiceRef = useRef(voiceOpts)
+  voiceRef.current = voiceOpts
+
+  // Il grosso è già scaldato all'apertura dell'app; qui restano i nomi degli
+  // esercizi di questo allenamento.
+  useEffect(() => {
+    preload(segments.map((s) => exerciseKey(s.name)))
+  }, [segments])
+
+  // La lista dei segmenti può cambiare mentre si va — il tasto «+30″» allunga
+  // l'intervallo in corso — e allora il numero mostrato salta su di trenta.
+  // Senza dimenticare l'ultimo numero visto, quel salto verrebbe letto come un
+  // ripensamento di Maurizio, con tanto di battuta e illustrazione: sarebbe
+  // l'app a prendersi gioco di una scelta dell'istruttore.
+  useEffect(() => {
+    lastShownRef.current = -1
+  }, [segments])
+
+  const total = useMemo(() => {
+    const last = segments[segments.length - 1]
+    return last ? last.offset + last.duration : 0
+  }, [segments])
+
+  const indexAt = useCallback(
+    (t: number) => {
+      if (segments.length === 0) return -1
+      for (let i = segments.length - 1; i >= 0; i--) {
+        if (t >= segments[i].offset) return i
+      }
+      return 0
+    },
+    [segments],
+  )
+
+  const announce = useCallback(
+    (seg: Segment, prossimo: Segment | null) => {
+      if (seg.kind === 'work') cues.current.work()
+      else cues.current.rest()
+      if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
+
+      // Il giro che Maurizio si è inventato non si annuncia come un lavoro
+      // qualsiasi: è lui che se lo intesta, con tanto di illustrazione.
+      if (seg.extra !== undefined) {
+        const frase = EXTRA_LINES[seg.extra] ?? EXTRA_LINES[0]
+        slipRef.current?.(frase)
+        if (settings.voice) say([extraClip(seg.extra)], frase, voiceRef.current)
+        return
+      }
+
+      if (!settings.voice) return
+      const label = seg.label.toLowerCase()
+      const base = seg.kind === 'work' ? [STATE_CLIP.work, exerciseKey(seg.name)] : [STATE_CLIP[seg.kind]]
+
+      // Nel recupero si dice anche dove si va dopo: in un circuito a otto
+      // stazioni è l'unico momento in cui uno può prepararsi alla successiva.
+      const dopo = prossimo && prossimo.kind === 'work' ? prossimo.name.trim() : ''
+      const annunciaDopo =
+        settings.announceNext && dopo.length > 0 && (seg.kind === 'rest' || seg.kind === 'setRest')
+      // La coda si aggiunge solo se entrambe le clip ci sono: `say` suona il
+      // pezzo disponibile e si ferma, e un «prossimo» senza nome è peggio del
+      // silenzio. Se invece parla la sintesi, la frase intera ce l'ha comunque.
+      const codaIncisa = annunciaDopo && hasClip(PROSSIMO_CLIP) && hasClip(exerciseKey(dopo))
+      const keys = codaIncisa ? [...base, PROSSIMO_CLIP, exerciseKey(dopo)] : base
+
+      // «Preparati» non si annuncia: ci pensa il saluto. E se il saluto non è
+      // ancora pronto, il silenzio è meglio di una voce sintetica che dice
+      // una parola di cui si può fare a meno.
+      const testo =
+        seg.kind === 'prepare'
+          ? ''
+          : (seg.kind === 'work' ? `${label}. ${seg.name}` : label) + (annunciaDopo ? `. Prossimo: ${dopo}` : '')
+      const conIntro = introRef.current
+      introRef.current = false
+      // Al primo annuncio il saluto PRENDE IL POSTO di «preparati», non lo
+      // precede: dice già lui che l'allenamento sta per cominciare, e
+      // incatenati i due sforavano nel conto alla rovescia, che li tagliava.
+      say(conIntro && hasClip(INTRO_CLIP) ? [INTRO_CLIP] : keys, testo, voiceRef.current)
+    },
+    [settings.vibrate, settings.voice, settings.volume, settings.voiceURI, settings.announceNext],
+  )
+
+  useEffect(() => {
+    if (status !== 'running') return
+
+    const tick = () => {
+      const now = bankedRef.current + (performance.now() - anchorRef.current) / 1000
+
+      if (total > 0 && now >= total) {
+        bankedRef.current = total
+        setElapsed(total)
+        setStatus('done')
+        cues.current.finish()
+        if (settings.vibrate) buzz([200, 100, 200, 100, 300])
+        if (settings.voice) say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
+        finishRef.current(total, true)
+        return
+      }
+
+      setElapsed(now)
+
+      const i = indexAt(now)
+      const seg = segments[i]
+      if (!seg) return
+
+      if (i !== lastIndexRef.current) {
+        lastIndexRef.current = i
+        lastShownRef.current = -1
+        announce(seg, segments[i + 1] ?? null)
+        return
+      }
+
+      if (seg.countUp) return
+      // Si reagisce al numero MOSTRATO, non a quello vero: altrimenti bip e
+      // voce tradirebbero il ripensamento un attimo prima che si veda.
+      const mostrato = Math.ceil(coachedDisplay(seg, seg.offset + seg.duration - now))
+      if (mostrato < 1 || mostrato === lastShownRef.current) return
+      const tornatoIndietro = lastShownRef.current > 0 && mostrato > lastShownRef.current
+      lastShownRef.current = mostrato
+
+      // L'esitazione può cadere ovunque nell'intervallo, non solo in fondo:
+      // la battuta va quindi legata al numero che risale, non al conto finale.
+      // Solo però se Maurizio è acceso: a modalità spenta un numero che risale
+      // è una cosa sola, l'istruttore che ha allungato l'intervallo.
+      if (tornatoIndietro && settings.coach !== 'off') {
+        const i = Math.floor(Math.random() * COACH_LINES.length)
+        slipRef.current?.(COACH_LINES[i])
+        if (settings.voice) say([`maurizio/${i + 1}`], COACH_LINES[i], voiceRef.current)
+        return
+      }
+
+      if (mostrato > 3) return
+      // Con la voce incisa il numero viene detto; il bip resta solo come
+      // ripiego, per non raddoppiare il segnale.
+      const detto = settings.recordedVoice && settings.voice && say([NUMBER_CLIP[mostrato]], '', voiceRef.current)
+      if (!detto && settings.countdownBeep) cues.current.countdown()
+    }
+
+    const id = window.setInterval(tick, 100)
+    tick()
+    return () => window.clearInterval(id)
+  }, [
+    status,
+    total,
+    segments,
+    indexAt,
+    announce,
+    settings.countdownBeep,
+    settings.vibrate,
+    settings.voice,
+    settings.volume,
+    settings.voiceURI,
+    settings.recordedVoice,
+    settings.announceNext,
+    settings.coach,
+  ])
+
+  const start = useCallback(() => {
+    cues.current.unlock()
+    unlockVoice()
+    introRef.current = true
+    bankedRef.current = 0
+    anchorRef.current = performance.now()
+    lastIndexRef.current = -1
+    lastShownRef.current = -1
+    setElapsed(0)
+    setStatus('running')
+  }, [])
+
+  const resume = useCallback(() => {
+    cues.current.unlock()
+    unlockVoice()
+    anchorRef.current = performance.now()
+    // Riparte dal segmento corrente senza riannunciarlo.
+    lastIndexRef.current = indexAt(bankedRef.current)
+    setStatus('running')
+  }, [indexAt])
+
+  const pause = useCallback(() => {
+    bankedRef.current = bankedRef.current + (performance.now() - anchorRef.current) / 1000
+    setElapsed(bankedRef.current)
+    setStatus('paused')
+  }, [])
+
+  const toggle = useCallback(() => {
+    if (status === 'running') pause()
+    else if (status === 'paused') resume()
+    else start()
+  }, [status, pause, resume, start])
+
+  const seekTo = useCallback(
+    (seconds: number) => {
+      const t = Math.max(0, Math.min(seconds, Math.max(0, total - 0.001)))
+      bankedRef.current = t
+      anchorRef.current = performance.now()
+      setElapsed(t)
+      lastShownRef.current = -1
+      const i = indexAt(t)
+      lastIndexRef.current = i
+      if (status === 'done') setStatus('paused')
+      const seg = segments[i]
+      if (seg && status === 'running') announce(seg, segments[i + 1] ?? null)
+    },
+    [total, indexAt, segments, status, announce],
+  )
+
+  const skip = useCallback(
+    (step: 1 | -1) => {
+      // A fine allenamento «avanti» non porta da nessuna parte: senza questo,
+      // riportava indietro a un'ultima frazione di secondo, in pausa, come se
+      // l'allenamento non fosse mai finito. Indietro invece resta utile.
+      if (step === 1 && status === 'done') return
+      const now = bankedRef.current + (status === 'running' ? (performance.now() - anchorRef.current) / 1000 : 0)
+      const i = indexAt(now)
+      if (i < 0) return
+      if (step === -1) {
+        // Come su un lettore musicale: indietro torna all'inizio del segmento,
+        // e solo se sei appena partito salta a quello precedente.
+        const intoSegment = now - segments[i].offset
+        const target = intoSegment > 1.5 ? i : Math.max(0, i - 1)
+        seekTo(segments[target].offset)
+        return
+      }
+      const next = segments[i + 1]
+      if (next) seekTo(next.offset)
+      else seekTo(total)
+    },
+    [status, indexAt, segments, seekTo, total],
+  )
+
+  /**
+   * Riparte da un allenamento interrotto: si mette in pausa al secondo dove
+   * era rimasto, invece di far ripartire il conto da zero. In pausa e non in
+   * corsa di proposito — chi riprende vuole dire «ci siamo?» prima di ripartire.
+   */
+  const riprendiDa = useCallback(
+    (secondi: number) => {
+      cues.current.unlock()
+      unlockVoice()
+      bankedRef.current = secondi
+      anchorRef.current = performance.now()
+      lastIndexRef.current = indexAt(secondi)
+      lastShownRef.current = -1
+      introRef.current = false
+      setElapsed(secondi)
+      setStatus('paused')
+    },
+    [indexAt],
+  )
+
+  const stop = useCallback(() => {
+    const done = bankedRef.current + (status === 'running' ? (performance.now() - anchorRef.current) / 1000 : 0)
+    // A fine allenamento lo storico è già stato scritto: non registrarlo due volte.
+    if (done > 1 && status !== 'done') finishRef.current(done, false)
+    bankedRef.current = 0
+    setElapsed(0)
+    lastIndexRef.current = -1
+    lastShownRef.current = -1
+    setStatus('idle')
+  }, [status])
+
+  const view: TimerView = useMemo(() => {
+    const index = indexAt(elapsed)
+    const segment = segments[index] ?? null
+    const into = segment ? elapsed - segment.offset : 0
+    const real = segment ? (segment.countUp ? into : segment.duration - into) : 0
+    const display = segment ? coachedDisplay(segment, real) : 0
+    return {
+      status,
+      segment,
+      index,
+      display: Math.max(0, display),
+      progress: segment && segment.duration > 0 ? Math.min(1, Math.max(0, into / segment.duration)) : 0,
+      remainingTotal: Math.max(0, total - elapsed),
+      elapsed,
+      total,
+      next: segments[index + 1] ?? null,
+    }
+  }, [elapsed, indexAt, segments, status, total])
+
+  return { view, start, pause, resume, toggle, stop, skip, seekTo, riprendiDa }
+}
