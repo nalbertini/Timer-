@@ -262,7 +262,7 @@ export function TimerScreen({
           </span>
         )}
         <button
-          className="icon-btn"
+          className="icon-btn testo"
           onClick={() => {
             stop()
             scordaInterrotto()

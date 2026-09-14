@@ -31,7 +31,13 @@
 
 * { box-sizing: border-box; }
 
+/* A pieno schermo la finestra cresce quando la barra del browser si ritrae, ma
+   `100%` misura il viewport di layout, che resta quello di prima: l'app restava
+   alta com'era e la barra delle schede finiva sospesa sopra una striscia di
+   fondo pagina. `dvh` segue la finestra vera, e dove non è supportata resta la
+   riga sopra, che vale quanto prima. */
 html, body, #root { height: 100%; }
+html, body, #root { height: 100dvh; }
 
 body {
   margin: 0;
@@ -77,6 +83,9 @@ input, textarea { font: inherit; color: inherit; }
   transition: border-color 120ms, color 120ms;
 }
 .icon-btn:hover { border-color: var(--dim); color: var(--text); }
+/* Lo stesso tasto quando dentro c'è una parola invece di un segno: 44 px fissi
+   bastano a «RESET» e tagliano «AZZERA». */
+.icon-btn.testo { width: auto; min-width: 44px; padding: 0 11px; }
 
 .btn {
   min-height: 56px; padding: 0 22px;
@@ -133,7 +142,11 @@ input, textarea { font: inherit; color: inherit; }
   /* Colonne automatiche: le schede si dividono la barra qualunque sia il loro numero. */
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   border-top: 2px solid var(--line-soft); background: #171717;
-  padding: 10px 6px calc(var(--safe-b) + 12px);
+  /* La zona sicura è già lo spazio che il sistema chiede: sommarci altri 12 px
+     lo raddoppiava, e su un telefono con la navigazione a gesti la barra
+     diventava alta il doppio del necessario. Dove la zona sicura non c'è, i
+     12 px restano. */
+  padding: 10px 6px max(12px, var(--safe-b));
 }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -420,6 +433,63 @@ input, textarea { font: inherit; color: inherit; }
   .timer[data-grande='true'] .timer-controlli { gap: 8px; padding: 8px 14px calc(var(--safe-b) + 8px); }
   .timer[data-grande='true'] .tasto-salto { width: 50px; height: 50px; }
   .timer[data-grande='true'] .tasto-avvia { height: 50px; }
+}
+
+/* ---------- gli attrezzi al volo: cronometro e conto alla rovescia ---------- */
+
+.al-volo { gap: 12px; padding: 12px 14px 14px; }
+.al-volo-crono {
+  min-height: 40px; padding: 0 14px;
+  font-family: var(--cond); font-size: 15px; font-weight: 700; letter-spacing: 0.1em;
+}
+/* Sei durate in una griglia che si divide lo spazio invece di scorrere: sono
+   sei tasti che si premono senza guardare, e uno fuori schermo non esiste. */
+.al-volo-scelte {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+}
+.al-volo-scelte .chip {
+  min-height: 46px; padding: 0 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--cond); font-size: 17px; font-weight: 700; letter-spacing: 0.02em;
+}
+/* Dentro il conto alla rovescia la stessa fila serve a cambiare durata. */
+.timer .al-volo-scelte { margin: 0 20px; }
+
+.crono-main {
+  flex-grow: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 0 20px;
+}
+.crono-cifre { display: flex; align-items: baseline; justify-content: center; gap: 2px; min-width: 0; }
+/* «00:16.63» è molto più largo di «00:45»: i minuti restano grandi, i centesimi
+   scendono a un terzo. Da lontano si legge il minuto, in mano il centesimo. */
+.digits-crono { font-size: min(26vw, 32vh); }
+.crono-centesimi {
+  font-size: min(9vw, 11vh); font-weight: 700; color: var(--dim);
+  letter-spacing: -0.02em;
+}
+
+.crono-giri {
+  width: 100%; max-width: 420px; max-height: 34vh; overflow-y: auto;
+  border-top: 2px solid var(--line-soft);
+}
+.crono-giro {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline;
+  padding: 9px 2px; border-bottom: 1px solid var(--line-soft);
+}
+.crono-giro-n { font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: var(--faint); }
+.crono-giro-scarto { font-size: 21px; font-weight: 700; text-align: right; }
+.crono-giro-tot { font-size: 14px; color: var(--dim); }
+.tasto-giro {
+  height: 68px; padding: 0 22px; flex-shrink: 0;
+  font-family: var(--cond); font-weight: 700; letter-spacing: 0.08em;
+}
+.tasto-giro:disabled { opacity: 0.35; }
+
+@media (max-height: 740px) and (orientation: portrait) {
+  .tasto-giro { height: 58px; }
+  .crono-main { gap: 12px; }
+  .crono-giri { max-height: 26vh; }
 }
 
 /* ---------- la scheda di Maurizio, in cima alle impostazioni ---------- */

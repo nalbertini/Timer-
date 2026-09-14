@@ -17,6 +17,7 @@ import { HistoryScreen } from './components/HistoryScreen'
 import { EserciziScreen } from './components/EserciziScreen'
 import { CondividiScreen } from './components/CondividiScreen'
 import { RicevutoScreen } from './components/RicevutoScreen'
+import { ContaAllaRovesciaScreen, CronometroScreen } from './components/AlVolo'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
 import { Dumbbell, Gear, History, Library, TimerIcon } from './components/Icons'
@@ -30,6 +31,8 @@ type View =
   | { kind: 'condividi'; workout: Workout }
   | { kind: 'ricevuto'; workout: Workout }
   | { kind: 'voce' }
+  | { kind: 'crono' }
+  | { kind: 'alvolo'; secondi: number }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
@@ -208,6 +211,8 @@ export default function App() {
             onDuplicate={duplicate}
             onDelete={remove}
             onShare={(w) => setView({ kind: 'condividi', workout: w })}
+            onCrono={() => setView({ kind: 'crono' })}
+            onAlVolo={(secondi) => setView({ kind: 'alvolo', secondi })}
             interrotto={interrotto}
             onRiprendi={() => {
               if (!interrotto) return
@@ -267,6 +272,20 @@ export default function App() {
         ripresa={view.ripresa}
         onExit={() => setView({ kind: 'tabs' })}
         onFinish={recordFinish(view.workout)}
+      />
+    )
+  }
+
+  if (view.kind === 'crono') {
+    return <CronometroScreen settings={settings} onExit={() => setView({ kind: 'tabs' })} />
+  }
+
+  if (view.kind === 'alvolo') {
+    return (
+      <ContaAllaRovesciaScreen
+        secondi={view.secondi}
+        settings={settings}
+        onExit={() => setView({ kind: 'tabs' })}
       />
     )
   }
