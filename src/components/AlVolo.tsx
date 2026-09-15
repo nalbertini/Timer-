@@ -193,7 +193,8 @@ function ScegliDurata({ onScegli }: { onScegli: (secondi: number) => void }) {
   return (
     <div className="scroll scelta-durate">
       <p className="pad" style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--dim)', margin: '0 0 2px' }}>
-        Parte al tocco, senza passare dall'editor. La durata si cambia anche a conto già iniziato.
+        Un solo blocco di lavoro, della durata che scegli. Parte al tocco, senza passare dall'editor, e
+        la durata si cambia anche a conto già iniziato.
       </p>
       <div className="pad" style={{ paddingTop: 14, paddingBottom: 24 }}>
         <div className="volo-griglia">
@@ -291,7 +292,12 @@ function ContaAllaRovescia({
     else setFine((f) => (f ?? performance.now()) + 30000)
   }
 
-  const tinta = aZero ? 'var(--rosso)' : 'var(--verde)'
+  /* Il conto alla rovescia è un blocco di lavoro della durata scelta, non un
+     recupero: mentre gira porta il rosso del lavoro, e allo zero passa al
+     verde, che in quest'app vuol dire finito — è lo stesso verde con cui il
+     timer degli allenamenti scrive COMPLETATO. Il cambio di colore allo zero
+     resta, ribaltato: da rosso a verde. */
+  const tinta = aZero ? 'var(--verde)' : 'var(--rosso)'
   const mostrato = Math.ceil(resto / 1000)
   const avanzamento = durata > 0 ? Math.min(1, svolti / (durata * 1000)) : 0
 
@@ -326,9 +332,9 @@ function ContaAllaRovescia({
         </div>
 
         <div className="timer-col" style={{ alignItems: 'center', gap: 4 }}>
-          <span className="state-label">{aZero ? 'TEMPO' : inCorso ? 'RECUPERO' : 'IN PAUSA'}</span>
+          <span className="state-label">{aZero ? 'TEMPO' : inCorso ? 'LAVORO' : 'IN PAUSA'}</span>
           <Digits value={`${pad(Math.floor(mostrato / 60))}:${pad(mostrato % 60)}`} />
-          <span className="exercise">{aZero ? 'Si riparte' : 'Fiato, e poi si va'}</span>
+          <span className="exercise">{aZero ? 'Tempo scaduto' : 'Si lavora fino a zero'}</span>
         </div>
       </div>
 
