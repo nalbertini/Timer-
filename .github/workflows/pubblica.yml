@@ -2,12 +2,8 @@ name: Pubblica
 
 on:
   push:
-    # `main` è la destinazione finale. Il branch di lavoro è qui perché al
-    # momento è ancora lui il default del repository e la pull request non è
-    # stata unita: appena lo sarà, questa seconda riga si può togliere.
     branches:
       - main
-      - claude/interval-timer-gym-app-ezesr2
   workflow_dispatch:
 
 permissions:
