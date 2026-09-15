@@ -298,6 +298,20 @@ export const EXTRA_LINES = [
   'Dai, l’ultimo giro. Questo sì',
 ]
 
+/**
+ * I complimenti di fine tempo: quando un conto arriva a zero e la modalità è
+ * accesa, Maurizio compare con una di queste. Sono corte di proposito — vanno
+ * lette in un'occhiata da chi ha appena finito e sta ancora respirando.
+ */
+export const FINALE_LINES = [
+  'Bravi, così si fa',
+  'Ottimo lavoro',
+  'Visto? Ce l’avete fatta',
+  'Questo sì che era un tempo',
+  'Grandi, tutti quanti',
+  'E anche questo è andato',
+]
+
 /** L'etichetta di stato del giro in più, al posto di LAVORO. */
 export const EXTRA_LABEL = 'ANCORA UNO'
 

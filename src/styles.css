@@ -442,35 +442,6 @@ input, textarea { font: inherit; color: inherit; }
 
 /* ---------- gli attrezzi al volo: cronometro e conto alla rovescia ---------- */
 
-/* Le sei durate come tessere: due righe da tre, grandi abbastanza da premerle
-   senza guardare mentre si parla alla sala. */
-.volo-griglia { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.volo-tessera {
-  min-height: 84px;
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--line); background: var(--surface);
-  transition: border-color 120ms, background 120ms;
-}
-.volo-tessera:hover { border-color: var(--verde); }
-.volo-tessera:active { background: var(--surface-2); }
-.volo-tessera-n {
-  font-size: 30px; font-weight: 700; letter-spacing: 0.01em; color: var(--text);
-}
-/* Senza l'intestazione dell'app sopra, la scelta delle durate si tiene da sé
-   lo spazio della barra di stato. */
-.scelta-durate { padding-top: calc(var(--safe-t) + 18px); }
-.scelta-durate .volo-griglia { row-gap: 12px; }
-.volo-crono { gap: 14px; padding: 0 14px; min-height: 72px; text-align: left; color: var(--text); }
-.volo-crono:hover { border-color: var(--blu); }
-@media (min-width: 560px) {
-  .volo-griglia { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
-
-.al-volo { gap: 12px; padding: 12px 14px 14px; }
-.al-volo-crono {
-  min-height: 40px; padding: 0 14px;
-  font-family: var(--cond); font-size: 15px; font-weight: 700; letter-spacing: 0.1em;
-}
 /* Sei durate in una griglia che si divide lo spazio invece di scorrere: sono
    sei tasti che si premono senza guardare, e uno fuori schermo non esiste. */
 .al-volo-scelte {
@@ -498,7 +469,10 @@ input, textarea { font: inherit; color: inherit; }
   .timer[data-attrezzo='true'] .exercise { display: none; }
 }
 @media (max-height: 600px) {
-  .timer[data-attrezzo='true'] .anello { display: none; }
+  /* Anche i complimenti di Maurizio: occupano il posto dell'anello, quindi
+     dove l'anello non ci sta non ci stanno nemmeno loro. */
+  .timer[data-attrezzo='true'] .anello,
+  .timer[data-attrezzo='true'] .beccato { display: none; }
 }
 
 /* Telefono girato di lato: trecentosessanta pixel in tutto, un centinaio dei
