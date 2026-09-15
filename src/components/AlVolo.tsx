@@ -3,8 +3,10 @@ import type { Settings } from '../types'
 import { Cues, speak } from '../lib/audio'
 import { useWakeLock } from '../lib/wakeLock'
 import { pad } from '../lib/format'
-import { Back, Pause, Play } from './Icons'
+import { Pause, Play } from './Icons'
 import { DentroAnello, Digits, Ring } from './Quadrante'
+import { FINALE, a_caso } from '../lib/adesivi'
+import { FINALE_LINES } from '../lib/engine'
 
 /**
  * I due strumenti che non hanno bisogno di un allenamento scritto.
@@ -177,57 +179,28 @@ export function CronometroScreen({ settings }: { settings: Settings }) {
  * ------------------------------------------------------------------ */
 
 /**
- * La scheda: prima le durate, poi il conto.
+ * La scheda apre direttamente sul conto, fermo.
  *
- * Restare nella stessa scheda invece di aprire una schermata sopra è ciò che
- * permette di tornare alle durate senza chiudere niente, che è il gesto che si
- * fa quando la sala chiede un altro mezzo minuto.
+ * Prima c'era una schermata di sole durate, e toccarne una faceva partire il
+ * conto: due cose sbagliate insieme. Una schermata che serve solo a scegliere
+ * un numero è un passaggio in più fra te e lo strumento — le sei durate stanno
+ * già dentro il conto, sotto le cifre — e far partire il tempo mentre si guarda
+ * lo schermo non è mai quello che si vuole: si sceglie la durata, si guarda la
+ * sala, e si dà il via quando la sala è pronta. Quindi scegliere prepara e
+ * basta; a far partire è AVVIA.
  */
 export function CountdownTab({ settings }: { settings: Settings }) {
-  const [scelta, setScelta] = useState<number | null>(null)
-  if (scelta === null) return <ScegliDurata onScegli={setScelta} />
-  return <ContaAllaRovescia key={scelta} secondi={scelta} settings={settings} onIndietro={() => setScelta(null)} />
+  return <ContaAllaRovescia settings={settings} />
 }
 
-function ScegliDurata({ onScegli }: { onScegli: (secondi: number) => void }) {
-  return (
-    <div className="scroll scelta-durate">
-      <p className="pad" style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--dim)', margin: '0 0 2px' }}>
-        Un solo blocco di lavoro, della durata che scegli. Parte al tocco, senza passare dall'editor, e
-        la durata si cambia anche a conto già iniziato.
-      </p>
-      <div className="pad" style={{ paddingTop: 14, paddingBottom: 24 }}>
-        <div className="volo-griglia">
-          {DURATE_AL_VOLO.map((s) => (
-            <button
-              key={s}
-              className="volo-tessera"
-              onClick={() => onScegli(s)}
-              aria-label={`Conto alla rovescia di ${s} secondi`}
-            >
-              <span className="num volo-tessera-n">{etichettaDurata(s)}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ContaAllaRovescia({
-  secondi,
-  settings,
-  onIndietro,
-}: {
-  secondi: number
-  settings: Settings
-  onIndietro: () => void
-}) {
-  const [durata, setDurata] = useState(secondi)
-  // Parte subito: chi tocca «1′30» ha già dato il via a voce.
-  const [fine, setFine] = useState<number | null>(() => performance.now() + secondi * 1000)
-  const [restoInPausa, setRestoInPausa] = useState(secondi * 1000)
+function ContaAllaRovescia({ settings }: { settings: Settings }) {
+  const [durata, setDurata] = useState(DURATE_AL_VOLO[0])
+  const [fine, setFine] = useState<number | null>(null)
+  const [restoInPausa, setRestoInPausa] = useState(DURATE_AL_VOLO[0] * 1000)
   const [ora, setOra] = useState(() => performance.now())
+  /* Estratti allo scadere e tenuti da parte: se li si scegliesse al volo dentro
+     il render, illustrazione e frase cambierebbero a ogni battito. */
+  const [complimento, setComplimento] = useState<{ src: string; frase: string } | null>(null)
   const cues = useRef(new Cues())
   const ultimoBip = useRef<number | null>(null)
   const finito = useRef(false)
@@ -255,6 +228,7 @@ function ContaAllaRovescia({
     }
     if (resto <= 0 && !finito.current) {
       finito.current = true
+      setComplimento({ src: a_caso(FINALE), frase: a_caso(FINALE_LINES) })
       cues.current.finish()
       if (settings.voice) speak('Tempo', settings.volume, settings.voiceURI)
       setFine(null)
@@ -264,9 +238,21 @@ function ContaAllaRovescia({
 
   useWakeLock(settings.keepAwake && inCorso)
 
+  /* Scegliere una durata la carica e lascia il conto fermo: il via lo dà AVVIA,
+     quando la sala è pronta e non quando il dito tocca il numero. */
+  const prepara = (da: number) => {
+    finito.current = false
+    ultimoBip.current = null
+    setComplimento(null)
+    setDurata(da)
+    setRestoInPausa(da * 1000)
+    setFine(null)
+  }
+
   const riparti = (da: number) => {
     finito.current = false
     ultimoBip.current = null
+    setComplimento(null)
     setDurata(da)
     setRestoInPausa(da * 1000)
     setFine(performance.now() + da * 1000)
@@ -287,6 +273,7 @@ function ContaAllaRovescia({
   const allunga = () => {
     finito.current = false
     ultimoBip.current = null
+    setComplimento(null)
     setDurata((d) => d + 30)
     if (fine === null) setRestoInPausa((r) => r + 30000)
     else setFine((f) => (f ?? performance.now()) + 30000)
@@ -297,6 +284,10 @@ function ContaAllaRovescia({
      verde, che in quest'app vuol dire finito — è lo stesso verde con cui il
      timer degli allenamenti scrive COMPLETATO. Il cambio di colore allo zero
      resta, ribaltato: da rosso a verde. */
+  /* Caricato e mai fatto partire: non è una pausa, è un timer pronto — e il
+     tasto grande deve dire AVVIA, non RIPRENDI. */
+  const intatto = fine === null && !aZero && restoInPausa === durata * 1000
+
   const tinta = aZero ? 'var(--verde)' : 'var(--rosso)'
   const mostrato = Math.ceil(resto / 1000)
   const avanzamento = durata > 0 ? Math.min(1, svolti / (durata * 1000)) : 0
@@ -304,9 +295,6 @@ function ContaAllaRovescia({
   return (
     <div className="timer" data-attrezzo="true" style={{ ['--state' as string]: tinta }}>
       <div className="row timer-top">
-        <button className="icon-btn" onClick={onIndietro} aria-label="Torna alle durate">
-          <Back />
-        </button>
         <div className="stack grow" style={{ gap: 1, minWidth: 0 }}>
           <span className="ob titolo-timer">CONTO ALLA ROVESCIA</span>
           <span className="sottotitolo-timer" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--dim)' }}>
@@ -321,20 +309,35 @@ function ContaAllaRovescia({
       </div>
 
       <div className="timer-main">
-        <div className="anello">
-          <Ring progress={avanzamento} color={tinta} />
-          <DentroAnello
-            etichetta="IN TUTTO"
-            numero={etichettaDurata(durata)}
-            sotto={`SVOLTI ${minutiSecondi(svolti)}`}
-            colore={tinta}
-          />
-        </div>
+        {/* Allo zero Maurizio si prende il posto dell'anello — non quello delle
+            cifre, che restano il contenuto — e fa i complimenti a chi ha appena
+            finito. È lo stesso posto e la stessa misura che occupa quando lo
+            becchi a sbagliare il conto nel timer degli allenamenti. */}
+        {aZero && complimento && settings.coach !== 'off' ? (
+          <div className="beccato">
+            <img src={complimento.src} alt="" />
+            <span className="beccato-frase">{complimento.frase}</span>
+          </div>
+        ) : (
+          <div className="anello">
+            <Ring progress={avanzamento} color={tinta} />
+            <DentroAnello
+              etichetta="IN TUTTO"
+              numero={etichettaDurata(durata)}
+              sotto={`SVOLTI ${minutiSecondi(svolti)}`}
+              colore={tinta}
+            />
+          </div>
+        )}
 
         <div className="timer-col" style={{ alignItems: 'center', gap: 4 }}>
-          <span className="state-label">{aZero ? 'TEMPO' : inCorso ? 'LAVORO' : 'IN PAUSA'}</span>
+          <span className="state-label">
+            {aZero ? 'TEMPO' : inCorso ? 'LAVORO' : intatto ? 'PRONTO' : 'IN PAUSA'}
+          </span>
           <Digits value={`${pad(Math.floor(mostrato / 60))}:${pad(mostrato % 60)}`} />
-          <span className="exercise">{aZero ? 'Tempo scaduto' : 'Si lavora fino a zero'}</span>
+          <span className="exercise">
+            {aZero ? 'Tempo scaduto' : intatto ? 'Scegli la durata, poi AVVIA' : 'Si lavora fino a zero'}
+          </span>
         </div>
       </div>
 
@@ -346,7 +349,7 @@ function ContaAllaRovescia({
           risponde meglio o peggio del previsto. */}
       <div className="al-volo-scelte">
         {DURATE_AL_VOLO.map((s) => (
-          <button key={s} className="chip" data-on={durata === s} onClick={() => riparti(s)}>
+          <button key={s} className="chip" data-on={durata === s} onClick={() => prepara(s)}>
             {etichettaDurata(s)}
           </button>
         ))}
@@ -358,7 +361,9 @@ function ContaAllaRovescia({
         </button>
         <button className="btn grow tasto-avvia" style={{ background: tinta, color: '#121212' }} onClick={pausaOAvvia}>
           {inCorso ? <Pause size={22} /> : <Play size={22} />}
-          <span style={{ fontSize: 22 }}>{inCorso ? 'PAUSA' : aZero ? 'RIFAI' : 'RIPRENDI'}</span>
+          <span style={{ fontSize: 22 }}>
+            {inCorso ? 'PAUSA' : aZero ? 'RIFAI' : intatto ? 'AVVIA' : 'RIPRENDI'}
+          </span>
         </button>
       </div>
     </div>
