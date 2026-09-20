@@ -11,6 +11,9 @@ export const DEFAULT_SETTINGS: Settings = {
   coach: 'classico',
   countdownBeep: true,
   voice: true,
+  // Spento di partenza: un tic al secondo per un'ora è una scelta, non un
+  // valore di fabbrica. Chi lo vuole lo accende e resta acceso.
+  ticchettio: false,
   vibrate: true,
   volume: 0.8,
   voiceURI: null,

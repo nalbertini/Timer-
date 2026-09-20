@@ -205,6 +205,22 @@ export function SettingsScreen({
           />
         )}
         <Toggle
+          label="Ticchettio"
+          hint="Un tic d'orologio a ogni secondo, mentre il timer conta"
+          on={settings.ticchettio}
+          onChange={(v) => {
+            onChange({ ticchettio: v })
+            // Farlo sentire subito: è l'unico modo per decidere se lo si vuole
+            // davvero per un'ora di lezione.
+            if (v) {
+              cues.unlock()
+              cues.volume = settings.volume
+              cues.tick(false)
+              window.setTimeout(() => cues.tick(true), 500)
+            }
+          }}
+        />
+        <Toggle
           label="Vibrazione"
           hint="Solo su telefono e tablet che la supportano"
           on={settings.vibrate}

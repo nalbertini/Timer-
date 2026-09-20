@@ -51,7 +51,29 @@ function context(): AudioContext | null {
   } catch {
     return null
   }
+  ascolta(ctx)
   return ctx
+}
+
+/**
+ * Come per i bip: quando cambia l'uscita audio — cassa bluetooth, cuffie, una
+ * telefonata — il sistema interrompe il contesto, e da lì in poi resta sospeso.
+ * `suona` lo risveglia per la volta dopo, ma solo se qualcuno prova a parlare:
+ * qui lo si risveglia nel momento in cui è stato interrotto, così la volta dopo
+ * è già pronto invece di essere la prima a perdersi.
+ */
+function ascolta(c: AudioContext) {
+  const sveglia = () => {
+    if (document.hidden || c.state === 'running') return
+    void c.resume().catch(() => {})
+  }
+  c.addEventListener('statechange', sveglia)
+  document.addEventListener('visibilitychange', sveglia)
+  try {
+    navigator.mediaDevices?.addEventListener?.('devicechange', sveglia)
+  } catch {
+    // Niente `mediaDevices`: restano gli altri due.
+  }
 }
 
 async function decode(data: ArrayBuffer): Promise<AudioBuffer | null> {

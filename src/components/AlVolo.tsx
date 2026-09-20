@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Settings } from '../types'
-import { Cues, speak } from '../lib/audio'
+import { Cues } from '../lib/audio'
 import { useWakeLock } from '../lib/wakeLock'
 import { pad } from '../lib/format'
 import { Pause, Play } from './Icons'
 import { DentroAnello, Digits, Ring } from './Quadrante'
 import { FINALE, a_caso } from '../lib/adesivi'
 import { FINALE_LINES } from '../lib/engine'
+import { say } from '../lib/voice'
+import { TEMPO_CLIP, finaleClip } from '../lib/voiceClips'
 
 /**
  * I due strumenti che non hanno bisogno di un allenamento scritto.
@@ -200,9 +202,10 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   const [ora, setOra] = useState(() => performance.now())
   /* Estratti allo scadere e tenuti da parte: se li si scegliesse al volo dentro
      il render, illustrazione e frase cambierebbero a ogni battito. */
-  const [complimento, setComplimento] = useState<{ src: string; frase: string } | null>(null)
+  const [complimento, setComplimento] = useState<{ src: string; frase: string; i: number } | null>(null)
   const cues = useRef(new Cues())
   const ultimoBip = useRef<number | null>(null)
+  const ultimoTic = useRef<number | null>(null)
   const finito = useRef(false)
 
   const resto = fine === null ? restoInPausa : Math.max(0, fine - ora)
@@ -217,24 +220,50 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
     return () => window.clearInterval(id)
   }, [fine])
 
+  /* Il contesto audio non veniva mai sbloccato qui: `new Cues()` c'era,
+     `unlock()` no, e senza contesto i tre bip finali e il segnale di fine non
+     venivano nemmeno creati — muti su qualunque dispositivo. E finché il conto
+     gira, il fruscìo che tiene sveglia la cassa bluetooth. */
+  useEffect(() => {
+    const c = cues.current
+    c.unlock()
+    c.tieniSveglio(inCorso)
+    return () => c.tieniSveglio(false)
+  }, [inCorso])
+
   // Bip degli ultimi tre secondi e segnale di fine: attaccati al secondo
   // mostrato, così suonano una volta sola anche se il tick passa più spesso.
   useEffect(() => {
     if (fine === null) return
     const s = Math.ceil(resto / 1000)
+    if (s > 0 && ultimoTic.current !== s) {
+      ultimoTic.current = s
+      if (settings.ticchettio) cues.current.tick(s % 2 === 0)
+    }
     if (s > 0 && s <= 3 && ultimoBip.current !== s) {
       ultimoBip.current = s
       if (settings.countdownBeep) cues.current.countdown()
     }
     if (resto <= 0 && !finito.current) {
       finito.current = true
-      setComplimento({ src: a_caso(FINALE), frase: a_caso(FINALE_LINES) })
+      const i = Math.floor(Math.random() * FINALE_LINES.length)
+      const complimenti = settings.coach !== 'off'
+      setComplimento({ src: a_caso(FINALE), frase: FINALE_LINES[i], i })
       cues.current.finish()
-      if (settings.voice) speak('Tempo', settings.volume, settings.voiceURI)
+      /* Passa dal sistema delle clip invece che dalla sintesi secca: così con
+         la voce incisa «Tempo» è la voce vera, e se Maurizio è acceso dice
+         anche lui la sua. Senza le clip parla la sintesi, con la frase intera. */
+      if (settings.voice) {
+        say(
+          complimenti ? [TEMPO_CLIP, finaleClip(i)] : [TEMPO_CLIP],
+          complimenti ? `Tempo. ${FINALE_LINES[i]}` : 'Tempo',
+          { volume: settings.volume, voiceURI: settings.voiceURI, useRecorded: settings.recordedVoice },
+        )
+      }
       setFine(null)
       setRestoInPausa(0)
     }
-  }, [resto, fine, settings.countdownBeep, settings.voice, settings.volume, settings.voiceURI])
+  }, [resto, fine, settings.countdownBeep, settings.voice, settings.volume, settings.voiceURI, settings.recordedVoice, settings.coach, settings.ticchettio])
 
   useWakeLock(settings.keepAwake && inCorso)
 
@@ -243,6 +272,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   const prepara = (da: number) => {
     finito.current = false
     ultimoBip.current = null
+    ultimoTic.current = null
     setComplimento(null)
     setDurata(da)
     setRestoInPausa(da * 1000)
@@ -252,6 +282,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   const riparti = (da: number) => {
     finito.current = false
     ultimoBip.current = null
+    ultimoTic.current = null
     setComplimento(null)
     setDurata(da)
     setRestoInPausa(da * 1000)
@@ -260,6 +291,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   }
 
   const pausaOAvvia = () => {
+    cues.current.unlock()
     if (inCorso) {
       setRestoInPausa(resto)
       setFine(null)
@@ -273,6 +305,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   const allunga = () => {
     finito.current = false
     ultimoBip.current = null
+    ultimoTic.current = null
     setComplimento(null)
     setDurata((d) => d + 30)
     if (fine === null) setRestoInPausa((r) => r + 30000)
