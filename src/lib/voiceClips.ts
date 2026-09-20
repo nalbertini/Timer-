@@ -25,6 +25,12 @@ export const PROSSIMO_CLIP = 'stato/prossimo'
 /** La frase con cui Maurizio annuncia il giro che si è inventato. */
 export const extraClip = (i: number) => `maurizio/extra-${i + 1}`
 
+/** «Tempo»: lo scadere del conto alla rovescia. */
+export const TEMPO_CLIP = 'stato/tempo'
+
+/** I complimenti di Maurizio quando il conto arriva a zero. */
+export const finaleClip = (i: number) => `maurizio/finale-${i + 1}`
+
 export const STATE_CLIP: Record<SegmentKind | 'finish', string> = {
   prepare: 'stato/preparati',
   work: 'stato/lavoro',
@@ -53,6 +59,12 @@ export const CLIPS: ClipSpec[] = [
     hint: 'Detta nel recupero, subito prima del nome dell’esercizio che arriva',
   },
 
+  {
+    key: TEMPO_CLIP,
+    text: 'Tempo',
+    group: 'Conto alla rovescia',
+    hint: 'Allo scadere del conto alla rovescia',
+  },
   { key: 'numeri/tre', text: 'Tre', group: 'Conto alla rovescia' },
   { key: 'numeri/due', text: 'Due', group: 'Conto alla rovescia' },
   { key: 'numeri/uno', text: 'Uno', group: 'Conto alla rovescia' },
@@ -72,6 +84,18 @@ export const CLIPS: ClipSpec[] = [
   },
   { key: 'maurizio/extra-2', text: 'Ne manca uno, me n’ero dimenticato', group: 'Maurizio' },
   { key: 'maurizio/extra-3', text: 'Dai, l’ultimo giro. Questo sì', group: 'Maurizio' },
+
+  {
+    key: 'maurizio/finale-1',
+    text: 'Bravi, così si fa',
+    group: 'Maurizio',
+    hint: 'I complimenti allo scadere del conto alla rovescia',
+  },
+  { key: 'maurizio/finale-2', text: 'Ottimo lavoro', group: 'Maurizio' },
+  { key: 'maurizio/finale-3', text: 'Visto? Ce l’avete fatta', group: 'Maurizio' },
+  { key: 'maurizio/finale-4', text: 'Questo sì che era un tempo', group: 'Maurizio' },
+  { key: 'maurizio/finale-5', text: 'Grandi, tutti quanti', group: 'Maurizio' },
+  { key: 'maurizio/finale-6', text: 'E anche questo è andato', group: 'Maurizio' },
 ]
 
 export const NUMBER_CLIP: Record<number, string> = {

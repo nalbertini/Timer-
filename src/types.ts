@@ -83,6 +83,8 @@ export interface Settings {
   recordedVoice: boolean
   /** Nel recupero dice anche qual è il prossimo esercizio. */
   announceNext: boolean
+  /** Un ticchettio d'orologio a ogni secondo, mentre il timer conta. */
+  ticchettio: boolean
   vibrate: boolean
   volume: number
   keepAwake: boolean

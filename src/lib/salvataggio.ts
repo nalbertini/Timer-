@@ -63,6 +63,7 @@ function impostazioniSane(v: unknown): Settings {
     voiceURI: typeof o.voiceURI === 'string' ? o.voiceURI.slice(0, 200) : null,
     recordedVoice: bool(o.recordedVoice, DEFAULT_SETTINGS.recordedVoice),
     announceNext: bool(o.announceNext, DEFAULT_SETTINGS.announceNext),
+    ticchettio: bool(o.ticchettio, DEFAULT_SETTINGS.ticchettio),
     vibrate: bool(o.vibrate, DEFAULT_SETTINGS.vibrate),
     volume: numeroSano(o.volume, 0, 1, DEFAULT_SETTINGS.volume),
     keepAwake: bool(o.keepAwake, DEFAULT_SETTINGS.keepAwake),

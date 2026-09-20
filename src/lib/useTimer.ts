@@ -174,6 +174,11 @@ export function useTimer(
       const tornatoIndietro = lastShownRef.current > 0 && mostrato > lastShownRef.current
       lastShownRef.current = mostrato
 
+      // Il ticchettio segue il numero mostrato come tutto il resto: se Maurizio
+      // si inceppa, l'orologio si inceppa con lui. Tic e tac si alternano sui
+      // secondi pari e dispari.
+      if (settings.ticchettio) cues.current.tick(mostrato % 2 === 0)
+
       // L'esitazione può cadere ovunque nell'intervallo, non solo in fondo:
       // la battuta va quindi legata al numero che risale, non al conto finale.
       // Solo però se Maurizio è acceso: a modalità spenta un numero che risale
@@ -202,6 +207,7 @@ export function useTimer(
     indexAt,
     announce,
     settings.countdownBeep,
+    settings.ticchettio,
     settings.vibrate,
     settings.voice,
     settings.volume,
@@ -210,6 +216,14 @@ export function useTimer(
     settings.announceNext,
     settings.coach,
   ])
+
+  /* Il fruscìo che tiene sveglia la cassa bluetooth, solo mentre il timer gira:
+     vedi `Cues.tieniSveglio`. */
+  useEffect(() => {
+    const c = cues.current
+    c.tieniSveglio(status === 'running')
+    return () => c.tieniSveglio(false)
+  }, [status])
 
   const start = useCallback(() => {
     cues.current.unlock()
