@@ -412,6 +412,56 @@ export function applyCoach(segments: Segment[], level: CoachLevel, rand: () => n
 }
 
 /** Il numero da mostrare: un elemento della sequenza per ogni secondo passato. */
+/** Un suono e l'istante dell'allenamento in cui va fatto, in secondi. */
+export interface EventoSonoro {
+  t: number
+  tipo: 'lavoro' | 'riposo' | 'bip' | 'fine'
+}
+
+/**
+ * Tutti i suoni di un allenamento, con il loro istante esatto.
+ *
+ * Si possono sapere in anticipo perché nulla, qui, dipende da cosa succederà:
+ * i segmenti hanno offset e durata fissi, e persino le esitazioni di Maurizio
+ * sono estratte all'avvio e vivono in `seg.display`, un numero per secondo. È
+ * ciò che permette di consegnare i suoni all'orologio audio invece di sperare
+ * che il thread JavaScript sia sveglio al momento giusto.
+ */
+export function eventiSonori(segments: Segment[], da: number, a: number): EventoSonoro[] {
+  const fuori = (t: number) => t <= da || t > a
+  const eventi: EventoSonoro[] = []
+  for (const seg of segments) {
+    if (seg.offset > a) break
+    if (!fuori(seg.offset)) eventi.push({ t: seg.offset, tipo: seg.kind === 'work' ? 'lavoro' : 'riposo' })
+    // In For Time il conto sale e non c'è nessuno scadere da annunciare.
+    if (seg.countUp) continue
+    if (seg.display) {
+      // Con Maurizio acceso conta il numero MOSTRATO: il bip segue lui, e
+      // quando il conto risale — l'esitazione — non si bippa affatto.
+      for (let i = 0; i < seg.display.length; i++) {
+        const v = seg.display[i]
+        const prima = i > 0 ? seg.display[i - 1] : -1
+        if (v < 1 || v > 3 || v === prima) continue
+        if (prima > 0 && v > prima) continue
+        const t = seg.offset + i
+        if (!fuori(t)) eventi.push({ t, tipo: 'bip' })
+      }
+    } else {
+      for (const k of [3, 2, 1]) {
+        if (k > seg.duration) continue
+        const t = seg.offset + seg.duration - k
+        if (!fuori(t)) eventi.push({ t, tipo: 'bip' })
+      }
+    }
+  }
+  const ultimo = segments[segments.length - 1]
+  if (ultimo) {
+    const fine = ultimo.offset + ultimo.duration
+    if (!fuori(fine)) eventi.push({ t: fine, tipo: 'fine' })
+  }
+  return eventi.sort((x, y) => x.t - y.t)
+}
+
 export function coachedDisplay(seg: Segment | null, remaining: number): number {
   if (!seg?.display || seg.countUp) return remaining
   const i = Math.floor(seg.duration - remaining)

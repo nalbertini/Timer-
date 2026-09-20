@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Segment, Settings } from '../types'
 import { Cues, buzz } from './audio'
-import { COACH_LINES, EXTRA_LINES, coachedDisplay } from './engine'
+import { COACH_LINES, EXTRA_LINES, coachedDisplay, eventiSonori } from './engine'
 import { hasClip, preload, say, unlockVoice } from './voice'
 import { INTRO_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './voiceClips'
 
@@ -27,6 +27,9 @@ export interface TimerView {
  * così un tab in background, messo in pausa dal sistema, riallinea da solo il
  * conteggio invece di restare indietro.
  */
+/** Quanti secondi di suoni si tengono sempre consegnati in anticipo. */
+const ORIZZONTE = 120
+
 export function useTimer(
   segments: Segment[],
   settings: Settings,
@@ -42,6 +45,11 @@ export function useTimer(
   const anchorRef = useRef(0)
   const lastIndexRef = useRef(-1)
   const lastShownRef = useRef(-1)
+  /* Fin dove i suoni sono già consegnati all'orologio audio, in secondi
+     dall'inizio dell'allenamento. Due minuti alla volta: abbastanza perché il
+     telefono possa stare in tasca a lungo senza che si perda un bip, e poco
+     abbastanza da non tenere in coda centinaia di nodi. */
+  const programmatoRef = useRef(-1)
   const introRef = useRef(false)
   const finishRef = useRef(onFinish)
   finishRef.current = onFinish
@@ -91,12 +99,10 @@ export function useTimer(
 
   const announce = useCallback(
     (seg: Segment, prossimo: Segment | null) => {
-      // Sotto muto non suona niente, nemmeno questi: erano gli unici due suoni
-      // che uscivano comunque, e «muto» prometteva il contrario.
-      if (settings.countdownBeep) {
-        if (seg.kind === 'work') cues.current.work()
-        else cues.current.rest()
-      }
+      // Il suono del cambio non si fa qui: è già stato consegnato all'orologio
+      // audio insieme a tutti gli altri, e farlo anche qui lo raddoppierebbe.
+      // Qui restano le cose che l'orologio audio non sa fare: la voce e la
+      // vibrazione.
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
 
       // Il giro che Maurizio si è inventato non si annuncia come un lavoro
@@ -140,6 +146,48 @@ export function useTimer(
     [settings.vibrate, settings.voice, settings.volume, settings.voiceURI, settings.announceNext],
   )
 
+  /**
+   * Consegna all'orologio audio i suoni dei prossimi due minuti.
+   *
+   * `daCapo` butta via quello che era già in coda: serve quando il programma
+   * cambia sotto i piedi — una pausa, un salto, un «+30″». Senza, si estende
+   * soltanto in avanti, e quello già consegnato resta dov'è.
+   */
+  const programmaSuoni = useCallback(
+    (adesso: number, daCapo: boolean) => {
+      const c = cues.current
+      if (daCapo) {
+        c.annullaProgrammati()
+        programmatoRef.current = adesso - 0.001
+      }
+      if (!settings.countdownBeep) return
+      const fino = adesso + ORIZZONTE
+      if (fino <= programmatoRef.current) return
+      for (const e of eventiSonori(segments, programmatoRef.current, fino)) {
+        const fra = e.t - adesso
+        if (fra < -0.05) continue
+        if (e.tipo === 'bip') c.programmaBip(fra)
+        else if (e.tipo === 'fine') c.programmaFine(fra)
+        else c.programmaCambio(fra, e.tipo === 'lavoro')
+      }
+      programmatoRef.current = fino
+    },
+    [segments, settings.countdownBeep],
+  )
+
+  /* I segmenti cambiano identità quando il «+30″» allunga l'intervallo in
+     corso: da lì in poi la coda dei suoni è sbagliata e va rifatta. */
+  useEffect(() => {
+    const c = cues.current
+    if (status !== 'running') {
+      c.annullaProgrammati()
+      programmatoRef.current = -1
+      return
+    }
+    programmaSuoni(bankedRef.current + (performance.now() - anchorRef.current) / 1000, true)
+    return () => c.annullaProgrammati()
+  }, [status, segments, programmaSuoni])
+
   useEffect(() => {
     if (status !== 'running') return
 
@@ -150,7 +198,6 @@ export function useTimer(
         bankedRef.current = total
         setElapsed(total)
         setStatus('done')
-        if (settings.countdownBeep) cues.current.finish()
         if (settings.vibrate) buzz([200, 100, 200, 100, 300])
         if (settings.voice) say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
         finishRef.current(total, true)
@@ -158,6 +205,10 @@ export function useTimer(
       }
 
       setElapsed(now)
+
+      // Quando la coda si accorcia a meno di un minuto, si allunga: così resta
+      // sempre almeno un minuto di suoni già consegnati davanti a noi.
+      if (now + ORIZZONTE / 2 > programmatoRef.current) programmaSuoni(now, false)
 
       const i = indexAt(now)
       const seg = segments[i]
@@ -194,13 +245,8 @@ export function useTimer(
         return
       }
 
-      if (mostrato > 3) return
-      // Tre bip uguali, non i numeri detti a voce: un conto alla rovescia lo si
-      // riconosce dal ritmo, e il ritmo di tre bip identici arriva attraverso
-      // la musica della sala meglio di tre parole. Subito dopo arriva il suono
-      // del segmento nuovo — acuto se è lavoro, basso se è recupero — che è
-      // l'«uno diverso» in fondo alla sequenza.
-      if (settings.countdownBeep) cues.current.countdown()
+      // I tre bip degli ultimi secondi sono anche loro già in coda: tre bip
+      // uguali, e poi il suono del segmento nuovo come «uno diverso» in fondo.
     }
 
     const id = window.setInterval(tick, 100)
@@ -249,8 +295,9 @@ export function useTimer(
     anchorRef.current = performance.now()
     // Riparte dal segmento corrente senza riannunciarlo.
     lastIndexRef.current = indexAt(bankedRef.current)
+    programmaSuoni(bankedRef.current, true)
     setStatus('running')
-  }, [indexAt])
+  }, [indexAt, programmaSuoni])
 
   const pause = useCallback(() => {
     bankedRef.current = bankedRef.current + (performance.now() - anchorRef.current) / 1000
@@ -273,11 +320,13 @@ export function useTimer(
       lastShownRef.current = -1
       const i = indexAt(t)
       lastIndexRef.current = i
+      if (status === 'running') programmaSuoni(t, true)
+      else cues.current.annullaProgrammati()
       if (status === 'done') setStatus('paused')
       const seg = segments[i]
       if (seg && status === 'running') announce(seg, segments[i + 1] ?? null)
     },
-    [total, indexAt, segments, status, announce],
+    [total, indexAt, segments, status, announce, programmaSuoni],
   )
 
   const skip = useCallback(

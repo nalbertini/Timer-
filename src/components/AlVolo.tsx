@@ -204,7 +204,6 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
      il render, illustrazione e frase cambierebbero a ogni battito. */
   const [complimento, setComplimento] = useState<{ src: string; frase: string; i: number } | null>(null)
   const cues = useRef(new Cues())
-  const ultimoBip = useRef<number | null>(null)
   const ultimoTic = useRef<number | null>(null)
   const finito = useRef(false)
 
@@ -219,6 +218,23 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
     const id = window.setInterval(() => setOra(performance.now()), 80)
     return () => window.clearInterval(id)
   }, [fine])
+
+  /* I suoni si consegnano all'orologio audio appena si sa quando scade, invece
+     di farli suonare dal battito: il battito si ferma quando il telefono va in
+     tasca, l'orologio audio no. `fine` cambia a ogni avvio, pausa, «+30″» o
+     cambio di durata, e ogni volta la coda si rifà da capo. */
+  useEffect(() => {
+    const c = cues.current
+    c.annullaProgrammati()
+    if (fine === null || !settings.countdownBeep) return
+    const resto = (fine - performance.now()) / 1000
+    for (const k of [3, 2, 1]) {
+      const fra = resto - k
+      if (fra > 0.02) c.programmaBip(fra)
+    }
+    if (resto > 0.02) c.programmaScadenza(resto)
+    return () => c.annullaProgrammati()
+  }, [fine, settings.countdownBeep])
 
   /* Il contesto audio non veniva mai sbloccato qui: `new Cues()` c'era,
      `unlock()` no, e senza contesto i tre bip finali e il segnale di fine non
@@ -240,18 +256,12 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
       ultimoTic.current = s
       if (settings.ticchettio) cues.current.tick(s % 2 === 0)
     }
-    if (s > 0 && s <= 3 && ultimoBip.current !== s) {
-      ultimoBip.current = s
-      if (settings.countdownBeep) cues.current.countdown()
-    }
+    // I tre bip e la nota dello scadere sono già in coda sull'orologio audio.
     if (resto <= 0 && !finito.current) {
       finito.current = true
       const i = Math.floor(Math.random() * FINALE_LINES.length)
       const complimenti = settings.coach !== 'off'
       setComplimento({ src: a_caso(FINALE), frase: FINALE_LINES[i], i })
-      // Una nota sola e diversa, non la fanfara di fine allenamento: qui il
-      // tempo scade e di solito si riparte subito.
-      if (settings.countdownBeep) cues.current.scadenza()
       /* Passa dal sistema delle clip invece che dalla sintesi secca: così con
          la voce incisa «Tempo» è la voce vera, e se Maurizio è acceso dice
          anche lui la sua. Senza le clip parla la sintesi, con la frase intera. */
@@ -273,7 +283,6 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
      quando la sala è pronta e non quando il dito tocca il numero. */
   const prepara = (da: number) => {
     finito.current = false
-    ultimoBip.current = null
     ultimoTic.current = null
     setComplimento(null)
     setDurata(da)
@@ -283,7 +292,6 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
 
   const riparti = (da: number) => {
     finito.current = false
-    ultimoBip.current = null
     ultimoTic.current = null
     setComplimento(null)
     setDurata(da)
@@ -306,7 +314,6 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
 
   const allunga = () => {
     finito.current = false
-    ultimoBip.current = null
     ultimoTic.current = null
     setComplimento(null)
     setDurata((d) => d + 30)
