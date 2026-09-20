@@ -217,6 +217,19 @@ export class Cues {
     this.tone(600, 320, 0.45, 'sine')
   }
 
+  /**
+   * Il tempo è scaduto: una nota sola, lunga, più acuta dei bip.
+   *
+   * È la seconda metà della partenza di una gara — tre corti, poi uno lungo e
+   * diverso — e la differenza sta lì: i tre bip dicono «ci siamo», questo dice
+   * «adesso». Una fanfara di tre note, che è quel che c'era prima, dice invece
+   * «bravi»: giusta a fine allenamento, sbagliata per un conto che scade e a
+   * cui di solito segue subito altro lavoro.
+   */
+  scadenza() {
+    this.tone(1175, 850, 0.6, 'square')
+  }
+
   /** Fine allenamento: tre note in salita. */
   finish() {
     this.tone(660, 220, 0.5)
