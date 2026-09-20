@@ -362,7 +362,7 @@
     </p>
     <div class="riga-versione">
       <span>Officine Dello Sport · Collegno</span>
-      <span>ODS Timer 1.3.0</span>
+      <span>ODS Timer 1.4.0</span>
       <span>nalbertini.github.io/Timer-</span>
     </div>
   </header>
@@ -927,7 +927,7 @@
             <thead><tr><th>Posizione</th><th>Cosa senti</th></tr></thead>
             <tbody>
               <tr><td class="nome-schema">MUTO</td><td>Niente. Restano il colore dello schermo, la barra e la vibrazione — in una sala con la musica alta è spesso l'unica cosa che si vede davvero.</td></tr>
-              <tr><td class="nome-schema">SOLO BIP</td><td>Tre bip sugli ultimi tre secondi di ogni intervallo, e uno più lungo al cambio.</td></tr>
+              <tr><td class="nome-schema">SOLO BIP</td><td>Tre bip uguali sugli ultimi tre secondi, e poi uno diverso quando il tempo scade: acuto se comincia il lavoro, basso se comincia il recupero, lungo nel conto alla rovescia.</td></tr>
               <tr><td class="nome-schema">BIP + VOCE</td><td>I bip più la voce, che annuncia lo stato e il nome dell'esercizio.</td></tr>
             </tbody>
           </table>
@@ -986,10 +986,15 @@
         <h3>La voce incisa</h3>
         <p>
           Al posto della sintesi del telefono l'app può usare <strong>clip registrate con una voce vera</strong>.
-          Oggi ce ne sono <strong>15 incise su 26</strong>: ci sono il saluto d'apertura, i cinque stati, i tre
-          numeri del conto alla rovescia e le sei battute di Maurizio. Ne mancano undici — «prossimo», le tre
-          frasi del giro in più, «Tempo» allo scadere del conto alla rovescia e i sei complimenti — e dove la
-          clip manca il timer torna da solo alla voce di sistema, senza saltare l'annuncio.
+          Oggi ce ne sono <strong>12 incise su 23</strong>: ci sono il saluto d'apertura, i cinque stati e le sei
+          battute di Maurizio. Ne mancano undici — «prossimo», le tre frasi del giro in più, «Tempo» allo scadere
+          del conto alla rovescia e i sei complimenti — e dove la clip manca il timer torna da solo alla voce di
+          sistema, senza saltare l'annuncio.
+        </p>
+        <p>
+          I tre numeri del conto alla rovescia erano incisi e non ci sono più: gli ultimi tre secondi adesso
+          sono bip e basta (vedi sopra). Le registrazioni restano nel progetto, quindi tornare indietro è una
+          riga di codice, ma il registratore non le chiede più.
         </p>
         <p>
           Per registrarle: IMPOSTAZIONI → VOCE INCISA → <span class="tasto">INCIDI LA VOCE</span>. Il registratore

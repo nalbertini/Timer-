@@ -3,7 +3,7 @@ import type { Segment, Settings } from '../types'
 import { Cues, buzz } from './audio'
 import { COACH_LINES, EXTRA_LINES, coachedDisplay } from './engine'
 import { hasClip, preload, say, unlockVoice } from './voice'
-import { INTRO_CLIP, NUMBER_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './voiceClips'
+import { INTRO_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './voiceClips'
 
 export type Status = 'idle' | 'running' | 'paused' | 'done'
 
@@ -91,8 +91,12 @@ export function useTimer(
 
   const announce = useCallback(
     (seg: Segment, prossimo: Segment | null) => {
-      if (seg.kind === 'work') cues.current.work()
-      else cues.current.rest()
+      // Sotto muto non suona niente, nemmeno questi: erano gli unici due suoni
+      // che uscivano comunque, e «muto» prometteva il contrario.
+      if (settings.countdownBeep) {
+        if (seg.kind === 'work') cues.current.work()
+        else cues.current.rest()
+      }
       if (settings.vibrate) buzz(seg.kind === 'work' ? [90, 60, 90] : 60)
 
       // Il giro che Maurizio si è inventato non si annuncia come un lavoro
@@ -146,7 +150,7 @@ export function useTimer(
         bankedRef.current = total
         setElapsed(total)
         setStatus('done')
-        cues.current.finish()
+        if (settings.countdownBeep) cues.current.finish()
         if (settings.vibrate) buzz([200, 100, 200, 100, 300])
         if (settings.voice) say([STATE_CLIP.finish], 'Allenamento completato', voiceRef.current)
         finishRef.current(total, true)
@@ -191,10 +195,12 @@ export function useTimer(
       }
 
       if (mostrato > 3) return
-      // Con la voce incisa il numero viene detto; il bip resta solo come
-      // ripiego, per non raddoppiare il segnale.
-      const detto = settings.recordedVoice && settings.voice && say([NUMBER_CLIP[mostrato]], '', voiceRef.current)
-      if (!detto && settings.countdownBeep) cues.current.countdown()
+      // Tre bip uguali, non i numeri detti a voce: un conto alla rovescia lo si
+      // riconosce dal ritmo, e il ritmo di tre bip identici arriva attraverso
+      // la musica della sala meglio di tre parole. Subito dopo arriva il suono
+      // del segmento nuovo — acuto se è lavoro, basso se è recupero — che è
+      // l'«uno diverso» in fondo alla sequenza.
+      if (settings.countdownBeep) cues.current.countdown()
     }
 
     const id = window.setInterval(tick, 100)

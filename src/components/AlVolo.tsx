@@ -249,7 +249,9 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
       const i = Math.floor(Math.random() * FINALE_LINES.length)
       const complimenti = settings.coach !== 'off'
       setComplimento({ src: a_caso(FINALE), frase: FINALE_LINES[i], i })
-      cues.current.finish()
+      // Una nota sola e diversa, non la fanfara di fine allenamento: qui il
+      // tempo scade e di solito si riparte subito.
+      if (settings.countdownBeep) cues.current.scadenza()
       /* Passa dal sistema delle clip invece che dalla sintesi secca: così con
          la voce incisa «Tempo» è la voce vera, e se Maurizio è acceso dice
          anche lui la sua. Senza le clip parla la sintesi, con la frase intera. */

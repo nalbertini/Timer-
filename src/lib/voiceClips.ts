@@ -65,10 +65,6 @@ export const CLIPS: ClipSpec[] = [
     group: 'Conto alla rovescia',
     hint: 'Allo scadere del conto alla rovescia',
   },
-  { key: 'numeri/tre', text: 'Tre', group: 'Conto alla rovescia' },
-  { key: 'numeri/due', text: 'Due', group: 'Conto alla rovescia' },
-  { key: 'numeri/uno', text: 'Uno', group: 'Conto alla rovescia' },
-
   { key: 'maurizio/1', text: 'Ho perso il conto, ricominciamo', group: 'Maurizio' },
   { key: 'maurizio/2', text: 'No aspetta, tre', group: 'Maurizio' },
   { key: 'maurizio/3', text: 'Ancora un attimo', group: 'Maurizio' },
@@ -97,12 +93,6 @@ export const CLIPS: ClipSpec[] = [
   { key: 'maurizio/finale-5', text: 'Grandi, tutti quanti', group: 'Maurizio' },
   { key: 'maurizio/finale-6', text: 'E anche questo è andato', group: 'Maurizio' },
 ]
-
-export const NUMBER_CLIP: Record<number, string> = {
-  1: 'numeri/uno',
-  2: 'numeri/due',
-  3: 'numeri/tre',
-}
 
 /** `Burpee + salto` → `esercizi/burpee-salto`. */
 export function exerciseKey(name: string): string {
