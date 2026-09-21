@@ -8,6 +8,8 @@ export class Cues {
   private sveglia: AudioBufferSourceNode | null = null
   private vuoleSveglia = false
   private inAscolto = false
+  /** I suoni già consegnati all'orologio audio e non ancora suonati. */
+  private programmati: OscillatorNode[] = []
   volume = 0.8
 
   /** I browser creano il contesto audio sospeso finché non c'è un gesto dell'utente. */
@@ -137,10 +139,68 @@ export class Cues {
     })
   }
 
-  private emetti(freq: number, ms: number, gain: number, type: OscillatorType) {
+  /**
+   * Un suono fissato a un istante futuro dell'orologio audio.
+   *
+   * È la differenza fra un bip che arriva e uno che sparisce. Suonare «adesso»
+   * vuol dire dipendere dal fatto che il thread JavaScript giri in quel
+   * preciso momento — e in secondo piano, o a telefono bloccato, non gira:
+   * misurato, cinque secondi di thread fermo costavano cinque bip su cinque.
+   * Consegnato invece all'orologio audio, il suono è già in coda sul thread
+   * dell'audio e parte puntuale anche se il resto dell'app è fermo.
+   */
+  private programma(fra: number, freq: number, ms: number, gain: number, type: OscillatorType) {
+    const c = this.ctx
+    if (!c) return
+    if (c.state !== 'running') {
+      void this.risveglia().then((ok) => ok && this.emetti(freq, ms, gain, type, fra))
+      return
+    }
+    this.emetti(freq, ms, gain, type, fra)
+  }
+
+  /** Il bip del conto alla rovescia, fra `fra` secondi. */
+  programmaBip(fra: number) {
+    this.programma(fra, 880, 140, 0.5, 'square')
+  }
+
+  /** Il suono del segmento che comincia, fra `fra` secondi. */
+  programmaCambio(fra: number, lavoro: boolean) {
+    if (lavoro) this.programma(fra, 1320, 420, 0.6, 'square')
+    else this.programma(fra, 600, 320, 0.45, 'sine')
+  }
+
+  /** La nota lunga dello scadere, fra `fra` secondi. */
+  programmaScadenza(fra: number) {
+    this.programma(fra, 1175, 850, 0.6, 'square')
+  }
+
+  /** Le tre note di fine allenamento, fra `fra` secondi. */
+  programmaFine(fra: number) {
+    this.programma(fra, 660, 220, 0.5, 'sine')
+    this.programma(fra + 0.2, 880, 220, 0.5, 'sine')
+    this.programma(fra + 0.4, 1320, 520, 0.55, 'sine')
+  }
+
+  /**
+   * Butta via tutto ciò che è in coda e non ha ancora suonato. Serve a ogni
+   * pausa, salto o «+30″»: da lì in poi il programma non è più quello.
+   */
+  annullaProgrammati() {
+    for (const o of this.programmati) {
+      try {
+        o.stop()
+      } catch {
+        // Già suonato o già fermato.
+      }
+    }
+    this.programmati = []
+  }
+
+  private emetti(freq: number, ms: number, gain: number, type: OscillatorType, fra = 0) {
     const c = this.ctx
     if (!c || c.state !== 'running') return
-    const now = c.currentTime
+    const now = c.currentTime + Math.max(0, fra)
     const osc = c.createOscillator()
     const amp = c.createGain()
     osc.type = type
@@ -152,6 +212,12 @@ export class Cues {
     osc.connect(amp).connect(c.destination)
     osc.start(now)
     osc.stop(now + ms / 1000 + 0.02)
+    if (fra > 0.02) {
+      this.programmati.push(osc)
+      osc.onended = () => {
+        this.programmati = this.programmati.filter((x) => x !== osc)
+      }
+    }
   }
 
   /**
