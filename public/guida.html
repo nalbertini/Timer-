@@ -362,7 +362,7 @@
     </p>
     <div class="riga-versione">
       <span>Officine Dello Sport · Collegno</span>
-      <span>ODS Timer 1.5.0</span>
+      <span>ODS Timer 1.6.0</span>
       <span>nalbertini.github.io/Timer-</span>
     </div>
   </header>
@@ -931,7 +931,7 @@
             <thead><tr><th>Posizione</th><th>Cosa senti</th></tr></thead>
             <tbody>
               <tr><td class="nome-schema">MUTO</td><td>Niente. Restano il colore dello schermo, la barra e la vibrazione — in una sala con la musica alta è spesso l'unica cosa che si vede davvero.</td></tr>
-              <tr><td class="nome-schema">SOLO BIP</td><td>Tre bip uguali sugli ultimi tre secondi, e poi uno diverso quando il tempo scade: acuto se comincia il lavoro, basso se comincia il recupero, lungo nel conto alla rovescia.</td></tr>
+              <tr><td class="nome-schema">SOLO BIP</td><td>Cinque bip uguali sugli ultimi cinque secondi — l’ultimo, a un secondo dallo scadere, lungo il doppio — e poi uno diverso quando il tempo scade: acuto se comincia il lavoro, basso se comincia il recupero, lungo nel conto alla rovescia.</td></tr>
               <tr><td class="nome-schema">BIP + VOCE</td><td>I bip più la voce, che annuncia lo stato e il nome dell'esercizio.</td></tr>
             </tbody>
           </table>
@@ -940,6 +940,25 @@
           Accanto ci sono il <strong>volume dei segnali</strong> (0–100 %, con un suono di prova mentre lo muovi), il
           <strong>ticchettio</strong> e la <strong>vibrazione</strong>, che è indipendente dal suono e funziona solo
           dove il dispositivo la supporta.
+        </p>
+
+        <h3>Cinque bip, e l’ultimo più lungo</h3>
+        <p>
+          Il conto alla rovescia sonoro comincia a <strong>cinque secondi</strong> dalla fine di ogni blocco, non
+          più a tre. Sono cinque colpi uguali, uno al secondo; quello a <strong>un secondo</strong> dura il
+          doppio degli altri, così la sequenza ha una fine riconoscibile e chi è sotto un bilanciere sa che
+          il prossimo suono è il cambio, senza contare.
+        </p>
+        <p>
+          I bip sono anche <strong>più forti e più lunghi</strong> di prima: due decimi di secondo invece
+          di uno, a tre quarti del volume invece che a metà. In sala, con la musica alta e il fiato corto, il
+          bip vecchio era un tic da scrivania. Il volume resta comunque il tuo: la manopola
+          <strong>Volume dei segnali</strong> in IMPOSTAZIONI → AUDIO li scala tutti insieme.
+        </p>
+        <p>
+          <strong>Nota.</strong> Il bip lungo a un secondo e il suono del cambio a zero si susseguono a distanza
+          ravvicinata: è voluto, ma se in sala risulta troppo, la durata dell’ultimo bip è una riga
+          sola da cambiare.
         </p>
 
         <h3>Il ticchettio</h3>
@@ -967,15 +986,42 @@
             <strong>Il telefono in tasca.</strong> I suoni non vengono fatti suonare secondo per secondo dall'app:
             vengono <strong>consegnati in anticipo all'orologio dell'audio</strong>, che è un pezzo separato e non si
             ferma quando il resto dell'app si ferma. Due minuti di bip sono sempre già in coda davanti a te. È quello
-            che permette di avviare il timer, mettere via il telefono o bloccarlo, e sentire comunque i tre bip e il
+            che permette di avviare il timer, mettere via il telefono o bloccarlo, e sentire comunque i cinque bip e il
             cambio al momento giusto — prima, con lo schermo spento, il bip non arrivava in ritardo: non arrivava.
           </p>
           <p>
             <strong>Con una cassa bluetooth</strong>, mentre il timer gira l'app le manda un fruscìo inaudibile.
             Non è un vezzo: una cassa che per qualche secondo non riceve niente va in standby, e al bip
-            successivo si sveglia mangiandosene l'inizio — e i bip durano un decimo di secondo, quindi se li
-            mangia interi. Tenendo la connessione sveglia arrivano tutti. Finito l'allenamento smette, e la
+            successivo si sveglia mangiandosene l'inizio — e un bip dura due decimi di secondo, quindi
+            l'inizio è quasi tutto il bip. Tenendo la connessione sveglia arrivano tutti. Finito l'allenamento smette, e la
             cassa torna libera.
+          </p>
+        </div>
+
+        <div class="scheda">
+          <span class="etichetta-scheda">COMANDI SULLA SCHERMATA DI BLOCCO</span>
+          <p>
+            Mentre un timer gira, l’app compare fra i <strong>comandi multimediali del telefono</strong>: sulla
+            schermata di blocco, nel centro di controllo, sulle cuffie e sullo smartwatch, come farebbe un lettore
+            musicale. La scheda mostra il nome dell’allenamento e il blocco in corso — <em>LAVORO</em>,
+            <em>RECUPERO</em>, <em>PREPARATI</em> — e si aggiorna a ogni cambio.
+          </p>
+          <div class="tabella-scorre">
+            <table>
+              <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+              <tbody>
+                <tr><td class="nome-schema">▶ ⏸</td><td>Avvia e mette in pausa il timer, esattamente come il tasto grande.</td></tr>
+                <tr><td class="nome-schema">⏭</td><td>Salta al blocco successivo.</td></tr>
+                <tr><td class="nome-schema">⏮</td><td>Torna al blocco precedente, per rifarlo.</td></tr>
+                <tr><td class="nome-schema">⏹</td><td>Ferma l’allenamento.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Serve a chi tiene il telefono in tasca o la sala a uno schermo solo: si mette in pausa senza sbloccare
+            niente. Finito l’allenamento la scheda sparisce e i comandi tornano alla musica. Vale anche per il
+            conto alla rovescia, ma solo quando sta contando davvero: appena aperto, fermo sulla durata scelta,
+            non si prende i comandi.
           </p>
         </div>
 
@@ -1003,7 +1049,7 @@
           sistema, senza saltare l'annuncio.
         </p>
         <p>
-          I tre numeri del conto alla rovescia erano incisi e non ci sono più: gli ultimi tre secondi adesso
+          I tre numeri del conto alla rovescia erano incisi e non ci sono più: gli ultimi secondi adesso
           sono bip e basta (vedi sopra). Le registrazioni restano nel progetto, quindi tornare indietro è una
           riga di codice, ma il registratore non le chiede più.
         </p>

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import type { Settings } from '../types'
 import { Cues } from '../lib/audio'
 import { useWakeLock } from '../lib/wakeLock'
+import { apriSessione, chiudiSessione } from '../lib/mediaSession'
 import { pad } from '../lib/format'
 import { Pause, Play } from './Icons'
 import { DentroAnello, Digits, Ring } from './Quadrante'
 import { FINALE, a_caso } from '../lib/adesivi'
-import { FINALE_LINES } from '../lib/engine'
+import { CONTO_ALLA_ROVESCIA, FINALE_LINES } from '../lib/engine'
 import { say } from '../lib/voice'
 import { TEMPO_CLIP, finaleClip } from '../lib/voiceClips'
 
@@ -228,16 +229,16 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
     c.annullaProgrammati()
     if (fine === null || !settings.countdownBeep) return
     const resto = (fine - performance.now()) / 1000
-    for (const k of [3, 2, 1]) {
+    for (let k = CONTO_ALLA_ROVESCIA; k >= 1; k--) {
       const fra = resto - k
-      if (fra > 0.02) c.programmaBip(fra)
+      if (fra > 0.02) c.programmaBip(fra, k === 1)
     }
     if (resto > 0.02) c.programmaScadenza(resto)
     return () => c.annullaProgrammati()
   }, [fine, settings.countdownBeep])
 
   /* Il contesto audio non veniva mai sbloccato qui: `new Cues()` c'era,
-     `unlock()` no, e senza contesto i tre bip finali e il segnale di fine non
+     `unlock()` no, e senza contesto i bip finali e il segnale di fine non
      venivano nemmeno creati — muti su qualunque dispositivo. E finché il conto
      gira, il fruscìo che tiene sveglia la cassa bluetooth. */
   useEffect(() => {
@@ -247,7 +248,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
     return () => c.tieniSveglio(false)
   }, [inCorso])
 
-  // Bip degli ultimi tre secondi e segnale di fine: attaccati al secondo
+  // Bip degli ultimi cinque secondi e segnale di fine: attaccati al secondo
   // mostrato, così suonano una volta sola anche se il tick passa più spesso.
   useEffect(() => {
     if (fine === null) return
@@ -256,7 +257,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
       ultimoTic.current = s
       if (settings.ticchettio) cues.current.tick(s % 2 === 0)
     }
-    // I tre bip e la nota dello scadere sono già in coda sull'orologio audio.
+    // I bip e la nota dello scadere sono già in coda sull'orologio audio.
     if (resto <= 0 && !finito.current) {
       finito.current = true
       const i = Math.floor(Math.random() * FINALE_LINES.length)
@@ -321,6 +322,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
     else setFine((f) => (f ?? performance.now()) + 30000)
   }
 
+
   /* Il conto alla rovescia è un blocco di lavoro della durata scelta, non un
      recupero: mentre gira porta il rosso del lavoro, e allo zero passa al
      verde, che in quest'app vuol dire finito — è lo stesso verde con cui il
@@ -329,6 +331,33 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
   /* Caricato e mai fatto partire: non è una pausa, è un timer pronto — e il
      tasto grande deve dire AVVIA, non RIPRENDI. */
   const intatto = fine === null && !aZero && restoInPausa === durata * 1000
+
+  /* La schermata di blocco, ma solo se il conto è stato davvero avviato.
+     Questa scheda resta montata anche quando guardi altrove — serve a farla
+     continuare a contare — e senza questa condizione si prendeva il «in
+     riproduzione» del telefono all'apertura dell'app, con il conto ancora
+     fermo su PRONTO: cioè toglieva il posto al lettore musicale senza che
+     nessuno avesse chiesto niente. */
+  const inSessione = !aZero && !intatto
+  useEffect(() => {
+    if (!inSessione) {
+      chiudiSessione()
+      return
+    }
+    apriSessione(
+      {
+        titolo: `${etichettaDurata(durata)} · ${inCorso ? 'in corso' : 'in pausa'}`,
+        sottotitolo: 'Conto alla rovescia',
+        inCorso,
+        durata,
+        posizione: Math.min(durata, svolti / 1000),
+      },
+      { avvia: pausaOAvvia, pausa: pausaOAvvia },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inSessione, inCorso, durata])
+
+  useEffect(() => () => chiudiSessione(), [])
 
   const tinta = aZero ? 'var(--verde)' : 'var(--rosso)'
   const mostrato = Math.ceil(resto / 1000)

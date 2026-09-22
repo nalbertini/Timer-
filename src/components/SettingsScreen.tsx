@@ -26,7 +26,7 @@ const AUDIO_ETICHETTA: Record<ModoAudio, string> = {
 
 const AUDIO_SUGGERIMENTO: Record<ModoAudio, string> = {
   muto: 'Nessun suono. Restano il colore dello schermo, la barra e la vibrazione: in una sala con la musica alta è spesso l’unica cosa che si vede davvero.',
-  bip: 'Tre bip sugli ultimi tre secondi di ogni intervallo, e uno più lungo al cambio.',
+  bip: 'Cinque bip sugli ultimi cinque secondi di ogni intervallo — l’ultimo lungo il doppio — e uno diverso al cambio.',
   voce: 'I bip più la voce, che annuncia lo stato e il nome dell’esercizio.',
 }
 
