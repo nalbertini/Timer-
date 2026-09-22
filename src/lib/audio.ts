@@ -2,6 +2,17 @@
  * Segnali acustici sintetizzati al volo: nessun file audio da scaricare, quindi
  * funzionano anche al primo avvio offline.
  */
+/**
+ * La nota dello scadere: frequenza, durata, volume, forma d'onda, tenuta.
+ *
+ * Quasi due secondi, e tenuti: chi è sotto sforzo non conta i millisecondi,
+ * riconosce che è finito perché il suono <em>non smette</em>. Un colpo secco
+ * si confonde con un bip del conto; questo no. Stava in due copie — una per
+ * il suono immediato, una per quello messo in coda — ed erano già diverse
+ * fra loro: da qui in avanti è una sola.
+ */
+const SCADENZA = [1175, 1800, 0.9, 'square', true] as const
+
 export class Cues {
   private ctx: AudioContext | null = null
   /** Il fruscìo che tiene sveglio l'altoparlante bluetooth. Vedi `tieniSveglio`. */
@@ -125,17 +136,17 @@ export class Cues {
     }
   }
 
-  private tone(freq: number, ms: number, gain: number, type: OscillatorType = 'sine') {
+  private tone(freq: number, ms: number, gain: number, type: OscillatorType = 'sine', tenuta = false) {
     const c = this.ctx
     if (!c) return
     if (c.state === 'running') {
-      this.emetti(freq, ms, gain, type)
+      this.emetti(freq, ms, gain, type, 0, tenuta)
       return
     }
     // Un bip in ritardo di un attimo è comunque meglio del silenzio: si
     // risveglia il contesto e lo si suona appena torna, invece di buttarlo.
     void this.risveglia().then((ok) => {
-      if (ok) this.emetti(freq, ms, gain, type)
+      if (ok) this.emetti(freq, ms, gain, type, 0, tenuta)
     })
   }
 
@@ -149,14 +160,14 @@ export class Cues {
    * Consegnato invece all'orologio audio, il suono è già in coda sul thread
    * dell'audio e parte puntuale anche se il resto dell'app è fermo.
    */
-  private programma(fra: number, freq: number, ms: number, gain: number, type: OscillatorType) {
+  private programma(fra: number, freq: number, ms: number, gain: number, type: OscillatorType, tenuta = false) {
     const c = this.ctx
     if (!c) return
     if (c.state !== 'running') {
-      void this.risveglia().then((ok) => ok && this.emetti(freq, ms, gain, type, fra))
+      void this.risveglia().then((ok) => ok && this.emetti(freq, ms, gain, type, fra, tenuta))
       return
     }
-    this.emetti(freq, ms, gain, type, fra)
+    this.emetti(freq, ms, gain, type, fra, tenuta)
   }
 
   /**
@@ -182,7 +193,7 @@ export class Cues {
 
   /** La nota lunga dello scadere, fra `fra` secondi. */
   programmaScadenza(fra: number) {
-    this.programma(fra, 1175, 900, 0.9, 'square')
+    this.programma(fra, SCADENZA[0], SCADENZA[1], SCADENZA[2], SCADENZA[3], SCADENZA[4])
   }
 
   /** Le tre note di fine allenamento, fra `fra` secondi. */
@@ -223,21 +234,28 @@ export class Cues {
     this.programmati = restano
   }
 
-  private emetti(freq: number, ms: number, gain: number, type: OscillatorType, fra = 0) {
+  private emetti(freq: number, ms: number, gain: number, type: OscillatorType, fra = 0, tenuta = false) {
     const c = this.ctx
     if (!c || c.state !== 'running') return
     const now = c.currentTime + Math.max(0, fra)
+    const dur = ms / 1000
+    const picco = gain * this.volume
     const osc = c.createOscillator()
     const amp = c.createGain()
     osc.type = type
     osc.frequency.setValueAtTime(freq, now)
     // Attacco e rilascio morbidi: un gain a gradino produce un click udibile.
     amp.gain.setValueAtTime(0, now)
-    amp.gain.linearRampToValueAtTime(gain * this.volume, now + 0.012)
-    amp.gain.exponentialRampToValueAtTime(0.0001, now + ms / 1000)
+    amp.gain.linearRampToValueAtTime(picco, now + 0.012)
+    // Senza tenuta la nota scende per tutta la sua durata: per un bip corto va
+    // bene, ma su una nota lunga vuol dire che la metà finale è già quasi
+    // silenzio, e da lontano dura meno di quanto è scritto. Con la tenuta il
+    // livello resta pieno fin quasi alla fine e solo l'ultimo pezzo sfuma.
+    if (tenuta && dur > 0.35) amp.gain.setValueAtTime(picco, now + dur - 0.2)
+    amp.gain.exponentialRampToValueAtTime(0.0001, now + dur)
     osc.connect(amp).connect(c.destination)
     osc.start(now)
-    osc.stop(now + ms / 1000 + 0.02)
+    osc.stop(now + dur + 0.02)
     if (fra > 0.02) {
       const voce = { nodo: osc, quando: now }
       this.programmati.push(voce)
@@ -311,7 +329,7 @@ export class Cues {
   }
 
   /**
-   * Il tempo è scaduto: una nota sola, lunga, più acuta dei bip.
+   * Il tempo è scaduto: una nota sola, molto lunga, più acuta dei bip.
    *
    * È la seconda metà della partenza di una gara — dei corti, poi uno lungo e
    * diverso — e la differenza sta lì: i bip dicono «ci siamo», questo dice
@@ -320,7 +338,7 @@ export class Cues {
    * cui di solito segue subito altro lavoro.
    */
   scadenza() {
-    this.tone(1175, 850, 0.6, 'square')
+    this.tone(...SCADENZA)
   }
 
   /** Fine allenamento: tre note in salita. */

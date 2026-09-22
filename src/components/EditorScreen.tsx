@@ -117,6 +117,7 @@ function CampoObiettivo({
 
 export function EditorScreen({
   initial,
+  nuovo,
   catalogo,
   onCatalogo,
   onSave,
@@ -124,6 +125,8 @@ export function EditorScreen({
   onSaveAndStart,
 }: {
   initial: Workout
+  /** Non sta ancora nella libreria: si sta creando, non modificando. */
+  nuovo?: boolean
   catalogo: Esercizio[]
   onCatalogo: (lista: Esercizio[]) => void
   onSave: (w: Workout) => void
@@ -181,7 +184,7 @@ export function EditorScreen({
           <Back />
         </button>
         <span className="ob grow" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '0.1em' }}>
-          {initial.builtin || !initial.name ? 'NUOVO TIMER' : 'MODIFICA'}
+          {nuovo || initial.builtin || !initial.name ? 'NUOVO TIMER' : 'MODIFICA'}
         </span>
         <button className="btn btn-go" style={{ minHeight: 44, padding: '0 20px', fontSize: 17 }} onClick={() => onSave(named)}>
           SALVA

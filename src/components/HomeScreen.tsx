@@ -36,7 +36,9 @@ export function HomeScreen({
   interrotto: Interrotto | null
   onRiprendi: () => void
   onScarta: () => void
-  onNew: () => void
+  /** Il filtro attivo viaggia con la richiesta: chi ha già detto «intervalli»
+      non deve ridirlo nella schermata dopo. */
+  onNew: (filtro: Mode | 'all') => void
 }) {
   const [filter, setFilter] = useState<Mode | 'all'>('all')
   const [open, setOpen] = useState<string | null>(null)
@@ -169,7 +171,7 @@ export function HomeScreen({
           )
         })}
 
-        <button className="btn btn-dashed" onClick={onNew}>
+        <button className="btn btn-dashed" onClick={() => onNew(filter)}>
           <Plus />
           NUOVO TIMER
         </button>
