@@ -106,6 +106,13 @@ export const PRESETS: Array<{ key: string; title: string; mode: Mode; make: () =
   },
 ]
 
+/**
+ * Gli schemi di un certo tipo. Serve a chi ha già detto che tipo vuole
+ * filtrando la libreria: se ne resta uno solo non c'è più niente da
+ * chiedere, e l'editor si apre diretto.
+ */
+export const presetsDi = (mode: Mode) => PRESETS.filter((p) => p.mode === mode)
+
 /** La libreria che l'app propone al primo avvio. */
 export function seedLibrary(): Workout[] {
   const now = Date.now()

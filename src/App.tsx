@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { HistoryEntry, Settings, Workout } from './types'
+import type { HistoryEntry, Mode, Settings, Workout } from './types'
 import { DEFAULT_SETTINGS, loadHistory, loadSettings, loadWorkouts, pushHistory, saveSettings, saveWorkouts } from './lib/storage'
 import { type Esercizio, loadEsercizi, normalizza, saveEsercizi } from './lib/esercizi'
 import { preload, unlockVoice } from './lib/voice'
 import { COACH_LINES, EXTRA_LINES } from './lib/engine'
 import { INTRO_CLIP, PROSSIMO_CLIP, STATE_CLIP, exerciseKey, extraClip } from './lib/voiceClips'
 import { uid } from './lib/format'
+import { presetsDi } from './lib/presets'
 import { HomeScreen } from './components/HomeScreen'
 import { PresetScreen } from './components/PresetScreen'
 import { EditorScreen } from './components/EditorScreen'
@@ -25,14 +26,17 @@ import { Logo, Wordmark } from './components/Logo'
 type Tab = 'timer' | 'crono' | 'countdown' | 'impostazioni'
 type View =
   | { kind: 'tabs' }
-  | { kind: 'editor'; workout: Workout }
+  /** `nuovo`: non sta ancora nella libreria, quindi la topbar dice NUOVO
+      TIMER e non MODIFICA. Uno schema appena scelto ha già un nome, e sul
+      nome soltanto non si distingue da un timer salvato. */
+  | { kind: 'editor'; workout: Workout; nuovo?: boolean }
   | { kind: 'run'; workout: Workout; ripresa?: Interrotto }
   | { kind: 'condividi'; workout: Workout }
   | { kind: 'ricevuto'; workout: Workout }
   | { kind: 'voce' }
   | { kind: 'storico' }
   | { kind: 'esercizi' }
-  | { kind: 'schema' }
+  | { kind: 'schema'; mode?: Mode }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
@@ -222,7 +226,14 @@ export default function App() {
               scordaInterrotto()
               setInterrotto(null)
             }}
-            onNew={() => setView({ kind: 'schema' })}
+            onNew={(filtro) => {
+              // Il filtro della libreria è già una scelta di tipo: se ne resta
+              // un solo schema l'editor si apre diretto, invece di far
+              // ripassare da una schermata con una sola carta da toccare.
+              const schemi = filtro === 'all' ? [] : presetsDi(filtro)
+              if (schemi.length === 1) setView({ kind: 'editor', workout: schemi[0].make(), nuovo: true })
+              else setView({ kind: 'schema', mode: filtro === 'all' ? undefined : filtro })
+            }}
           />
         )
       case 'crono':
@@ -318,7 +329,7 @@ export default function App() {
           </span>
         </div>
         <div className="scroll">
-          <PresetScreen onPick={(w) => setView({ kind: 'editor', workout: w })} />
+          <PresetScreen mode={view.mode} onPick={(w) => setView({ kind: 'editor', workout: w, nuovo: true })} />
         </div>
       </div>
     )
@@ -355,6 +366,7 @@ export default function App() {
     return (
       <EditorScreen
         initial={view.workout}
+        nuovo={view.nuovo}
         catalogo={catalogo}
         onCatalogo={setCatalogo}
         onCancel={() => setView({ kind: 'tabs' })}

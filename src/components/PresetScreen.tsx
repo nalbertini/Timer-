@@ -1,6 +1,6 @@
 import type { Mode, Workout } from '../types'
-import { MODE_HINT } from '../lib/engine'
-import { PRESETS } from '../lib/presets'
+import { MODE_BADGE, MODE_HINT } from '../lib/engine'
+import { presetsDi, PRESETS } from '../lib/presets'
 
 /** Schema visivo del preset: si riconosce a colpo d'occhio meglio di una descrizione. */
 function Diagram({ mode }: { mode: Mode }) {
@@ -67,18 +67,25 @@ function Diagram({ mode }: { mode: Mode }) {
   }
 }
 
-export function PresetScreen({ onPick }: { onPick: (w: Workout) => void }) {
+/**
+ * `mode` arriva dal filtro della libreria: chi ha già detto che tipo vuole
+ * vede solo gli schemi di quel tipo, invece di ritrovarsi tutti e sei.
+ */
+export function PresetScreen({ onPick, mode }: { onPick: (w: Workout) => void; mode?: Mode }) {
+  const schemi = mode ? presetsDi(mode) : PRESETS
   return (
     <>
       <p className="pad" style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--dim)', margin: '14px 0 0', textWrap: 'pretty' }}>
-        Scegli uno schema, poi regola tempi ed esercizi. Resta salvato nella libreria.
+        {mode
+          ? `${schemi.length} modi di fare ${MODE_BADGE[mode].toLowerCase()}: scegli da quale partire, poi regola tempi ed esercizi.`
+          : 'Scegli uno schema, poi regola tempi ed esercizi. Resta salvato nella libreria.'}
       </p>
 
       <div
         className="pad"
         style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, padding: '18px 20px' }}
       >
-        {PRESETS.map((p) => (
+        {schemi.map((p) => (
           <button key={p.key} className="card stack" style={{ gap: 10, padding: 14, textAlign: 'left' }} onClick={() => onPick(p.make())}>
             <Diagram mode={p.mode} />
             <span className="ob" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.05em', lineHeight: 1 }}>

@@ -362,7 +362,7 @@
     </p>
     <div class="riga-versione">
       <span>Officine Dello Sport · Collegno</span>
-      <span>ODS Timer 1.6.0</span>
+      <span>ODS Timer 1.6.1</span>
       <span>nalbertini.github.io/Timer-</span>
     </div>
   </header>
@@ -473,7 +473,7 @@
           tanto, non a lezione iniziata.
         </p>
         <ul>
-          <li><strong>Gli schemi</strong> (Tabata, HIIT, EMOM, AMRAP, For Time, Circuito) non sono una destinazione ma un punto di partenza: compaiono come prima schermata dopo <span class="tasto">+ NUOVO TIMER</span>, che è l'unico momento in cui servono.</li>
+          <li><strong>Gli schemi</strong> (Tabata, HIIT, EMOM, AMRAP, For Time, Circuito) non sono una destinazione ma un punto di partenza: compaiono come prima schermata dopo <span class="tasto">+ NUOVO TIMER</span>, che è l'unico momento in cui servono — e nemmeno sempre, perché con un filtro di tipo attivo la scelta è già fatta (§&thinsp;5).</li>
           <li><strong>La libreria esercizi</strong> è la prima voce delle impostazioni: il catalogo si cura ogni tanto, non a ogni lezione.</li>
           <li><strong>Lo storico</strong> è in fondo alle impostazioni. Continua a registrare ogni allenamento portato a termine e a viaggiare nelle copie di sicurezza, ma non occupa un posto in barra.</li>
         </ul>
@@ -506,7 +506,7 @@
         <ul>
           <li><strong>Scegliere una durata non fa partire niente</strong>: la carica e basta, e il conto resta fermo su PRONTO. A dare il via è <span class="tasto">AVVIA</span>, quando guardi la sala e non lo schermo. Vale anche a conto già iniziato: toccare un'altra durata ricarica da capo e rimette in pronto.</li>
           <li>C'è il <span class="tasto">+30″</span> del timer grande, e <span class="tasto">RIFAI</span> in alto a destra per ricominciare la stessa durata.</li>
-          <li>Mentre gira la cornice è <strong>rossa</strong>, come il lavoro del timer degli allenamenti, e la scritta dice LAVORO. Allo zero passa al <strong>verde</strong> — il verde con cui l'app dice «finito» — con la scritta TEMPO e il segnale di fine: si vede da tutta la sala anche senza sentire niente.</li>
+          <li>Mentre gira la cornice è <strong>rossa</strong>, come il lavoro del timer degli allenamenti, e la scritta dice LAVORO. Allo zero passa al <strong>verde</strong> — il verde con cui l'app dice «finito» — con la scritta TEMPO e la nota lunga dello scadere: si vede da tutta la sala anche senza sentire niente, e si sente da tutta la sala anche senza guardare.</li>
           <li>Allo zero, se la <strong>modalità Maurizio</strong> è accesa, compare lui con una frase di complimenti: <em>«Bravi, così si fa»</em>, <em>«Questo sì che era un tempo»</em>. Prende il posto dell'anello e non quello delle cifre, che restano lì a dire 00:00. Con la modalità spenta non compare niente.</li>
         </ul>
 
@@ -627,6 +627,21 @@
           Lo schema si sceglie lì e dentro l'editor si legge soltanto: era un bivio offerto due volte, e la
           seconda volta non serviva a nessuno.
         </p>
+
+        <div class="scheda primo-passo">
+          <span class="etichetta-scheda">IL FILTRO È GIÀ UNA SCELTA</span>
+          <p>
+            I filtri in cima alla libreria — <span class="tasto">TUTTI</span>, <span class="tasto">INTERVALLI</span>,
+            <span class="tasto">EMOM</span>, <span class="tasto">AMRAP</span>, <span class="tasto">CIRCUITO</span>,
+            <span class="tasto">FOR TIME</span> — non servono solo a cercare: se ne hai scelto uno,
+            <strong>il tipo l'hai già detto</strong>, e <span class="tasto">+ NUOVO TIMER</span> non te lo richiede.
+          </p>
+          <ul>
+            <li>Con <strong>EMOM, AMRAP, CIRCUITO o FOR TIME</strong> attivo si va <strong>dritti all'editor</strong>, con lo schema già impostato: di quel tipo c'è un solo schema, e una schermata con una sola carta da toccare è un passaggio a vuoto.</li>
+            <li>Con <strong>INTERVALLI</strong> la scelta compare ancora, ma <strong>ristretta a Tabata e HIIT 40/20</strong>: lì una decisione c'è davvero, ed è fra due, non fra sei.</li>
+            <li>Con <strong>TUTTI</strong> — o senza filtro — restano tutti e sei gli schemi, come prima.</li>
+          </ul>
+        </div>
 
         <h3>I parametri, con i loro limiti</h3>
         <p>
@@ -931,7 +946,7 @@
             <thead><tr><th>Posizione</th><th>Cosa senti</th></tr></thead>
             <tbody>
               <tr><td class="nome-schema">MUTO</td><td>Niente. Restano il colore dello schermo, la barra e la vibrazione — in una sala con la musica alta è spesso l'unica cosa che si vede davvero.</td></tr>
-              <tr><td class="nome-schema">SOLO BIP</td><td>Cinque bip uguali sugli ultimi cinque secondi — l’ultimo, a un secondo dallo scadere, lungo il doppio — e poi uno diverso quando il tempo scade: acuto se comincia il lavoro, basso se comincia il recupero, lungo nel conto alla rovescia.</td></tr>
+              <tr><td class="nome-schema">SOLO BIP</td><td>Cinque bip uguali sugli ultimi cinque secondi — l’ultimo, a un secondo dallo scadere, lungo il doppio — e poi uno diverso quando il tempo scade: acuto se comincia il lavoro, basso se comincia il recupero, e nel conto alla rovescia una nota lunga quasi due secondi.</td></tr>
               <tr><td class="nome-schema">BIP + VOCE</td><td>I bip più la voce, che annuncia lo stato e il nome dell'esercizio.</td></tr>
             </tbody>
           </table>
@@ -959,6 +974,19 @@
           <strong>Nota.</strong> Il bip lungo a un secondo e il suono del cambio a zero si susseguono a distanza
           ravvicinata: è voluto, ma se in sala risulta troppo, la durata dell’ultimo bip è una riga
           sola da cambiare.
+        </p>
+
+        <h3>La nota dello scadere</h3>
+        <p>
+          Quando il conto alla rovescia arriva a zero parte <strong>una nota sola, lunga quasi due secondi</strong>,
+          più acuta dei bip. Non è un colpo secco di proposito: chi è sotto sforzo non conta i
+          millisecondi, e riconosce che è finito perché il suono <em>non smette</em>. Un bip corto, dopo
+          cinque bip corti, sarebbe il sesto bip; questa è un’altra cosa, e si sente che lo è.
+        </p>
+        <p>
+          La nota resta a <strong>volume pieno fin quasi alla fine</strong>, e solo l’ultimo quinto di secondo
+          sfuma. È il motivo per cui dura davvero quanto è scritto: una nota che scende per tutta la sua
+          durata, da lontano, finisce molto prima di quando finisce.
         </p>
 
         <h3>Il ticchettio</h3>
