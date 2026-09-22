@@ -8,8 +8,8 @@ export class Cues {
   private sveglia: AudioBufferSourceNode | null = null
   private vuoleSveglia = false
   private inAscolto = false
-  /** I suoni già consegnati all'orologio audio e non ancora suonati. */
-  private programmati: OscillatorNode[] = []
+  /** I suoni consegnati all'orologio audio, con l'istante in cui partono. */
+  private programmati: Array<{ nodo: OscillatorNode; quando: number }> = []
   volume = 0.8
 
   /** I browser creano il contesto audio sospeso finché non c'è un gesto dell'utente. */
@@ -159,20 +159,30 @@ export class Cues {
     this.emetti(freq, ms, gain, type, fra)
   }
 
-  /** Il bip del conto alla rovescia, fra `fra` secondi. */
-  programmaBip(fra: number) {
-    this.programma(fra, 880, 140, 0.5, 'square')
+  /**
+   * Il bip del conto alla rovescia, fra `fra` secondi.
+   *
+   * Più forte e più lungo di com'era: in sala non si sentiva. Centoquaranta
+   * millisecondi a metà volume sono un tic da scrivania, non un segnale che
+   * deve arrivare in fondo a una palestra sopra la musica.
+   *
+   * `ultimo` è il bip a un secondo dallo scadere: dura il doppio, così la
+   * sequenza ha una fine riconoscibile e non cinque colpi tutti uguali.
+   */
+  programmaBip(fra: number, ultimo = false) {
+    if (ultimo) this.programma(fra, 880, 440, 0.8, 'square')
+    else this.programma(fra, 880, 220, 0.75, 'square')
   }
 
   /** Il suono del segmento che comincia, fra `fra` secondi. */
   programmaCambio(fra: number, lavoro: boolean) {
-    if (lavoro) this.programma(fra, 1320, 420, 0.6, 'square')
-    else this.programma(fra, 600, 320, 0.45, 'sine')
+    if (lavoro) this.programma(fra, 1320, 520, 0.85, 'square')
+    else this.programma(fra, 600, 420, 0.7, 'sine')
   }
 
   /** La nota lunga dello scadere, fra `fra` secondi. */
   programmaScadenza(fra: number) {
-    this.programma(fra, 1175, 850, 0.6, 'square')
+    this.programma(fra, 1175, 900, 0.9, 'square')
   }
 
   /** Le tre note di fine allenamento, fra `fra` secondi. */
@@ -183,18 +193,34 @@ export class Cues {
   }
 
   /**
-   * Butta via tutto ciò che è in coda e non ha ancora suonato. Serve a ogni
+   * Butta via ciò che è in coda e **non è ancora partito**. Serve a ogni
    * pausa, salto o «+30″»: da lì in poi il programma non è più quello.
+   *
+   * Un suono già cominciato si lascia finire. Fermarlo lo taglia a metà: allo
+   * scadere del conto alla rovescia la nota lunga partiva e veniva troncata
+   * dopo un'ottantina di millisecondi dal riassetto che segue lo zero, e
+   * invece di una nota si sentiva un colpo.
    */
   annullaProgrammati() {
-    for (const o of this.programmati) {
+    const ora = this.ctx?.currentTime ?? 0
+    const restano: Array<{ nodo: OscillatorNode; quando: number }> = []
+    for (const p of this.programmati) {
+      /* Un quarto di secondo di grazia e non un millesimo: l'orologio audio e
+         quello della pagina non sono allineati al millisecondo, e allo scadere
+         la nota risultava «qualche millesimo nel futuro» e veniva annullata
+         proprio mentre stava per partire. Ciò che sta per suonare conta come
+         già partito. */
+      if (p.quando <= ora + 0.25) {
+        restano.push(p)
+        continue
+      }
       try {
-        o.stop()
+        p.nodo.stop()
       } catch {
-        // Già suonato o già fermato.
+        // Già fermato.
       }
     }
-    this.programmati = []
+    this.programmati = restano
   }
 
   private emetti(freq: number, ms: number, gain: number, type: OscillatorType, fra = 0) {
@@ -213,9 +239,10 @@ export class Cues {
     osc.start(now)
     osc.stop(now + ms / 1000 + 0.02)
     if (fra > 0.02) {
-      this.programmati.push(osc)
+      const voce = { nodo: osc, quando: now }
+      this.programmati.push(voce)
       osc.onended = () => {
-        this.programmati = this.programmati.filter((x) => x !== osc)
+        this.programmati = this.programmati.filter((x) => x !== voce)
       }
     }
   }
@@ -268,26 +295,26 @@ export class Cues {
     }
   }
 
-  /** Uno dei tre bip che precedono un cambio di stato. */
+  /** Uno dei bip che precedono un cambio di stato. */
   countdown() {
-    this.tone(880, 140, 0.5, 'square')
+    this.tone(880, 220, 0.75, 'square')
   }
 
   /** Inizio di un intervallo di lavoro: acuto e deciso. */
   work() {
-    this.tone(1320, 420, 0.6, 'square')
+    this.tone(1320, 520, 0.85, 'square')
   }
 
   /** Inizio di un recupero: più basso e corto. */
   rest() {
-    this.tone(600, 320, 0.45, 'sine')
+    this.tone(600, 420, 0.7, 'sine')
   }
 
   /**
    * Il tempo è scaduto: una nota sola, lunga, più acuta dei bip.
    *
-   * È la seconda metà della partenza di una gara — tre corti, poi uno lungo e
-   * diverso — e la differenza sta lì: i tre bip dicono «ci siamo», questo dice
+   * È la seconda metà della partenza di una gara — dei corti, poi uno lungo e
+   * diverso — e la differenza sta lì: i bip dicono «ci siamo», questo dice
    * «adesso». Una fanfara di tre note, che è quel che c'era prima, dice invece
    * «bravi»: giusta a fine allenamento, sbagliata per un conto che scade e a
    * cui di solito segue subito altro lavoro.

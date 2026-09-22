@@ -7,6 +7,7 @@ import { useTimer } from '../lib/useTimer'
 import { segnalaTimerAperto } from '../lib/aggiornamento'
 import { type Interrotto, salvaInterrotto, scordaInterrotto } from '../lib/ripresa'
 import { useWakeLock } from '../lib/wakeLock'
+import { apriSessione, chiudiSessione } from '../lib/mediaSession'
 import { DentroAnello, Digits, Ring } from './Quadrante'
 import { Close, Next, Pause, Play, Prev } from './Icons'
 
@@ -137,6 +138,40 @@ export function TimerScreen({
   }
 
   useWakeLock(settings.keepAwake && view.status === 'running')
+
+  /* I comandi sulla schermata di blocco, finché l'allenamento è aperto: stato,
+     nome, avanzamento e i tasti per mettere in pausa o saltare un intervallo
+     senza sbloccare il telefono. Si rilascia all'uscita, così il lettore
+     musicale si riprende il suo posto. Aggiornato a ogni cambio di stato e di
+     segmento, non a ogni secondo: sulla schermata di blocco il tempo lo fa
+     scorrere il sistema, a partire dalla posizione che gli diamo. */
+  const acceso = view.status === 'running' || view.status === 'paused'
+  const etichettaSeg = view.segment?.label ?? ''
+  useEffect(() => {
+    if (!acceso) {
+      chiudiSessione()
+      return
+    }
+    apriSessione(
+      {
+        titolo: `${etichettaSeg || workout.name}`,
+        sottotitolo: workout.name,
+        inCorso: view.status === 'running',
+        durata: view.total,
+        posizione: view.elapsed,
+      },
+      {
+        avvia: toggle,
+        pausa: toggle,
+        avanti: () => skip(1),
+        indietro: () => skip(-1),
+        ferma: stop,
+      },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceso, view.status, etichettaSeg, view.index, workout.name])
+
+  useEffect(() => () => chiudiSessione(), [])
 
   // La barra e la tacca del browser prendono il colore dello stato.
   useEffect(() => {

@@ -50,6 +50,13 @@ export function useTimer(
      telefono possa stare in tasca a lungo senza che si perda un bip, e poco
      abbastanza da non tenere in coda centinaia di nodi. */
   const programmatoRef = useRef(-1)
+  /* L'ultimo suono di cambio fatto partire SUBITO, con il momento reale in cui
+     è successo. All'avvio la coda viene costruita due volte a un decimo di
+     secondo di distanza — i segmenti si riestraggono perché Maurizio sbaglia
+     in punti diversi a ogni giro — e un suono già partito non si può più
+     annullare: senza questa memoria il tono del primo segmento si sentiva
+     doppio. */
+  const ultimoCambioRef = useRef<{ t: number; quando: number } | null>(null)
   const introRef = useRef(false)
   const finishRef = useRef(onFinish)
   finishRef.current = onFinish
@@ -163,12 +170,26 @@ export function useTimer(
       if (!settings.countdownBeep) return
       const fino = adesso + ORIZZONTE
       if (fino <= programmatoRef.current) return
-      for (const e of eventiSonori(segments, programmatoRef.current, fino)) {
+      /* Su una programmazione da capo si guarda anche un attimo all'indietro,
+         perché quasi sempre si riparte NEL momento in cui si entra in un
+         segmento — l'avvio, un salto — e il suono di quel segmento è appena
+         passato. Vale solo per i suoni di cambio: un bip già suonato non si
+         ripete, o all'avvio se ne sentirebbero due. */
+      const grazia = daCapo ? 0.4 : 0
+      for (const e of eventiSonori(segments, adesso - grazia - 0.001, fino)) {
         const fra = e.t - adesso
-        if (fra < -0.05) continue
-        if (e.tipo === 'bip') c.programmaBip(fra)
-        else if (e.tipo === 'fine') c.programmaFine(fra)
-        else c.programmaCambio(fra, e.tipo === 'lavoro')
+        const cambio = e.tipo === 'lavoro' || e.tipo === 'riposo'
+        if (fra < -0.05 && !cambio) continue
+        const quando = Math.max(0, fra)
+        if (cambio && quando === 0) {
+          const g = ultimoCambioRef.current
+          const ora = performance.now()
+          if (g && Math.abs(g.t - e.t) < 0.05 && ora - g.quando < 1500) continue
+          ultimoCambioRef.current = { t: e.t, quando: ora }
+        }
+        if (e.tipo === 'bip' || e.tipo === 'bipUltimo') c.programmaBip(quando, e.tipo === 'bipUltimo')
+        else if (e.tipo === 'fine') c.programmaFine(quando)
+        else c.programmaCambio(quando, e.tipo === 'lavoro')
       }
       programmatoRef.current = fino
     },
@@ -245,8 +266,8 @@ export function useTimer(
         return
       }
 
-      // I tre bip degli ultimi secondi sono anche loro già in coda: tre bip
-      // uguali, e poi il suono del segmento nuovo come «uno diverso» in fondo.
+      // Anche i bip degli ultimi secondi sono già in coda: cinque uguali,
+      // l'ultimo lungo il doppio, e poi il suono del segmento nuovo in fondo.
     }
 
     const id = window.setInterval(tick, 100)

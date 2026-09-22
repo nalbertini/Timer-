@@ -412,10 +412,18 @@ export function applyCoach(segments: Segment[], level: CoachLevel, rand: () => n
 }
 
 /** Il numero da mostrare: un elemento della sequenza per ogni secondo passato. */
+/**
+ * Da quanti secondi prima dello scadere comincia il conto.
+ *
+ * Erano tre, e in sala arrivavano addosso: chi lavora ha bisogno di sapere che
+ * sta per finire, non di scoprirlo. Cinque dà il tempo di chiudere la serie.
+ */
+export const CONTO_ALLA_ROVESCIA = 5
+
 /** Un suono e l'istante dell'allenamento in cui va fatto, in secondi. */
 export interface EventoSonoro {
   t: number
-  tipo: 'lavoro' | 'riposo' | 'bip' | 'fine'
+  tipo: 'lavoro' | 'riposo' | 'bip' | 'bipUltimo' | 'fine'
 }
 
 /**
@@ -441,16 +449,16 @@ export function eventiSonori(segments: Segment[], da: number, a: number): Evento
       for (let i = 0; i < seg.display.length; i++) {
         const v = seg.display[i]
         const prima = i > 0 ? seg.display[i - 1] : -1
-        if (v < 1 || v > 3 || v === prima) continue
+        if (v < 1 || v > CONTO_ALLA_ROVESCIA || v === prima) continue
         if (prima > 0 && v > prima) continue
         const t = seg.offset + i
-        if (!fuori(t)) eventi.push({ t, tipo: 'bip' })
+        if (!fuori(t)) eventi.push({ t, tipo: v === 1 ? 'bipUltimo' : 'bip' })
       }
     } else {
-      for (const k of [3, 2, 1]) {
+      for (let k = CONTO_ALLA_ROVESCIA; k >= 1; k--) {
         if (k > seg.duration) continue
         const t = seg.offset + seg.duration - k
-        if (!fuori(t)) eventi.push({ t, tipo: 'bip' })
+        if (!fuori(t)) eventi.push({ t, tipo: k === 1 ? 'bipUltimo' : 'bip' })
       }
     }
   }
