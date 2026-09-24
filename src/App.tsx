@@ -18,12 +18,13 @@ import { EserciziScreen } from './components/EserciziScreen'
 import { CondividiScreen } from './components/CondividiScreen'
 import { RicevutoScreen } from './components/RicevutoScreen'
 import { CountdownTab, CronometroScreen } from './components/AlVolo'
+import { Sala } from './components/Sala'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
-import { Back, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
+import { Back, Calendario, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
-type Tab = 'timer' | 'crono' | 'countdown' | 'impostazioni'
+type Tab = 'sala' | 'timer' | 'crono' | 'countdown' | 'impostazioni'
 type View =
   | { kind: 'tabs' }
   /** `nuovo`: non sta ancora nella libreria, quindi la topbar dice NUOVO
@@ -39,6 +40,10 @@ type View =
   | { kind: 'schema'; mode?: Mode }
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
+  // SALA per prima perché in una palestra che gira sui corsi la giornata
+  // comincia dal calendario. La scheda aperta all'avvio resta TIMER finché i
+  // dati veri non ci sono: aprire l'app su un orario inventato sarebbe peggio.
+  { key: 'sala', label: 'SALA', icon: Calendario },
   { key: 'timer', label: 'TIMER', icon: TimerIcon },
   { key: 'crono', label: 'CRONOMETRO', icon: Crono },
   { key: 'countdown', label: 'COUNTDOWN', icon: Clessidra },
@@ -46,6 +51,7 @@ const TABS: Array<{ key: Tab; label: string; icon: typeof TimerIcon }> = [
 ]
 
 const TAB_TITLE: Record<Tab, string> = {
+  sala: 'CORSI IN SALA',
   timer: 'I TUOI TIMER',
   crono: 'CRONOMETRO',
   countdown: 'CONTO ALLA ROVESCIA',
@@ -233,6 +239,16 @@ export default function App() {
               const schemi = filtro === 'all' ? [] : presetsDi(filtro)
               if (schemi.length === 1) setView({ kind: 'editor', workout: schemi[0].make(), nuovo: true })
               else setView({ kind: 'schema', mode: filtro === 'all' ? undefined : filtro })
+            }}
+          />
+        )
+      case 'sala':
+        return (
+          <Sala
+            onAvvia={(w) => {
+              scordaInterrotto()
+              setInterrotto(null)
+              setView({ kind: 'run', workout: w })
             }}
           />
         )

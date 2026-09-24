@@ -35,7 +35,15 @@ jobs:
 
       # Il controllo dei tipi è dentro `npm run build` (tsc -b && vite build):
       # se non compila, il push è rosso.
+      #
+      # I due segreti sono facoltativi: senza, la scheda SALA parte in modalità
+      # prova con un orario inventato, e il client Supabase non finisce nemmeno
+      # nel pacchetto. Si impostano in Settings → Secrets → Actions quando la
+      # palestra ha il suo database (vedi supabase/LEGGIMI.md).
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - uses: actions/upload-pages-artifact@v5
         with:

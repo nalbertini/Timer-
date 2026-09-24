@@ -362,7 +362,7 @@
     </p>
     <div class="riga-versione">
       <span>Officine Dello Sport · Collegno</span>
-      <span>ODS Timer 1.6.1</span>
+      <span>ODS Timer 1.7.0</span>
       <span>nalbertini.github.io/Timer-</span>
     </div>
   </header>
@@ -373,7 +373,8 @@
       <div class="indice-titolo">INDICE</div>
       <ol>
         <li><a href="#cose">Cos'è e dove vive</a></li>
-        <li><a href="#schede">Le quattro schede</a></li>
+        <li><a href="#schede">Le cinque schede</a></li>
+        <li><a href="#sala">I corsi in sala</a></li>
         <li><a href="#alvolo-tools">Cronometro e countdown</a></li>
         <li><a href="#schemi">I cinque schemi</a></li>
         <li><a href="#editor">Costruire un timer</a></li>
@@ -447,10 +448,10 @@
 
       <section id="schede">
         <div class="occhiello">ORIENTARSI</div>
-        <h2>Le quattro schede</h2>
+        <h2>Le cinque schede</h2>
         <p>
-          In fondo allo schermo (di lato, sul computer) ci sono quattro voci. Sono tutta la navigazione
-          che l'app ha, e sono quattro perché in una lezione si entra solo lì.
+          In fondo allo schermo (di lato, sul computer) ci sono cinque voci. Sono tutta la navigazione
+          che l'app ha, e sono cinque perché in una lezione si entra solo lì.
         </p>
 
         <div class="tabella-scorre">
@@ -459,6 +460,7 @@
               <tr><th>Scheda</th><th>A cosa serve</th></tr>
             </thead>
             <tbody>
+              <tr><td class="nome-schema">SALA</td><td>Il calendario dei corsi della palestra, e dentro ogni lezione l'appello e il suo timer (§&thinsp;3).</td></tr>
               <tr><td class="nome-schema">TIMER</td><td>I tuoi allenamenti. Da qui si avvia, si modifica, si duplica, si manda, si elimina.</td></tr>
               <tr><td class="nome-schema">CRONOMETRO</td><td>Conta in salita, con i centesimi e i giri. Per un randori, una navetta, un test.</td></tr>
               <tr><td class="nome-schema">COUNTDOWN</td><td>Un blocco di lavoro lungo quanto dici: scegli la durata, poi AVVIA.</td></tr>
@@ -482,6 +484,98 @@
     <figure>
       <img src="guida/impostazioni-dati.webp" alt="Le voci in fondo alle impostazioni: guida, storico, copie di sicurezza" width="820" height="1688" loading="lazy">
       <figcaption>In fondo alle impostazioni: le copie di sicurezza, questa guida e lo storico.</figcaption>
+    </figure>
+        </div>
+      </section>
+
+      <section id="sala">
+        <div class="occhiello">LA PALESTRA, NON IL SINGOLO</div>
+        <h2>I corsi in sala</h2>
+        <p class="guida-intro">
+          La scheda SALA è l'altra metà dell'app: il calendario dei corsi, e dentro ogni lezione
+          l'elenco degli iscritti da spuntare e il timer di quel corso già pronto. Il resto dell'app
+          è fatto per chi conduce un allenamento; questa è fatta per una palestra che ha un orario.
+        </p>
+
+        <div class="scheda attenzione">
+          <span class="etichetta-scheda">DATI DI PROVA</span>
+          <p>
+            Finché la palestra non ha il suo database, la scheda SALA mostra <strong>un orario e degli
+            iscritti inventati</strong>, e lo dice con un nastro giallo in cima. Serve a far vedere come
+            funziona: si può toccare tutto senza paura, non c'è nessun dato di nessuno. Le presenze
+            segnate restano su quel dispositivo e basta. Come si collega il database vero sta in
+            <code>supabase/LEGGIMI.md</code> dentro il progetto.
+          </p>
+        </div>
+
+        <h3>Il calendario</h3>
+        <p>
+          In cima una striscia di <strong>sette giorni</strong>: sotto ognuno, dei puntini dicono quante
+          lezioni ci sono, e <strong>oggi è in giallo</strong>. Toccando un giorno compaiono le sue lezioni
+          in ordine di orario, ognuna con la sua ora, la sala, l'istruttore e il numero di iscritti. Le
+          frecce in alto spostano di una settimana.
+        </p>
+        <p>
+          Non è una griglia settimanale, di proposito: su un telefono una griglia si legge male, e chi
+          apre questa scheda nove volte su dieci vuole sapere <em>cosa c'è adesso</em>, non farsi un'idea
+          della settimana. Quando l'appello è stato fatto, il numero a destra diventa verde e dice
+          <strong>presenti su iscritti</strong> invece del solo totale: da una schermata sola si vede quali
+          lezioni della giornata sono già state spuntate.
+        </p>
+
+        <h3>L'appello</h3>
+        <p>
+          Toccando una lezione si apre l'elenco degli iscritti, in ordine di cognome. Un tocco su una riga
+          la fa girare fra <strong>presente</strong> (verde, con la spunta), <strong>assente</strong> (rosso, con
+          il nome sbarrato) e <strong>non segnato</strong>. Niente menù e niente conferme: le righe sono alte
+          come i tasti del timer perché le si tocca in piedi, di fretta e senza guardare.
+        </p>
+        <div class="scheda primo-passo">
+          <span class="etichetta-scheda">NON SI PARTE DA «TUTTI ASSENTI»</span>
+          <p>
+            All'apertura non è segnato nessuno, e in cima c'è <span class="tasto">TUTTI PRESENTI</span>. In
+            una classe di ventidue con venti presenti si segnano <strong>due assenze invece di venti
+            presenze</strong>. È il motivo per cui il tasto sta lì e non in fondo.
+            <span class="tasto">AZZERA</span> toglie tutti i segni, per ricominciare.
+          </p>
+        </div>
+        <p>
+          Il contatore grande dice quanti presenti su quanti iscritti, e accanto quanti mancano ancora da
+          segnare. Quando non ne manca nessuno diventa <strong>APPELLO FATTO</strong>.
+        </p>
+
+        <h3>Dal registro al timer</h3>
+        <p>
+          Se il corso ha un allenamento associato, in fondo resta attaccato un tasto
+          <span class="tasto">AVVIA</span> con il nome di quel timer: si preme e parte la lezione, con i suoi
+          esercizi e i suoi tempi, senza passare dalla libreria e senza ricostruire niente. È il punto in
+          cui le due metà dell'app diventano una cosa sola.
+        </p>
+
+        <div class="scheda">
+          <span class="etichetta-scheda">SENZA RETE L'APPELLO NON SI PERDE</span>
+          <p>
+            Il wifi di una palestra è quello che è, e l'appello si fa in fondo a una sala. Ogni presenza
+            segnata viene <strong>scritta sul dispositivo prima di partire</strong>, e resta in coda finché il
+            server non l'ha presa: quando ce ne sono in attesa, in alto compare
+            <strong>«3 DA INVIARE»</strong>. Tornata la rete partono da sole, in ordine. Toccare più volte lo
+            stesso nome mentre si è scollegati lascia in coda <em>l'ultimo stato</em>, non tre scritture di
+            cui due già sbagliate.
+          </p>
+          <p>
+            Due tablet sulla stessa lezione non litigano: una presenza è una riga sola per persona, e
+            l'ultima che arriva vince. Resta scritto chi l'ha segnata.
+          </p>
+        </div>
+
+        <div class="scatti">
+    <figure>
+      <img src="guida/sala-calendario.webp" alt="Il calendario della settimana con la striscia dei giorni e le lezioni" width="820" height="1688" loading="lazy">
+      <figcaption>La striscia dei sette giorni, con oggi in giallo, e sotto le lezioni in ordine di orario.</figcaption>
+    </figure>
+    <figure>
+      <img src="guida/sala-appello.webp" alt="L’appello di una lezione, con presenti e assenti" width="820" height="1688" loading="lazy">
+      <figcaption>L’appello: verde presente, rosso assente, e in fondo il tasto che avvia il timer del corso.</figcaption>
     </figure>
         </div>
       </section>
