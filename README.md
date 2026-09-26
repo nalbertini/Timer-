@@ -36,6 +36,11 @@ altri i nomi si alternano a ogni round e vengono annunciati dalla voce.
 I timer, le impostazioni e lo storico stanno nel browser del dispositivo
 (`localStorage`), senza account e senza server.
 
+L'ultima voce della barra, **CORSI**, riporta a ODS Corsi
+([nalbertini/ods-corsi](https://github.com/nalbertini/ods-corsi)), il calendario
+e l'appello: è un'app a sé, che ha il timer fra le sue voci. Si apre la sua
+radice, che su un tablet di sala riapre il tablet.
+
 ## La libreria di esercizi
 
 `src/lib/esercizi.ts` tiene un catalogo di 52 esercizi di partenza, pensati per

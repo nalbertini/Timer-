@@ -20,7 +20,7 @@ import { RicevutoScreen } from './components/RicevutoScreen'
 import { CountdownTab, CronometroScreen } from './components/AlVolo'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
-import { Back, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
+import { Back, Calendario, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
 type Tab = 'timer' | 'crono' | 'countdown' | 'impostazioni'
@@ -55,6 +55,13 @@ const TAB_TITLE: Record<Tab, string> = {
 /* Le due schede degli attrezzi riempiono l'area, non scorrono: le cifre grandi
    vogliono l'altezza intera, e sotto c'è già la barra delle schede. */
 const PIENE: Tab[] = ['crono', 'countdown']
+
+/**
+ * ODS Corsi, il calendario e l'appello, è un'app a sé (nalbertini/ods-corsi)
+ * che ha il timer fra le sue voci: questo è il ritorno. Si apre la radice, che
+ * su un tablet di sala riapre il tablet e altrove la pagina di scelta.
+ */
+const CORSI = 'https://nalbertini.github.io/ods-corsi/'
 
 export default function App() {
   const [workouts, setWorkouts] = useState<Workout[]>(() => loadWorkouts())
@@ -398,6 +405,13 @@ export default function App() {
             </button>
           ))}
         </div>
+        <div className="grow" />
+        <div className="stack" style={{ padding: '0 12px' }}>
+          <a className="navitem" href={CORSI}>
+            <i />
+            CORSI
+          </a>
+        </div>
       </nav>
 
       <div className="app content">
@@ -442,6 +456,10 @@ export default function App() {
               </button>
             )
           })}
+          <a className="tab" href={CORSI}>
+            <Calendario />
+            CORSI
+          </a>
         </nav>
       </div>
     </div>

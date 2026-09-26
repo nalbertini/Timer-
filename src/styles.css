@@ -161,6 +161,7 @@ input, textarea { font: inherit; color: inherit; }
 }
 @media (max-width: 359px) { .tab { font-size: 8px; letter-spacing: 0; } }
 .tab[data-on='true'] { color: var(--blu); }
+a.tab { text-decoration: none; }
 
 /* ---------- lista allenamenti ---------- */
 
@@ -269,6 +270,7 @@ input, textarea { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 12px;
   color: #b8b8b2; font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
 }
+a.navitem { text-decoration: none; }
 .navitem[data-on='true'] { background: var(--surface-2); color: var(--text); }
 .navitem > i { display: block; width: 8px; height: 8px; background: #3a3a38; }
 .navitem[data-on='true'] > i { background: var(--blu); }
