@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { Esercizio } from '../lib/esercizi'
 import { PickerEsercizi } from './PickerEsercizi'
 import type { Exercise, Segment, Workout } from '../types'
@@ -24,10 +24,13 @@ function Stepper({
   field,
   value,
   onChange,
+  children,
 }: {
   field: Field
   value: number
   onChange: (v: number) => void
+  /** Quello che la cella porta con sé sotto il numero: per il lavoro, gli esercizi. */
+  children?: ReactNode
 }) {
   const m = FIELD_META[field as string]
   const shown = m.unit === 'min' ? Math.round(value / 60) : value
@@ -61,6 +64,7 @@ function Stepper({
           <Plus size={16} />
         </button>
       </div>
+      {children}
     </div>
   )
 }
@@ -143,6 +147,11 @@ export function EditorScreen({
   const fields = MODE_FIELDS[w.mode]
   const steppers = fields.filter((f) => f !== 'sets' || w.mode !== 'fortime')
   const segments = buildSegments(w)
+  // La cella del lavoro è anche dove si scelgono gli esercizi: è lì che si
+  // pensa a cosa fare, e scendere fino all'elenco per aggiungerli era un
+  // secondo passaggio. Il circuito non ce l'ha: ogni stazione ha la sua durata.
+  const cellaLavoro: Field | undefined = steppers.includes('work') ? 'work' : steppers.includes('duration') ? 'duration' : undefined
+  const nomiEsercizi = w.exercises.map((e) => e.name.trim()).filter(Boolean)
 
   const aggiungiDalCatalogo = (nomi: string[]) => {
     set({ exercises: [...w.exercises, ...nomi.map((name) => ({ id: uid(), name }))] })
@@ -225,7 +234,33 @@ export function EditorScreen({
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}
         >
           {steppers.map((f) => (
-            <Stepper key={f} field={f} value={w[f] as number} onChange={(v) => set({ [f]: v } as Partial<Workout>)} />
+            <Stepper key={f} field={f} value={w[f] as number} onChange={(v) => set({ [f]: v } as Partial<Workout>)}>
+              {f === cellaLavoro && (
+                <button
+                  className="scegli-esercizi"
+                  data-vuoto={nomiEsercizi.length === 0}
+                  onClick={() => setScegliendo(true)}
+                  title={nomiEsercizi.join(' · ') || undefined}
+                >
+                  {nomiEsercizi.length === 0 ? (
+                    <>
+                      <Plus size={14} />
+                      ESERCIZI
+                    </>
+                  ) : (
+                    <>
+                      <span className="num" style={{ fontSize: 15, fontWeight: 700, color: 'var(--rosso)' }}>
+                        {nomiEsercizi.length}
+                      </span>
+                      <span className="grow" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {nomiEsercizi.join(' · ')}
+                      </span>
+                      <Plus size={14} />
+                    </>
+                  )}
+                </button>
+              )}
+            </Stepper>
           ))}
         </div>
 
