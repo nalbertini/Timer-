@@ -166,7 +166,7 @@ export function CronometroScreen({ settings }: { settings: Settings }) {
         </button>
         <button
           className="btn grow tasto-avvia"
-          style={{ background: 'var(--blu)', color: '#121212' }}
+          style={{ background: 'var(--blu)', color: 'var(--su-colore)' }}
           onClick={avviaOFerma}
         >
           {inCorso ? <Pause size={22} /> : <Play size={22} />}
@@ -430,7 +430,7 @@ function ContaAllaRovescia({ settings }: { settings: Settings }) {
         <button className="btn-piu" onClick={allunga} aria-label="Aggiungi trenta secondi">
           +30&Prime;
         </button>
-        <button className="btn grow tasto-avvia" style={{ background: tinta, color: '#121212' }} onClick={pausaOAvvia}>
+        <button className="btn grow tasto-avvia" style={{ background: tinta, color: 'var(--su-colore)' }} onClick={pausaOAvvia}>
           {inCorso ? <Pause size={22} /> : <Play size={22} />}
           <span style={{ fontSize: 22 }}>
             {inCorso ? 'PAUSA' : aZero ? 'RIFAI' : intatto ? 'AVVIA' : 'RIPRENDI'}

@@ -74,7 +74,7 @@ export function CondividiScreen({ workout, onBack }: { workout: Workout; onBack:
             {link ? (
               <QrCode testo={link} />
             ) : (
-              <span style={{ fontSize: 14, color: '#555' }}>Preparo il codice…</span>
+              <span style={{ fontSize: 14, color: 'var(--dim)' }}>Preparo il codice…</span>
             )}
           </div>
 

@@ -115,7 +115,7 @@ export function PickerEsercizi({
                       border: '2px solid var(--line)',
                       background: preso ? 'var(--verde)' : 'transparent',
                       borderColor: preso ? 'var(--verde)' : 'var(--line)',
-                      color: '#121212',
+                      color: 'var(--su-colore)',
                       fontSize: 12,
                       fontWeight: 700,
                       display: 'flex',
@@ -153,7 +153,7 @@ export function PickerEsercizi({
         style={{
           gap: 12,
           borderTop: '2px solid var(--line-soft)',
-          background: '#171717',
+          background: 'var(--menu)',
           padding: '12px 20px calc(var(--safe-b) + 14px)',
         }}
       >

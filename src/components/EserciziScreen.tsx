@@ -168,7 +168,7 @@ export function EserciziScreen({
         ))}
       </div>
       {bozza.nome.trim() && !libero(bozza.nome, aperto ?? undefined) && (
-        <span style={{ fontSize: 12, color: 'var(--giallo)' }}>C’è già un esercizio con questo nome.</span>
+        <span style={{ fontSize: 12, color: 'var(--giallo-testo)' }}>C’è già un esercizio con questo nome.</span>
       )}
       {aperto !== 'nuovo' && quantiUsi(catalogo.find((e) => e.id === aperto)?.nome ?? '') > 0 && (
         <span style={{ fontSize: 12, color: 'var(--dim)' }}>

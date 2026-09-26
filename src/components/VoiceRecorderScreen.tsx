@@ -211,7 +211,7 @@ export function VoiceRecorderScreen({
                         minHeight: 48,
                         background: inCorso ? 'var(--rosso)' : 'transparent',
                         border: inCorso ? 'none' : '2px solid var(--line)',
-                        color: inCorso ? '#121212' : '#b8b8b2',
+                        color: inCorso ? 'var(--su-colore)' : 'var(--tasto)',
                       }}
                       disabled={!format || (active !== null && !inCorso)}
                       onClick={() => (inCorso ? stop() : record(c.key))}

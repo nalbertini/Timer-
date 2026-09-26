@@ -13,6 +13,18 @@
   --rosso: #e4292a;
   --giallo: #f4c31b;
   --verde: #16a54a;
+  /* Il giallo scritto: sul nero è quello del marchio, sul bianco si scurisce,
+     altrimenti non si legge. */
+  --giallo-testo: #f4c31b;
+  /* Le scritte sopra i colori del marchio restano scure in tutti e due i temi. */
+  --su-colore: #121212;
+  --tasto: #b8b8b2;
+  --tratteggio: #4a4a46;
+  /* Le barre, in basso e di lato: un filo diverse dal fondo. */
+  --menu: #171717;
+  --spento: #3a3a38;
+  /* Il fondo caldo della scheda di Maurizio. */
+  --caldo: #241f0d;
 
   --prepare: var(--giallo);
   --work: var(--rosso);
@@ -27,6 +39,30 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
 
   color-scheme: dark;
+}
+
+/* Il tema bianco, lo stesso di ODS Corsi: si sceglie da Impostazioni, o
+   dall'altra app, perché la scelta è una sola per tutte e due (vedi
+   `lib/tema.ts`). Finché nessuno sceglie, segue il dispositivo. */
+:root[data-tema='chiaro'] {
+  --bg: #f4f4f1;
+  --surface: #ffffff;
+  --surface-2: #e9e9e5;
+  --line: #d4d4ce;
+  --line-soft: #e2e2dd;
+  --text: #161616;
+  --dim: #6b6b67;
+  --faint: #a8a8a3;
+
+  --verde: #12913f;
+  --giallo-testo: #8f6a00;
+  --tasto: #4a4a46;
+  --tratteggio: #b0b0aa;
+  --menu: #ebebe7;
+  --spento: #c4c4be;
+  --caldo: #fbf1cf;
+
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -83,7 +119,7 @@ input, textarea { font: inherit; color: inherit; }
 
 .icon-btn {
   width: 44px; height: 44px; flex-shrink: 0;
-  border: 2px solid var(--line); color: #b8b8b2;
+  border: 2px solid var(--line); color: var(--tasto);
   display: flex; align-items: center; justify-content: center;
   transition: border-color 120ms, color 120ms;
 }
@@ -98,11 +134,11 @@ input, textarea { font: inherit; color: inherit; }
   font-family: var(--cond); font-style: oblique 9deg;
   font-size: 19px; font-weight: 700; letter-spacing: 0.16em;
 }
-.btn-primary { background: var(--rosso); color: #121212; }
-.btn-go { background: var(--verde); color: #121212; }
-.btn-ghost { border: 2px solid var(--line); color: #b8b8b2; }
+.btn-primary { background: var(--rosso); color: var(--su-colore); }
+.btn-go { background: var(--verde); color: var(--su-colore); }
+.btn-ghost { border: 2px solid var(--line); color: var(--tasto); }
 .btn-ghost:hover { border-color: var(--dim); color: var(--text); }
-.btn-dashed { border: 2px dashed #4a4a46; color: #b8b8b2; width: 100%; }
+.btn-dashed { border: 2px dashed var(--tratteggio); color: var(--tasto); width: 100%; }
 .btn-dashed:hover { border-color: var(--dim); color: var(--text); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -119,12 +155,12 @@ input, textarea { font: inherit; color: inherit; }
 .chip {
   padding: 10px 16px; white-space: nowrap;
   font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
-  border: 2px solid var(--line); background: var(--surface); color: #b8b8b2;
+  border: 2px solid var(--line); background: var(--surface); color: var(--tasto);
 }
-.chip[data-on='true'] { background: var(--blu); border-color: var(--blu); color: #121212; font-weight: 700; }
+.chip[data-on='true'] { background: var(--blu); border-color: var(--blu); color: var(--su-colore); font-weight: 700; }
 
 .badge {
-  padding: 3px 9px; color: #121212;
+  padding: 3px 9px; color: var(--su-colore);
   font-size: 10px; font-weight: 700; letter-spacing: 0.16em; white-space: nowrap;
 }
 
@@ -139,14 +175,14 @@ input, textarea { font: inherit; color: inherit; }
 .switch { width: 54px; height: 30px; flex-shrink: 0; padding: 3px; display: flex; align-items: center; }
 .switch > i { display: block; width: 24px; height: 24px; }
 .switch[data-on='true'] { background: var(--verde); justify-content: flex-end; }
-.switch[data-on='true'] > i { background: #121212; }
+.switch[data-on='true'] > i { background: var(--su-colore); }
 .switch[data-on='false'] { background: var(--surface-2); justify-content: flex-start; }
 .switch[data-on='false'] > i { background: var(--faint); }
 
 .tabbar {
   /* Colonne automatiche: le schede si dividono la barra qualunque sia il loro numero. */
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  border-top: 2px solid var(--line-soft); background: #171717;
+  border-top: 2px solid var(--line-soft); background: var(--menu);
   /* La zona sicura è già lo spazio che il sistema chiede: sommarci altri 12 px
      lo raddoppiava, e su un telefono con la navigazione a gesti la barra
      diventava alta il doppio del necessario. Dove la zona sicura non c'è, i
@@ -162,6 +198,24 @@ input, textarea { font: inherit; color: inherit; }
 @media (max-width: 359px) { .tab { font-size: 8px; letter-spacing: 0; } }
 .tab[data-on='true'] { color: var(--blu); }
 a.tab { text-decoration: none; }
+
+/* Il ritorno alla sala: le misure dei tasti in fondo al tablet di ODS Corsi,
+   perché da lì si arriva e lì si torna. In alto solo da tablet, dove accanto
+   al marchio c'è posto; su telefono sta nella barra in basso. */
+.torna-sala {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 60px; padding: 0 22px; flex-shrink: 0;
+  border: 2px solid var(--line); color: var(--text); text-decoration: none;
+  font-family: var(--cond); font-style: oblique 9deg;
+  font-size: 18px; font-weight: 700; letter-spacing: 0.12em;
+}
+.torna-sala:hover { border-color: var(--dim); }
+.torna-sala-alto { display: none; }
+@media (min-width: 600px) and (max-width: 1023px) {
+  .torna-sala-alto { display: flex; }
+  .tab-sala { display: none; }
+}
+@media (min-width: 1024px) { .torna-sala-alto { display: none; } }
 
 /* ---------- lista allenamenti ---------- */
 
@@ -257,7 +311,7 @@ a.tab { text-decoration: none; }
 @media (min-width: 1024px) {
   .sidebar {
     display: flex; flex-direction: column; width: 240px; flex-shrink: 0;
-    background: #171717; border-right: 2px solid var(--line-soft); padding: 26px 0;
+    background: var(--menu); border-right: 2px solid var(--line-soft); padding: 26px 0;
   }
   .tabbar { display: none; }
   .pad { padding: 0 32px; }
@@ -268,11 +322,11 @@ a.tab { text-decoration: none; }
 
 .navitem {
   display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 12px;
-  color: #b8b8b2; font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
+  color: var(--tasto); font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
 }
 a.navitem { text-decoration: none; }
 .navitem[data-on='true'] { background: var(--surface-2); color: var(--text); }
-.navitem > i { display: block; width: 8px; height: 8px; background: #3a3a38; }
+.navitem > i { display: block; width: 8px; height: 8px; background: var(--spento); }
 .navitem[data-on='true'] > i { background: var(--blu); }
 
 /* Il marchio e il titolo non convivono: su telefono comanda la barra in basso,
@@ -313,7 +367,7 @@ a.navitem { text-decoration: none; }
 .beccato-frase {
   font-family: var(--cond); font-style: oblique 9deg; font-weight: 700;
   font-size: clamp(15px, 4vw, 24px); letter-spacing: 0.04em; line-height: 1.08;
-  color: var(--giallo); text-align: center; text-wrap: balance;
+  color: var(--giallo-testo); text-align: center; text-wrap: balance;
   text-shadow: 0 2px 12px #000000cc;
 }
 
@@ -544,7 +598,7 @@ a.navitem { text-decoration: none; }
   display: flex; flex-direction: column; gap: 14px;
   padding: 16px 16px 18px;
   border-color: var(--giallo);
-  background: linear-gradient(180deg, #241f0d 0%, var(--surface) 62%);
+  background: linear-gradient(180deg, var(--caldo) 0%, var(--surface) 62%);
 }
 
 .maurizio-faccia {
@@ -559,12 +613,12 @@ a.navitem { text-decoration: none; }
 .livello {
   min-height: 52px; padding: 0 10px;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--line); background: var(--surface-2); color: #b8b8b2;
+  border: 2px solid var(--line); background: var(--surface-2); color: var(--tasto);
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 .livello:hover { border-color: var(--dim); color: var(--text); }
 .livello[data-on='true'] {
-  background: var(--giallo); border-color: var(--giallo); color: #121212;
+  background: var(--giallo); border-color: var(--giallo); color: var(--su-colore);
 }
 
 @media (min-width: 560px) {
@@ -579,11 +633,11 @@ a.navitem { text-decoration: none; }
 .segmento {
   min-height: 52px; padding: 0 4px;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  border: 2px solid var(--line); background: var(--surface-2); color: #b8b8b2;
+  border: 2px solid var(--line); background: var(--surface-2); color: var(--tasto);
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 .segmento:hover { border-color: var(--dim); color: var(--text); }
-.segmento[data-on='true'] { background: var(--blu); border-color: var(--blu); color: #121212; }
+.segmento[data-on='true'] { background: var(--blu); border-color: var(--blu); color: var(--su-colore); }
 
 /* ---------- misure del timer, elastiche ---------- */
 
@@ -631,7 +685,7 @@ a.navitem { text-decoration: none; }
 .btn-piu {
   flex-shrink: 0; min-width: 66px; padding: 0 12px;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--line); background: var(--surface); color: #b8b8b2;
+  border: 2px solid var(--line); background: var(--surface); color: var(--tasto);
   font-family: var(--cond); font-variant-numeric: tabular-nums;
   font-size: 17px; font-weight: 700; letter-spacing: 0.06em;
 }

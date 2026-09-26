@@ -8,6 +8,7 @@ import { segnalaTimerAperto } from '../lib/aggiornamento'
 import { type Interrotto, salvaInterrotto, scordaInterrotto } from '../lib/ripresa'
 import { useWakeLock } from '../lib/wakeLock'
 import { apriSessione, chiudiSessione } from '../lib/mediaSession'
+import { coloreFondo } from '../lib/tema'
 import { DentroAnello, Digits, Ring } from './Quadrante'
 import { Close, Next, Pause, Play, Prev } from './Icons'
 
@@ -184,8 +185,8 @@ export function TimerScreen({
       setRest: '#1b8ac4',
       cooldown: '#1b8ac4',
     }
-    meta?.setAttribute('content', view.status === 'running' && kind ? map[kind] : '#121212')
-    return () => meta?.setAttribute('content', '#121212')
+    meta?.setAttribute('content', view.status === 'running' && kind ? map[kind] : coloreFondo())
+    return () => meta?.setAttribute('content', coloreFondo())
   }, [seg?.kind, view.status])
 
   // Uscire a metà non butta via il lavoro fatto: stop() lo registra come interrotto.
@@ -278,7 +279,7 @@ export function TimerScreen({
               <span
                 key={r}
                 style={{
-                  background: r === cur ? color : r < cur ? '#4a4a46' : 'transparent',
+                  background: r === cur ? color : r < cur ? 'var(--tratteggio)' : 'transparent',
                   borderColor: r === cur ? color : 'var(--line)',
                 }}
               />
@@ -363,7 +364,7 @@ export function TimerScreen({
             style={{
               fontSize: 19,
               fontWeight: 600,
-              color: '#b8b8b2',
+              color: 'var(--tasto)',
               minWidth: 0,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -383,7 +384,7 @@ export function TimerScreen({
         </button>
         <button
           className="btn grow tasto-avvia"
-          style={{ background: tinta, color: '#121212' }}
+          style={{ background: tinta, color: 'var(--su-colore)' }}
           onClick={done ? exit : startOrToggle}
         >
           {view.status === 'running' ? <Pause size={22} /> : <Play size={22} />}

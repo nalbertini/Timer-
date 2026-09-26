@@ -15,6 +15,7 @@ import {
   nomeFile,
   salvataggioCorrente,
 } from '../lib/salvataggio'
+import { type Tema, useTema } from '../lib/tema'
 import { Chevron } from './Icons'
 import { Logo } from './Logo'
 
@@ -71,6 +72,7 @@ export function SettingsScreen({
   onOpenStorico: () => void
   onOpenEsercizi: () => void
 }) {
+  const [tema, scegliTema] = useTema()
   const [incise, setIncise] = useState(0)
   const [daRipristinare, setDaRipristinare] = useState<Salvataggio | null>(null)
   const [messaggio, setMessaggio] = useState<string | null>(null)
@@ -137,7 +139,7 @@ export function SettingsScreen({
             ))}
           </div>
 
-          <span style={{ fontSize: 13, lineHeight: 1.4, color: settings.coach === 'off' ? 'var(--dim)' : 'var(--giallo)' }}>
+          <span style={{ fontSize: 13, lineHeight: 1.4, color: settings.coach === 'off' ? 'var(--dim)' : 'var(--giallo-testo)' }}>
             {COACH_HINT[settings.coach]}
           </span>
         </div>
@@ -160,6 +162,32 @@ export function SettingsScreen({
           </div>
           <Chevron />
         </button>
+      </div>
+
+      <div className="rule">
+        <span className="rule-label">TEMA</span>
+        <div className="rule-line" />
+      </div>
+      <div className="pad stack" style={{ gap: 2 }}>
+        <div className="card stack" style={{ gap: 10, padding: '12px 14px 14px' }}>
+          <div className="segmenti" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+            {(
+              [
+                ['scuro', 'NERO'],
+                ['chiaro', 'BIANCO'],
+              ] as [Tema, string][]
+            ).map(([t, etichetta]) => (
+              <button key={t} className="segmento" data-on={tema === t} aria-pressed={tema === t} onClick={() => scegliTema(t)}>
+                <span className="ob" style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.06em' }}>
+                  {etichetta}
+                </span>
+              </button>
+            ))}
+          </div>
+          <span style={{ fontSize: 13, lineHeight: 1.4, color: 'var(--dim)' }}>
+            È lo stesso di ODS Corsi: scelto qui o là, vale per tutte e due su questo dispositivo.
+          </span>
+        </div>
       </div>
 
       <div className="rule">

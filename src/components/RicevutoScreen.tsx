@@ -90,7 +90,7 @@ export function RicevutoScreen({
         style={{
           gap: 10,
           borderTop: '2px solid var(--line-soft)',
-          background: '#171717',
+          background: 'var(--menu)',
           padding: '12px 20px calc(var(--safe-b) + 14px)',
         }}
       >
