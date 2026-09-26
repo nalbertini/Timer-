@@ -56,7 +56,7 @@ export function HomeScreen({
         <div className="pad" style={{ paddingTop: 14 }}>
           <div className="card stack" style={{ gap: 10, padding: 14, borderColor: 'var(--giallo)' }}>
             <div className="stack" style={{ gap: 2, minWidth: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--giallo)' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--giallo-testo)' }}>
                 ALLENAMENTO INTERROTTO
               </span>
               <span className="ob" style={{ fontSize: 20, fontWeight: 700 }}>

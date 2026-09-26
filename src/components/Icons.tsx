@@ -136,16 +136,6 @@ export const Clessidra = ({ size = 22 }: P) => (
   </svg>
 )
 
-/** Un calendario: ODS Corsi, l'app delle lezioni. */
-export const Calendario = ({ size = 22 }: P) => (
-  <svg {...base(size)} aria-hidden="true">
-    <rect x="3" y="5" width="18" height="16" />
-    <path d="M3 10h18" />
-    <path d="M8 3v4" />
-    <path d="M16 3v4" />
-  </svg>
-)
-
 export const Drag = ({ size = 16 }: P) => (
   <svg {...base(size)} aria-hidden="true">
     <line x1="4" y1="8" x2="20" y2="8" />

@@ -36,10 +36,17 @@ altri i nomi si alternano a ogni round e vengono annunciati dalla voce.
 I timer, le impostazioni e lo storico stanno nel browser del dispositivo
 (`localStorage`), senza account e senza server.
 
-L'ultima voce della barra, **CORSI**, riporta a ODS Corsi
+Il tasto **SALA** riporta al tablet di sala di ODS Corsi
 ([nalbertini/ods-corsi](https://github.com/nalbertini/ods-corsi)), il calendario
-e l'appello: è un'app a sé, che ha il timer fra le sue voci. Si apre la sua
-radice, che su un tablet di sala riapre il tablet.
+e l'appello: è un'app a sé, che sul tablet ha il tasto TIMER. È grosso come i
+tasti del tablet: in fondo alla barra laterale, in alto sui tablet in verticale,
+nella barra in basso sui telefoni. Apre la radice di ODS Corsi, che su un tablet
+di sala riapre il tablet della sua sala.
+
+Il **tema** è nero o bianco, e lo stesso di ODS Corsi: le due app stanno sullo
+stesso dominio e usano la stessa chiave (`ods-tema`), quindi scelto in una vale
+anche nell'altra. Si sceglie da Impostazioni; finché nessuno sceglie, segue il
+dispositivo.
 
 ## La libreria di esercizi
 

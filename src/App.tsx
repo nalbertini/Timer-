@@ -20,7 +20,7 @@ import { RicevutoScreen } from './components/RicevutoScreen'
 import { CountdownTab, CronometroScreen } from './components/AlVolo'
 import { pulisciLink, workoutDaLink } from './lib/condivisione'
 import { type Interrotto, leggiInterrotto, scordaInterrotto } from './lib/ripresa'
-import { Back, Calendario, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
+import { Back, Clessidra, Crono, Gear, TimerIcon } from './components/Icons'
 import { Logo, Wordmark } from './components/Logo'
 
 type Tab = 'timer' | 'crono' | 'countdown' | 'impostazioni'
@@ -58,10 +58,22 @@ const PIENE: Tab[] = ['crono', 'countdown']
 
 /**
  * ODS Corsi, il calendario e l'appello, è un'app a sé (nalbertini/ods-corsi)
- * che ha il timer fra le sue voci: questo è il ritorno. Si apre la radice, che
- * su un tablet di sala riapre il tablet e altrove la pagina di scelta.
+ * che ha il timer sul tablet di sala: questo è il ritorno. Si apre la radice,
+ * che su un tablet di sala riapre il tablet della sua sala (e altrove la pagina
+ * di scelta). Non `#sala`: quell'indirizzo farebbe diventare un tablet di sala
+ * anche il telefono di chi lo tocca.
  */
-const CORSI = 'https://nalbertini.github.io/ods-corsi/'
+const SALA = 'https://nalbertini.github.io/ods-corsi/'
+
+/** Il ritorno alla sala, grosso come i tasti del tablet da cui si arriva. */
+function TornaSala({ className }: { className: string }) {
+  return (
+    <a className={`torna-sala ${className}`} href={SALA}>
+      <Back size={20} />
+      SALA
+    </a>
+  )
+}
 
 export default function App() {
   const [workouts, setWorkouts] = useState<Workout[]>(() => loadWorkouts())
@@ -407,10 +419,7 @@ export default function App() {
         </div>
         <div className="grow" />
         <div className="stack" style={{ padding: '0 12px' }}>
-          <a className="navitem" href={CORSI}>
-            <i />
-            CORSI
-          </a>
+          <TornaSala className="" />
         </div>
       </nav>
 
@@ -431,6 +440,7 @@ export default function App() {
             <span className="ob page-title" style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--dim)' }}>
               {TAB_TITLE[tab]}
             </span>
+            <TornaSala className="torna-sala-alto" />
           </header>
         )}
 
@@ -456,9 +466,12 @@ export default function App() {
               </button>
             )
           })}
-          <a className="tab" href={CORSI}>
-            <Calendario />
-            CORSI
+          {/* Su un telefono in alto non c'è posto accanto al marchio: il ritorno
+              sta qui. Da tablet c'è il tasto grosso in alto, se in alto c'è
+              la testata; nelle schede a tutto schermo resta questo. */}
+          <a className={PIENE.includes(tab) ? 'tab' : 'tab tab-sala'} href={SALA}>
+            <Back size={22} />
+            SALA
           </a>
         </nav>
       </div>

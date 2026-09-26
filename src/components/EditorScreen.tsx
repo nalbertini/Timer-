@@ -312,7 +312,7 @@ export function EditorScreen({
                     fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: '0.08em',
-                    color: obiettivo ? 'var(--giallo)' : 'var(--faint)',
+                    color: obiettivo ? 'var(--giallo-testo)' : 'var(--faint)',
                   }}
                   onClick={() => setObiettivoAperto(aperto ? null : ex.id)}
                   aria-expanded={aperto}
@@ -372,7 +372,7 @@ export function EditorScreen({
               <span style={{ fontSize: 14, fontWeight: 600 }} className="grow">
                 {rigaAnteprima(s)}
               </span>
-              <span className="num" style={{ fontSize: 16, fontWeight: 700, color: '#b8b8b2' }}>
+              <span className="num" style={{ fontSize: 16, fontWeight: 700, color: 'var(--tasto)' }}>
                 {s.duration}&quot;
               </span>
             </div>
@@ -390,7 +390,7 @@ export function EditorScreen({
         style={{
           gap: 14,
           borderTop: '2px solid var(--line-soft)',
-          background: '#171717',
+          background: 'var(--menu)',
           padding: '14px 20px calc(var(--safe-b) + 16px)',
         }}
       >
